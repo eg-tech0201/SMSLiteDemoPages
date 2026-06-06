@@ -1,0 +1,85 @@
+.breadcrumb-mini {
+    font-size: 0.82rem;
+}
+
+.breadcrumb-mini a {
+    color: var(--brand-navy);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.exports-card {
+    border-radius: 16px;
+    border: 1px solid transparent;
+    background:
+        linear-gradient(var(--panel-background), var(--panel-background)) padding-box,
+        var(--usda-border-grad) border-box;
+    box-shadow: 0 6px 22px rgba(11, 43, 75, 0.08);
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+.exports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.exports-title {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--brand-navy);
+}
+
+.exports-subtitle {
+    color: var(--brand-muted);
+    font-weight: 700;
+}
+
+.exports-status {
+    border-radius: 999px;
+    padding: 0.38rem 0.85rem;
+    font-weight: 900;
+}
+
+.exports-status.is-allowed {
+    background: color-mix(in srgb, var(--brand-green) 15%, #ffffff);
+    color: var(--brand-green);
+}
+
+.exports-status.is-denied {
+    background: #fff1f1;
+    color: #a94545;
+}
+
+.export-actions {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.button-lite,
+.button-primary {
+    border-radius: 12px;
+    padding: 0.56rem 0.8rem;
+    font-weight: 800;
+}
+
+.button-lite {
+    border: 1px solid var(--brand-border);
+    background: var(--brand-background);
+    color: var(--brand-navy);
+}
+
+.button-primary {
+    border: 1px solid transparent;
+    background:
+        linear-gradient(180deg, #ffffff, #f2f8f5) padding-box,
+        linear-gradient(135deg, #1f6f3f, #55b07a 50%, #0b2b4b) border-box;
+    color: var(--brand-navy);
+}

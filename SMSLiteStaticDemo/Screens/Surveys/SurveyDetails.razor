@@ -1,0 +1,886 @@
+@page "/surveys/details"
+@page "/surveys/details/{SurveyId:int?}"
+@using Microsoft.AspNetCore.Components.Web
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject SMSLiteStaticDemo.Services.SurveyInstanceService SurveyInstanceService
+@inject SMSLiteStaticDemo.Services.UserRecentSurveyService RecentSurveyService
+@inject SMSLiteStaticDemo.Services.DemoAuditTrailService AuditTrailService
+@inject SMSLiteStaticDemo.Services.DemoUserContextService UserContext
+
+<PageTitle>@(Detail?.Title ?? "Survey Details")</PageTitle>
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb breadcrumb-mini mb-0">
+        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="surveys">Surveys</a></li>
+        <li class="breadcrumb-item"><a href="surveys/results">Results</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Survey Details</li>
+    </ol>
+</nav>
+
+@if (IsLoading)
+{
+    <div class="alert alert-info">Loading survey details...</div>
+}
+else if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-warning">@ErrorMessage</div>
+}
+else if (Detail is null)
+{
+    <div class="alert alert-warning">No survey detail found for the selected instance.</div>
+}
+else
+{
+    <section class="detail-identity mb-2">
+        <div class="detail-identity-main">
+            <h1 class="detail-identity-title">@Detail.Title</h1>
+            <div class="detail-identity-subtitle">@Detail.SubTitle</div>
+        </div>
+        <div class="detail-identity-meta">
+            <div class="identity-line">
+                <span class="identity-key">Survey ID:</span>
+                <span class="identity-data">@Detail.SurveyId</span>
+            </div>
+            <div class="identity-line">
+                <span class="identity-key">Reference Date:</span>
+                <span class="identity-data">@Detail.ReferenceDate.ToString("MM/dd/yyyy")</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="details-top-layout mb-4">
+        <div class="card overview-card">
+            <div class="card-body top-card-body">
+                <div class="count-stack-wrap overview-stack-wrap">
+                    <div class="metric-label">Received vs Deleted</div>
+                    <div class="count-stack">
+                        <span class="count-stack-received" style="width:@($"{ReceivedPercent:0.##}%")"></span>
+                        <span class="count-stack-deleted" style="width:@($"{DeletedPercent:0.##}%")"></span>
+                    </div>
+                    <div class="count-stack-meta">
+                        <span class="count-stack-received-text">Received: @Detail.TotalReceived (@ReceivedPercent.ToString("0.0")%)</span>
+                        <span class="count-stack-deleted-text">Deleted: @Detail.TotalDeleted (@DeletedPercent.ToString("0.0")%)</span>
+                    </div>
+                </div>
+                <div class="survey-overview-grid compact-overview">
+                    <div class="survey-overview-item"><span class="overview-label">Sample ID</span><span class="overview-value">@Detail.SampleId</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">Sample</span><span class="overview-value">@Detail.SampleName</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">Survey Frequency</span><span class="overview-value">@Detail.SurveyFrequency</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">Version</span><span class="overview-value">@Detail.Version</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">HQ Survey Admin</span><span class="overview-value">@Detail.HqSurveyAdmin</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">Project Code</span><span class="overview-value">@Detail.ProjectCode</span></div>
+                    <div class="survey-overview-item">
+                        <span class="overview-label">Date Range</span>
+                        <span class="overview-value">Start: @Detail.SurveyStartDate.ToString("MM/dd/yyyy")<span class="date-range-gap"></span>End Date: @Detail.SurveyStopDate.ToString("MM/dd/yyyy")</span>
+                    </div>
+                    <div class="survey-overview-item"><span class="overview-label">Budget Allocation</span><span class="overview-value">@Detail.BudgetAllocation.ToString("C0")</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card chart-panel-card">
+            <div class="card-body top-card-body">
+                <div class="count-chart-card">
+                    <div class="count-chart-title">OpDom Status Distribution</div>
+                    <div class="count-chart-visual">
+                        <div class="response-pie response-pie-sm" style="background:@BuildCountPie(OpDomChartItems);">
+                            <div class="response-pie-center response-pie-center-sm">
+                                <div class="response-pie-label">OpDom Total</div>
+                                <div class="response-pie-value">@GetChartTotal(OpDomChartItems)</div>
+                            </div>
+                        </div>
+                        <div class="response-legend response-legend-wide">
+                            @foreach (var item in OpDomChartItems)
+                            {
+                                <div class="legend-item">
+                                    <span class="legend-swatch" style="background:@item.Color"></span>
+                                    <span class="legend-label">@item.Label</span>
+                                    <span class="legend-value">@($"{item.Count} ({GetChartPercent(item.Count, OpDomChartItems)})")</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card chart-panel-card">
+            <div class="card-body top-card-body">
+                <div class="count-chart-card">
+                    <div class="count-chart-title">Data Collection Mode Status Distribution</div>
+                    <div class="count-chart-visual">
+                        <div class="response-pie response-pie-sm" style="background:@BuildCountPie(DcmsChartItems);">
+                            <div class="response-pie-center response-pie-center-sm">
+                                <div class="response-pie-label">Mode Total</div>
+                                <div class="response-pie-value">@GetChartTotal(DcmsChartItems)</div>
+                            </div>
+                        </div>
+                        <div class="response-legend response-legend-wide">
+                            @foreach (var item in DcmsChartItems)
+                            {
+                                <div class="legend-item">
+                                    <span class="legend-swatch" style="background:@item.Color"></span>
+                                    <span class="legend-label">@item.Label</span>
+                                    <span class="legend-value">@($"{item.Count} ({GetChartPercent(item.Count, DcmsChartItems)})")</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="detail-tabs" role="tablist" aria-label="Survey detail tabs">
+            <button class="@GetTabClass("records")" type="button" @onclick="ShowRecordsTab">Survey Records</button>
+            <button class="@GetTabClass("materials")" type="button" @onclick="ShowMaterialsTab">Materials</button>
+        </div>
+        <div class="card-body">
+            @if (ActiveTab == "materials")
+            {
+                <div class="materials-header">
+                    <div>
+                        <div class="widget-title materials-title">Data Collection Materials</div>
+                    </div>
+                    <div class="materials-summary">@FilteredCollectionMaterials.Count material(s)</div>
+                </div>
+
+                <div class="materials-filter-bar" aria-label="Collection mode filter">
+                    @foreach (var mode in MaterialFilterOptions)
+                    {
+                        <button class="@GetMaterialFilterClass(mode)" type="button" @onclick="@(() => SetMaterialModeFilter(mode))">@mode</button>
+                    }
+                </div>
+
+                <div class="table-wrap">
+                    <table class="table-surveys materials-table">
+                        <thead>
+                            <tr>
+                                <th>Material Name</th>
+                                <th>Type</th>
+                                <th>Collection Mode</th>
+                                <th>Version</th>
+                                <th>Upload Date</th>
+                                <th>File Size</th>
+                                <th>Download</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!FilteredCollectionMaterials.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-muted">No materials found for the selected collection mode.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var material in FilteredCollectionMaterials)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a class="material-name material-link" href="@BuildMaterialViewerHref(material)">@material.MaterialName</a>
+                                            <div class="material-file">@material.FileName</div>
+                                        </td>
+                                        <td>@material.MaterialType</td>
+                                        <td>@material.CollectionMode</td>
+                                        <td><a class="table-link" href="@BuildMaterialViewerHref(material)">@material.Version</a></td>
+                                        <td>@material.UploadDate.ToString("MM/dd/yyyy")</td>
+                                        <td>@FormatFileSize(material.FileSizeBytes)</td>
+                                        <td>
+                                            <button class="button-lite compact" type="button" @onclick="@(() => DownloadMaterialAsync(material))">Download</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="widget-title records-title">Survey Records</div>
+                <div class="poid-lookup-shell mb-2">
+                    <form class="poid-search-form" @onsubmit="LookupByPoid" @onsubmit:preventDefault="true">
+                        <span class="poid-search-icon bi bi-search" aria-hidden="true"></span>
+                        <input class="poid-search-input"
+                               placeholder="Filter records by SKey"
+                               @bind="PoidLookupText"
+                               @bind:event="oninput" />
+                        <div class="poid-search-actions">
+                            <button class="poid-clear-button" type="button" @onclick="ClearPoidLookup">Clear</button>
+                        </div>
+                    </form>
+                    @if (!string.IsNullOrWhiteSpace(PoidLookupMessage))
+                    {
+                        <div class="poid-lookup-message">@PoidLookupMessage</div>
+                    }
+                </div>
+
+               
+
+                <div class="records-toolbar">
+                    <div class="pager">
+                        <button class="button-lite" @onclick="PrevInstancePage" disabled="@IsInstancePrevDisabled">‹</button>
+                        <span class="pager-text">@InstancePageSummary</span>
+                        <button class="button-lite" @onclick="NextInstancePage" disabled="@IsInstanceNextDisabled">›</button>
+                    </div>
+                    <div class="pagesize">
+                        <span class="pagesize-label">Rows:</span>
+                        <select class="select-lite" @bind="InstancePageSizeString" @bind:after="OnInstancePageSizeChanged">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="All">All</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="table-surveys">
+                        <thead>
+                            <tr>
+                                <th>@InstanceColumnHeader("Fips", true)</th>
+                                <th>@InstanceColumnHeader("State", true)</th>
+                                <th>@InstanceColumnHeader("SKey", true)</th>
+                                <th>@InstanceColumnHeader("Status", true)</th>
+                                <th>Paper</th>
+                                <th>@InstanceColumnHeader("CAWI", true)</th>
+                                <th>@InstanceColumnHeader("CAPI", true)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!PagedInstanceRows.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-muted">No matching records for current filter.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var row in PagedInstanceRows)
+                                {
+                                    <tr class="survey-row" @onclick="@(() => Navigation.NavigateTo(BuildRecordHref(row)))">
+                                        <td>@row.Fips</td>
+                                        <td>@row.State</td>
+                                        <td>
+                                            <a class="table-link" href="@BuildRecordHref(row)">@row.Skey</a>
+                                        </td>
+                                        <td>@row.Status</td>
+                                        <td>@BuildGridLink(row.PaperLabel, row.PaperLink)</td>
+                                        <td>@BuildGridLink(row.CawiLabel, row.CawiLink)</td>
+                                        <td>@BuildGridLink(row.CapiLabel, row.CapiLink)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(ActiveInstanceColumnMenuKey))
+                {
+                    var key = ActiveInstanceColumnMenuKey!;
+                    <div class="column-menu-backdrop" @onclick="CloseInstanceColumnMenu"></div>
+                    <div class="column-menu-floating" style="top:@($"{InstanceColumnMenuTop}px"); left:@($"{InstanceColumnMenuLeft}px")">
+                        <div class="column-menu-header">
+                            <div class="column-menu-title">@key</div>
+                            <button type="button" class="column-menu-close" @onclick="CloseInstanceColumnMenu" aria-label="Close">×</button>
+                        </div>
+                        <button class="column-menu-pill" type="button" @onclick="() => ApplyInstanceSort(key, true)">Sort low → high</button>
+                        <button class="column-menu-pill" type="button" @onclick="() => ApplyInstanceSort(key, false)">Sort high → low</button>
+                        <button class="column-menu-pill" type="button" @onclick="ClearInstanceSort">Clear sorting</button>
+                        <label class="column-menu-label">Filter contains</label>
+                        <input class="column-menu-input" @bind="InstanceColumnFilterDraft" @bind:event="oninput" />
+                        <div class="column-menu-actions">
+                            <button class="column-menu-pill" type="button" @onclick="ApplyInstanceColumnFilter">Apply filter</button>
+                            <button class="column-menu-pill" type="button" @onclick="() => ClearInstanceColumnFilter(key)">Clear filter</button>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int? SurveyId { get; set; }
+    [SupplyParameterFromQuery(Name = "surveyId")] public int? SurveyIdQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "sampleId")] public string? SampleId { get; set; }
+    [SupplyParameterFromQuery(Name = "referenceDate")] public string? ReferenceDate { get; set; }
+
+    private SMSLiteStaticDemo.Services.SurveyInstanceDetailResponse? Detail { get; set; }
+    private string? ErrorMessage { get; set; }
+    private bool IsLoading { get; set; }
+    private string PoidLookupText { get; set; } = "";
+    private string? PoidLookupMessage { get; set; }
+    private List<SMSLiteStaticDemo.Services.SurveyRecordIndexItem> RelatedSurveyRecords { get; set; } = new();
+    private List<InstanceGridRow> InstanceRows { get; set; } = new();
+    private int InstancePageIndex { get; set; }
+    private int InstancePageSize { get; set; } = 10;
+    private string InstancePageSizeString { get; set; } = "10";
+    private string? ActiveInstanceColumnMenuKey { get; set; }
+    private double InstanceColumnMenuTop { get; set; }
+    private double InstanceColumnMenuLeft { get; set; }
+    private string InstanceSortKey { get; set; } = "SKey";
+    private bool InstanceSortAscending { get; set; } = true;
+    private string InstanceColumnFilterDraft { get; set; } = "";
+    private string ActiveTab { get; set; } = "records";
+    private string SelectedMaterialMode { get; set; } = "All";
+    private readonly Dictionary<string, string> InstanceColumnFilters = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly string[] ChartPalette =
+    {
+        "#2f8f5b",
+        "#65af83",
+        "#8fc8a7",
+        "#0b2b4b",
+        "#5b83a8",
+        "#f0b35e",
+        "#d66a6a"
+    };
+    private const string DemoUserId = "demo-user";
+    private List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation> VisibleSurveyDesignerAssociations =>
+        Detail is null ? new List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation>() : FilterAssociationsByRole(Detail.SurveyDesignerAssociations, "NASS");
+    private List<CountSlice> OpDomChartItems => BuildChartSlices(Detail?.OpDomCounts.Select(c => (c.Code, c.Definition, c.Count)));
+    private List<CountSlice> DcmsChartItems => BuildChartSlices(Detail?.DcmsCounts.Select(c => (c.Code, c.Definition, c.Count)));
+    private double ReceivedPercent => GetPercent(Detail?.TotalReceived ?? 0, (Detail?.TotalReceived ?? 0) + (Detail?.TotalDeleted ?? 0));
+    private double DeletedPercent => GetPercent(Detail?.TotalDeleted ?? 0, (Detail?.TotalReceived ?? 0) + (Detail?.TotalDeleted ?? 0));
+    private List<string> MaterialFilterOptions => new() { "All", "EDR", "CAPI", "CATI", "Mail" };
+    private List<SMSLiteStaticDemo.Services.CollectionMaterial> FilteredCollectionMaterials =>
+        (Detail?.CollectionMaterials ?? new List<SMSLiteStaticDemo.Services.CollectionMaterial>())
+            .Where(m => SelectedMaterialMode == "All" || m.CollectionMode.Equals(SelectedMaterialMode, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+    private IEnumerable<InstanceGridRow> FilteredInstanceRows
+    {
+        get
+        {
+            IEnumerable<InstanceGridRow> rows = InstanceRows;
+            if (!string.IsNullOrWhiteSpace(PoidLookupText))
+            {
+                var term = PoidLookupText.Trim();
+                rows = rows.Where(r => r.Skey.Contains(term, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (InstanceColumnFilters.Count > 0)
+            {
+                rows = rows.Where(row =>
+                {
+                    foreach (var filter in InstanceColumnFilters)
+                    {
+                        var value = GetInstanceColumnValue(row, filter.Key);
+                        if (!value.Contains(filter.Value, StringComparison.OrdinalIgnoreCase))
+                            return false;
+                    }
+
+                    return true;
+                });
+            }
+
+            rows = (InstanceSortKey, InstanceSortAscending) switch
+            {
+                ("Fips", true) => rows.OrderBy(r => r.Fips),
+                ("Fips", false) => rows.OrderByDescending(r => r.Fips),
+                ("State", true) => rows.OrderBy(r => r.State),
+                ("State", false) => rows.OrderByDescending(r => r.State),
+                ("SKey", true) => rows.OrderBy(r => r.Skey),
+                ("SKey", false) => rows.OrderByDescending(r => r.Skey),
+                ("Status", true) => rows.OrderBy(r => r.Status),
+                ("Status", false) => rows.OrderByDescending(r => r.Status),
+                ("CAWI", true) => rows.OrderBy(r => r.CawiLabel),
+                ("CAWI", false) => rows.OrderByDescending(r => r.CawiLabel),
+                ("CAPI", true) => rows.OrderBy(r => r.CapiLabel),
+                ("CAPI", false) => rows.OrderByDescending(r => r.CapiLabel),
+                _ => rows
+            };
+
+            return rows;
+        }
+    }
+
+    private List<InstanceGridRow> PagedInstanceRows
+    {
+        get
+        {
+            var rows = FilteredInstanceRows.ToList();
+            if (InstancePageSize <= 0 || rows.Count == 0)
+                return rows;
+
+            var maxPage = Math.Max(0, (int)Math.Ceiling(rows.Count / (double)InstancePageSize) - 1);
+            if (InstancePageIndex > maxPage)
+                InstancePageIndex = maxPage;
+
+            return rows.Skip(InstancePageIndex * InstancePageSize).Take(InstancePageSize).ToList();
+        }
+    }
+
+    private bool IsInstancePrevDisabled => InstancePageIndex <= 0 || InstancePageSize <= 0;
+
+    private bool IsInstanceNextDisabled
+    {
+        get
+        {
+            if (InstancePageSize <= 0)
+                return true;
+            var total = FilteredInstanceRows.Count();
+            return (InstancePageIndex + 1) * InstancePageSize >= total;
+        }
+    }
+
+    private string InstancePageSummary
+    {
+        get
+        {
+            var total = FilteredInstanceRows.Count();
+            if (total == 0)
+                return "0 results";
+            if (InstancePageSize <= 0)
+                return $"1-{total} of {total}";
+            var start = InstancePageIndex * InstancePageSize + 1;
+            var end = Math.Min(total, (InstancePageIndex + 1) * InstancePageSize);
+            return $"{start}-{end} of {total}";
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        ErrorMessage = null;
+        Detail = null;
+
+        var surveyId = SurveyIdQuery ?? SurveyId;
+        if (!surveyId.HasValue || string.IsNullOrWhiteSpace(SampleId) || string.IsNullOrWhiteSpace(ReferenceDate))
+        {
+            ErrorMessage = "Select Reference Date, Survey ID, and Sample ID on the Surveys page to view details.";
+            return;
+        }
+
+        if (!DateTime.TryParse(ReferenceDate, out var parsedReferenceDate))
+        {
+            ErrorMessage = "Invalid reference date.";
+            return;
+        }
+
+        var instance = SurveyInstanceService.FindInstance(parsedReferenceDate, surveyId.Value, SampleId);
+        var fallbackInstance = SurveyInstanceService.Instances
+            .Where(i => i.SurveyId == surveyId.Value && i.SampleId.Equals(SampleId, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(i => i.ReferenceDate)
+            .FirstOrDefault();
+        var effectiveInstance = instance ?? fallbackInstance;
+
+        if (effectiveInstance is null || string.IsNullOrWhiteSpace(effectiveInstance.SampleId) || effectiveInstance.Status.Equals("IN HQ REVIEW", StringComparison.OrdinalIgnoreCase))
+        {
+            ErrorMessage = "The selected survey instance is not yet available (sample not populated or status is IN HQ REVIEW).";
+            return;
+        }
+
+        IsLoading = true;
+        try
+        {
+            Detail = SurveyInstanceService.GetDetail(parsedReferenceDate, surveyId.Value, SampleId);
+            LoadSurveySummaries(surveyId.Value);
+            RecentSurveyService.Track(DemoUserId, parsedReferenceDate, surveyId.Value, SampleId!, "Reviewed");
+        }
+        catch
+        {
+            ErrorMessage = "Unable to load survey details. Please try again.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void LoadSurveySummaries(int surveyId)
+    {
+        InstancePageIndex = 0;
+        RelatedSurveyRecords = SurveyInstanceService.GetSurveyRecordIndex(surveyId).ToList();
+        var association = VisibleSurveyDesignerAssociations;
+        var paper = association.FirstOrDefault(a => a.QuestionnaireFormat.Equals("Paper", StringComparison.OrdinalIgnoreCase));
+        var cawi = association.FirstOrDefault(a => a.CollectionMode.Equals("CAWI", StringComparison.OrdinalIgnoreCase));
+        var capi = association.FirstOrDefault(a => a.CollectionMode.Equals("CAPI", StringComparison.OrdinalIgnoreCase));
+
+        InstanceRows = RelatedSurveyRecords
+            .Select(r =>
+            {
+                return new InstanceGridRow(
+                    r.StateId,
+                    r.StateAlpha,
+                    r.SKey,
+                    ResolveGridStatus(association),
+                    r.Poid,
+                    r.TargetPoid,
+                    r.SampleId,
+                    r.ReferenceDate,
+                    "PDF | BOOKLET PDF",
+                    paper is null ? null : BuildQuestionnaireViewerHref("Paper Questionnaire", paper.CollectionMode, paper.QuestionnaireVersion, paper.QuestionnaireLink, paper.QuestionnaireFormat, r.SKey),
+                    "CAWI - SD",
+                    cawi is null ? null : BuildQuestionnaireViewerHref("CAWI Questionnaire", cawi.CollectionMode, cawi.QuestionnaireVersion, cawi.QuestionnaireLink, cawi.QuestionnaireFormat, r.SKey),
+                    "PDF",
+                    capi is null ? null : BuildQuestionnaireViewerHref("CAPI Questionnaire", capi.CollectionMode, capi.QuestionnaireVersion, capi.QuestionnaireLink, capi.QuestionnaireFormat, r.SKey));
+            })
+            .OrderBy(r => r.Fips)
+            .ThenBy(r => r.Skey)
+            .ToList();
+    }
+
+    private static string ResolveGridStatus(List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation> associations)
+    {
+        var status = associations.FirstOrDefault()?.QuestionnaireStatus ?? "Published";
+        return status.ToUpperInvariant();
+    }
+
+    private Task LookupByPoid()
+    {
+        if (string.IsNullOrWhiteSpace(PoidLookupText))
+        {
+            PoidLookupMessage = "Enter SKey to filter rows.";
+            return Task.CompletedTask;
+        }
+
+        var count = FilteredInstanceRows.Count();
+        PoidLookupMessage = count == 0
+            ? $"No rows match '{PoidLookupText}'."
+            : $"Showing {count} matching row(s).";
+
+        return Task.CompletedTask;
+    }
+
+    private void ClearPoidLookup()
+    {
+        PoidLookupText = "";
+        PoidLookupMessage = null;
+    }
+
+    private RenderFragment InstanceColumnHeader(string key, bool sortable) => builder =>
+    {
+        var seq = 0;
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "th-head");
+
+        if (sortable)
+        {
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "class", "column-header-label");
+            builder.AddContent(seq++, key);
+            builder.CloseElement();
+
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "role", "button");
+            builder.AddAttribute(seq++, "tabindex", "0");
+            builder.AddAttribute(seq++, "class", "th-filter-btn");
+            builder.AddAttribute(seq++, "title", "Column options");
+            builder.AddAttribute(seq++, "aria-label", $"Column options for {key}");
+            builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, e => OpenInstanceColumnMenu(key, e)));
+            builder.AddMarkupContent(seq++, FilterIconSvg);
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.AddContent(seq++, key);
+        }
+
+        builder.CloseElement();
+    };
+
+    private const string FilterIconSvg =
+        "<svg class=\"filter-icon\" viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" aria-hidden=\"true\">" +
+        "<path fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3 5h18l-7 8v5l-4 2v-7L3 5z\" />" +
+        "</svg>";
+
+    private void OpenInstanceColumnMenu(string key, MouseEventArgs e)
+    {
+        ActiveInstanceColumnMenuKey = key;
+        InstanceColumnFilterDraft = InstanceColumnFilters.TryGetValue(key, out var value) ? value : "";
+        InstanceColumnMenuTop = Math.Max(12, e.ClientY + 10);
+        InstanceColumnMenuLeft = Math.Max(12, e.ClientX - 6);
+    }
+
+    private void CloseInstanceColumnMenu()
+    {
+        ActiveInstanceColumnMenuKey = null;
+    }
+
+    private void ApplyInstanceSort(string key)
+    {
+        if (InstanceSortKey == key)
+            InstanceSortAscending = !InstanceSortAscending;
+        else
+        {
+            InstanceSortKey = key;
+            InstanceSortAscending = true;
+        }
+    }
+
+    private void ApplyInstanceSort(string key, bool ascending)
+    {
+        InstanceSortKey = key;
+        InstanceSortAscending = ascending;
+    }
+
+    private void ClearInstanceSort()
+    {
+        InstanceSortKey = "SKey";
+        InstanceSortAscending = true;
+        CloseInstanceColumnMenu();
+    }
+
+    private void ApplyInstanceColumnFilter()
+    {
+        if (string.IsNullOrWhiteSpace(ActiveInstanceColumnMenuKey))
+            return;
+
+        var key = ActiveInstanceColumnMenuKey!;
+        var value = InstanceColumnFilterDraft.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+            InstanceColumnFilters.Remove(key);
+        else
+            InstanceColumnFilters[key] = value;
+    }
+
+    private void ClearInstanceColumnFilter(string key)
+    {
+        InstanceColumnFilters.Remove(key);
+        if (string.Equals(ActiveInstanceColumnMenuKey, key, StringComparison.OrdinalIgnoreCase))
+            InstanceColumnFilterDraft = "";
+    }
+
+    private static string GetInstanceColumnValue(InstanceGridRow row, string key)
+        => key switch
+        {
+            "Fips" => row.Fips,
+            "State" => row.State,
+            "SKey" => row.Skey,
+            "Status" => row.Status,
+            "CAWI" => row.CawiLabel,
+            "CAPI" => row.CapiLabel,
+            _ => ""
+        };
+
+    private void OnInstancePageSizeChanged()
+    {
+        if (string.Equals(InstancePageSizeString, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            InstancePageSize = 0;
+            InstancePageIndex = 0;
+            return;
+        }
+
+        if (int.TryParse(InstancePageSizeString, out var parsed) && parsed > 0)
+        {
+            InstancePageSize = parsed;
+            InstancePageIndex = 0;
+            return;
+        }
+
+        InstancePageSizeString = "10";
+        InstancePageSize = 10;
+        InstancePageIndex = 0;
+    }
+
+    private void PrevInstancePage()
+    {
+        if (!IsInstancePrevDisabled)
+            InstancePageIndex--;
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        ActiveTab = tab;
+    }
+
+    private void ShowRecordsTab() => SetActiveTab("records");
+
+    private void ShowMaterialsTab() => SetActiveTab("materials");
+
+    private string GetTabClass(string tab)
+        => ActiveTab == tab ? "detail-tab is-active" : "detail-tab";
+
+    private void SetMaterialModeFilter(string mode)
+    {
+        SelectedMaterialMode = mode;
+    }
+
+    private string GetMaterialFilterClass(string mode)
+        => SelectedMaterialMode == mode ? "material-filter-chip is-active" : "material-filter-chip";
+
+    private void NextInstancePage()
+    {
+        if (!IsInstanceNextDisabled)
+            InstancePageIndex++;
+    }
+
+    private string BuildQuestionnaireViewerHref(string label, string? collectionMode, string? version, string? sourceLink, string format, string? sKey = null)
+    {
+        var title = Uri.EscapeDataString(label);
+        var mode = Uri.EscapeDataString(collectionMode ?? "EDR");
+        var docVersion = Uri.EscapeDataString(version ?? "v1.0");
+        var source = Uri.EscapeDataString(sourceLink ?? string.Empty);
+        var documentId = Uri.EscapeDataString($"{Detail?.SurveyId}-{mode}-{format}-{docVersion}");
+        var href = $"surveys/document-viewer?title={title}&mode={mode}&version={docVersion}&format={Uri.EscapeDataString(format)}&documentId={documentId}&source={source}";
+        if (!string.IsNullOrWhiteSpace(sKey))
+        {
+            href += $"&skey={Uri.EscapeDataString(sKey)}&publishedState=400&outputType=2";
+        }
+
+        return href;
+    }
+
+    private string BuildMaterialViewerHref(SMSLiteStaticDemo.Services.CollectionMaterial material)
+    {
+        var title = Uri.EscapeDataString(material.MaterialName);
+        var mode = Uri.EscapeDataString(material.CollectionMode);
+        var version = Uri.EscapeDataString(material.Version);
+        var format = Uri.EscapeDataString(System.IO.Path.GetExtension(material.FileName).Trim('.').ToUpperInvariant());
+        var documentId = Uri.EscapeDataString($"{Detail?.SurveyId}-{material.CollectionMode}-{material.MaterialType}-{material.Version}");
+        var fileName = Uri.EscapeDataString(material.FileName);
+        return $"surveys/document-viewer?title={title}&mode={mode}&version={version}&format={format}&documentId={documentId}&fileName={fileName}&materialType={Uri.EscapeDataString(material.MaterialType)}";
+    }
+
+    private async Task DownloadMaterialAsync(SMSLiteStaticDemo.Services.CollectionMaterial material)
+    {
+        var content = BuildDownloadContent(material.MaterialName, material.MaterialType, material.CollectionMode, material.Version, material.FileName);
+        await Js.InvokeVoidAsync("smsDownloadText", material.FileName, content, "text/plain;charset=utf-8");
+        AuditTrailService.Log(
+            "Download",
+            "Collection Material",
+            $"{Detail?.SurveyId}:{material.MaterialType}:{material.CollectionMode}:{material.Version}",
+            material.FileName,
+            UserContext.CurrentRole,
+            $"Downloaded from survey details for sample {Detail?.SampleId}.");
+    }
+
+    private string BuildRecordHref(InstanceGridRow row)
+        => $"surveys/record?referenceDate={row.ReferenceDate:yyyy-MM-dd}&surveyId={Detail?.SurveyId}&sampleId={Uri.EscapeDataString(row.SampleId)}&skey={Uri.EscapeDataString(row.Skey)}&state={Uri.EscapeDataString(row.State)}";
+
+    private RenderFragment BuildGridLink(string label, string? href) => builder =>
+    {
+        var seq = 0;
+        if (string.IsNullOrWhiteSpace(href))
+        {
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "class", "text-muted");
+            builder.AddContent(seq++, "N/A");
+            builder.CloseElement();
+            return;
+        }
+
+        builder.OpenElement(seq++, "a");
+        builder.AddAttribute(seq++, "href", href);
+        builder.AddAttribute(seq++, "target", "_blank");
+        builder.AddAttribute(seq++, "rel", "noopener noreferrer");
+        builder.AddContent(seq++, label);
+        builder.CloseElement();
+    };
+
+    private static string BuildDownloadContent(string title, string type, string mode, string version, string fileName)
+        => string.Join(Environment.NewLine, new[]
+        {
+            "USDA Survey Management Demo Document",
+            $"Title: {title}",
+            $"Type: {type}",
+            $"Collection Mode: {mode}",
+            $"Version: {version}",
+            $"File Name: {fileName}",
+            string.Empty,
+            "This is a demo artifact generated for the Blazor prototype.",
+            "External Survey Review integration is still pending API specifications."
+        });
+
+    private static List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation> FilterAssociationsByRole(
+        List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation> associations,
+        string staffRole)
+    {
+        if (string.Equals(staffRole, "NASDA", StringComparison.OrdinalIgnoreCase))
+        {
+            return associations
+                .Where(a => a.QuestionnaireStatus.Equals("Published", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        return associations
+            .Where(a =>
+                a.QuestionnaireStatus.Equals("Published", StringComparison.OrdinalIgnoreCase) ||
+                a.QuestionnaireStatus.Equals("NASS Review", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private static List<CountSlice> BuildChartSlices(IEnumerable<(string Code, string Definition, int Count)>? source)
+    {
+        if (source is null)
+            return new List<CountSlice>();
+
+        return source
+            .Where(item => item.Count > 0)
+            .Select((item, index) => new CountSlice(item.Code, item.Definition, item.Count, ChartPalette[index % ChartPalette.Length]))
+            .ToList();
+    }
+
+    private static int GetChartTotal(IReadOnlyCollection<CountSlice> slices)
+        => slices.Sum(s => s.Count);
+
+    private static string BuildCountPie(IReadOnlyCollection<CountSlice> slices)
+    {
+        var total = GetChartTotal(slices);
+        if (total <= 0)
+            return "conic-gradient(#d7dde3 0deg 360deg)";
+
+        var stops = new List<string>();
+        var current = 0d;
+        foreach (var slice in slices)
+        {
+            var span = 360d * slice.Count / total;
+            var next = current + span;
+            stops.Add($"{slice.Color} {current:0.##}deg {next:0.##}deg");
+            current = next;
+        }
+
+        return $"conic-gradient({string.Join(", ", stops)})";
+    }
+
+    private static string GetChartPercent(int count, IReadOnlyCollection<CountSlice> slices)
+    {
+        var total = GetChartTotal(slices);
+        if (total == 0)
+            return "0%";
+
+        var percent = (decimal)count / total * 100m;
+        return $"{Math.Round(percent, 1)}%";
+    }
+
+    private static double GetPercent(int count, int total)
+    {
+        if (total <= 0)
+            return 0;
+        return (double)count / total * 100d;
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024)
+            return $"{bytes} B";
+
+        var size = bytes / 1024d;
+        if (size < 1024)
+            return $"{size:0.#} KB";
+
+        size /= 1024d;
+        return $"{size:0.#} MB";
+    }
+
+    private sealed record InstanceGridRow(
+        string Fips,
+        string State,
+        string Skey,
+        string Status,
+        string Poid,
+        string TargetPoid,
+        string SampleId,
+        DateTime ReferenceDate,
+        string PaperLabel,
+        string? PaperLink,
+        string CawiLabel,
+        string? CawiLink,
+        string CapiLabel,
+        string? CapiLink);
+
+    private sealed record CountSlice(string Label, string Definition, int Count, string Color);
+}

@@ -1,0 +1,260 @@
+:root {
+    /* using USDA-inspired brand colors for now; will align to requirements
+    once team receives USDA doc with instructions for specific colors */
+    --brand-navy: #0b2b4b;
+    --brand-green: #1f6f3f;
+    --brand-green-2: #2a8a4a;
+
+    /* UI neutrals */
+    --brand-background: #ffffff; /* will be different colors for dev beta versions */
+    --brand-surface: #f8f9fa;
+    --brand-border: rgba(0, 0, 0, 0.08);
+    --brand-muted: #6c757d;
+
+    /* Status colors */
+    --status-progress: #1f6f3f;
+    --status-blocked: #f0ad4e;
+    --status-overdue: #dc3545;
+    --status-notstarted: #94999e;
+
+    --usda-border-grad: linear-gradient(180deg, var(--brand-green) 0%, var(--brand-navy) 100%);
+    --panel-background: #ffffff;
+    --content-padding-y: 1rem;
+    --content-padding-x: 1.25rem;
+}
+
+/* Hide Blazor's error UI banner by default; it will still be logged to console. */
+#blazor-error-ui { display: none !important; }
+
+/* Filters popover styling: center relative to anchor and match anchor width */
+.filters-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  max-width: 640px; /* will be adjusted by JS positioning to anchor width */
+  width: auto;
+  background: var(--panel-background);
+  border: 1px solid var(--brand-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(11, 43, 75, 0.12);
+  z-index: 60;
+  padding: 1rem;
+}
+
+.filters-backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent !important; /* ensure no grey shadow */
+  z-index: 50;
+}
+
+/* hide pop when not hovered or focused: we still rely on component state to show/hide; these rules merely ensure it disappears when mouse leaves */
+.filters-pop:not(:hover) {
+  /* allow short delay before closing by Blazor logic; no persistent override here */
+}
+
+.search-shell { position: relative; }
+
+.search-input { min-width: 220px; }
+
+.search-input-row { display: flex; align-items: center; gap: 0.5rem; position: relative; }
+/* Inline filter chips removed globally */
+.chip { background: #f1f3f5; border-radius: 999px; padding: 0.25rem 0.5rem; border: 1px solid var(--brand-border); display: inline-flex; align-items: center; gap: 0.5rem; }
+.chip .chip-x { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; border: 1px solid var(--brand-border); font-weight: 700; line-height: 1; }
+.inline-filter-chips { position: absolute; left: 0; right: 0; top: 100%; margin-top: 6px; z-index: 52; }
+.search-input-row .inline-filter-chips { width: 100%; box-sizing: border-box; }
+
+/* Nav dropdowns: hide menus after click (they are controlled by Blazor state) and ensure they close on mouseleave */
+.nav-group { position: relative; }
+.nav-dropdown { position: absolute; top: calc(100% - 6px); left: 0; display: none; min-width: 220px; background: var(--panel-background); border: 1px solid var(--brand-border); box-shadow: 0 6px 16px rgba(11,43,75,0.08); border-radius: 8px; z-index: 40; }
+.nav-group::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 14px; pointer-events: auto; }
+.nav-group:hover .nav-dropdown { display: block; }
+.nav-dropdown .nav-subgroup { padding: 0.5rem; }
+.nav-dropdown .nav-submenu { display: none; }
+.nav-subgroup:hover > .nav-submenu { display: block; }
+
+/* ensure user-menu and notif dropdowns close on outside click (backdrop handled by Blazor) */
+.user-menu { position: absolute; right: 1rem; top: 100%; z-index: 60; }
+
+/* Filters popover tweak: place top edge at bottom of search bar border and match anchor width via JS (smsPositionFilterPopover already sets width) */
+.filters-pop { top: auto; }
+
+
+html,
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0;
+}
+
+/* scaled-root provides a visual zoom (80%) while keeping layout inside the viewport
+   by scaling and adjusting the transform origin and width. This prevents horizontal overflow. */
+.scaled-root {
+    width: 125%; /* 1 / 0.8 = 1.25 to compensate for 80% scale */
+    transform: scale(0.8);
+    transform-origin: top left;
+    /* make layout height compensate for visual scaling so content fits viewport without extra whitespace */
+    height: calc(100vh / 0.8);
+    min-height: calc(100vh / 0.8);
+}
+
+#app { min-height: 100%; }
+
+html, body { height: 100%; }
+
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+a,
+.btn-link {
+    color: #006bb7;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid #e50000;
+}
+
+.validation-message {
+    color: #e50000;
+}
+
+.blazor-error-boundary {
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
+}
+
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
+
+.darker-border-checkbox.form-check-input {
+    border-color: #929292;
+}
+
+@media (max-width: 900px) {
+    :root {
+        --content-padding-x: 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    :root {
+        --content-padding-y: 0.75rem;
+        --content-padding-x: 0.75rem;
+    }
+}
+.button-lite:hover,
+.button-primary:hover,
+.icon-action:hover,
+.search-filter-button:hover {
+  background: color-mix(in srgb, var(--brand-navy) 7%, transparent);
+}
+
+.typeahead-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid var(--brand-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 22px rgba(11, 43, 75, 0.12);
+  z-index: 30;
+}
+
+.typeahead-item {
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--brand-navy);
+}
+
+.typeahead-item:hover {
+  background: rgba(31, 111, 63, 0.12);
+}
+
+.select-lite,
+input.select-lite,
+select.select-lite {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--brand-border) !important;
+  background:
+    linear-gradient(180deg, #ffffff, #f7fbf8) padding-box,
+    linear-gradient(135deg, rgba(31, 111, 63, 0.32), rgba(11, 43, 75, 0.18)) border-box !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  color: var(--brand-navy) !important;
+  font-weight: 800;
+}
+
+select.select-lite {
+  padding-right: 1.9rem !important;
+  background-image:
+    linear-gradient(180deg, #ffffff, #f7fbf8),
+    linear-gradient(135deg, rgba(31, 111, 63, 0.32), rgba(11, 43, 75, 0.18)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230b2b4b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-origin: border-box, border-box, padding-box !important;
+  background-clip: padding-box, border-box, padding-box !important;
+  background-position: 0 0, 0 0, right 0.7rem center !important;
+  background-repeat: no-repeat !important;
+}
+
+input[type="date"].select-lite::-webkit-calendar-picker-indicator {
+  opacity: 0.65;
+}
+table.table-surveys thead th .column-menu-trigger,
+table.table-surveys thead th .column-menu-trigger:hover,
+table.table-surveys thead th .column-menu-trigger:focus {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.column-menu-floating button {
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(11, 43, 75, 0.18) !important;
+  box-shadow: none !important;
+}

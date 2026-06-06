@@ -1,0 +1,435 @@
+.calendar-wrap {
+    display: grid;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+/* ===== Toolbar: left / centered title / right ===== */
+.calendar-toolbar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.calendar-left,
+.calendar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.calendar-center {
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+}
+
+.calendar-title {
+    font-weight: 900;
+    font-size: 1.05rem;
+    text-align: center;
+    color: var(--brand-navy);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-button {
+    border: 1px solid var(--brand-border);
+    background: var(--brand-background);
+    border-radius: 12px;
+    padding: 0.45rem 0.7rem;
+    color: var(--brand-navy);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.calendar-select {
+    border: 1px solid var(--brand-border);
+    background: var(--brand-background);
+    border-radius: 12px;
+    padding: 0.45rem 0.9rem;
+    font-weight: 800;
+    color: var(--brand-navy);
+    max-width: 100%;
+}
+
+/* ===== Month ===== */
+.calendar-grid {
+    display: grid;
+    gap: 0.35rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.calendar-month {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-rows: auto repeat(6, 1fr);
+    height: 520px;
+}
+
+.calendar-head {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--brand-muted);
+    padding: 0.25rem 0.35rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.calendar-cell {
+    border: 1px solid var(--brand-border);
+    border-radius: 12px;
+    min-height: 0;
+    padding: 0.45rem;
+    background: var(--brand-background);
+    overflow: hidden;
+    min-width: 0;
+}
+
+.calendar-cell.muted {
+    opacity: 0.55;
+}
+
+.calendar-cell.today {
+    outline: 2px solid color-mix(in srgb, var(--brand-green) 35%, transparent);
+}
+
+.calendar-cell.selected-day {
+    outline: 2px solid color-mix(in srgb, var(--brand-navy) 25%, transparent);
+}
+
+.calendar-daynum {
+    font-weight: 900;
+    font-size: 0.85rem;
+    margin-bottom: 0.15rem;
+    color: var(--brand-navy);
+}
+
+.calendar-ev {
+    font-size: 0.78rem;
+    padding: 0.12rem 0.3rem;
+    border-radius: 10px;
+    border: 1px solid var(--brand-border);
+    margin-top: 0.2rem;
+    line-height: 1.1;
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+
+.calendar-event {
+    position: relative;
+    cursor: pointer;
+}
+
+.calendar-event.selected {
+    outline: 2px solid color-mix(in srgb, var(--brand-green) 35%, transparent);
+    z-index: 3;
+}
+
+/* status colors (month chips) */
+.calendar-ev.ev-progress {
+    background: color-mix(in srgb, var(--status-progress) 18%, transparent);
+    color: var(--status-progress);
+}
+
+.calendar-ev.ev-blocked {
+    background: color-mix(in srgb, var(--status-blocked) 22%, transparent);
+    color: #7a5200;
+}
+
+.calendar-ev.ev-notstarted {
+    background: color-mix(in srgb, var(--status-notstarted) 22%, transparent);
+    color: var(--brand-muted);
+}
+
+.calendar-ev.ev-overdue {
+    background: color-mix(in srgb, var(--status-overdue) 18%, transparent);
+    color: var(--status-overdue);
+}
+
+/* ===== Day time grid ===== */
+.timegrid {
+    display: grid;
+    gap: 0.35rem;
+    max-height: 520px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.timegrid-header {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.timegrid-title {
+    font-weight: 900;
+    color: var(--brand-navy);
+}
+
+.timegrid-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 0.5rem;
+    align-items: start;
+}
+
+.timegrid-time {
+    color: var(--brand-muted);
+    font-size: 0.85rem;
+    padding-top: 0.35rem;
+}
+
+.timegrid-slot {
+    border: 1px solid var(--brand-border);
+    border-radius: 12px;
+    min-height: 34px;
+    --slot-pad: 0.4rem;
+    padding: var(--slot-pad);
+    background: var(--brand-background);
+    overflow: visible;
+    position: relative;
+    min-height: 72px;
+    background-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(50% - 1px),
+        color-mix(in srgb, var(--brand-border) 55%, transparent) calc(50% - 1px),
+        color-mix(in srgb, var(--brand-border) 55%, transparent) calc(50% + 1px),
+        transparent calc(50% + 1px),
+        transparent 100%
+    );
+}
+
+.time-ev {
+    border-radius: 12px;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--brand-border);
+    position: absolute;
+    left: var(--slot-pad);
+    right: var(--slot-pad);
+    top: calc(var(--slot-pad) + (100% - (var(--slot-pad) * 2)) * var(--event-offset));
+}
+
+.time-ev-title {
+    font-size: 0.82rem;
+    font-weight: 900;
+}
+
+.time-ev-sub {
+    font-size: 0.72rem;
+    color: var(--brand-muted);
+}
+
+/* status colors (day/week items) */
+.ev-progress {
+    background: color-mix(in srgb, var(--status-progress) 18%, transparent);
+}
+
+.ev-blocked {
+    background: color-mix(in srgb, var(--status-blocked) 22%, transparent);
+}
+
+.ev-notstarted {
+    background: color-mix(in srgb, var(--status-notstarted) 22%, transparent);
+}
+
+.ev-overdue {
+    background: color-mix(in srgb, var(--status-overdue) 18%, transparent);
+}
+
+/* ===== Week grid (tighter columns) ===== */
+.weekgrid {
+    overflow: auto;
+    border: 1px solid var(--brand-border);
+    border-radius: 14px;
+    background: var(--brand-background);
+    max-height: 520px;
+    width: 100%;
+}
+
+.weekgrid-header,
+.weekgrid-row {
+    display: grid;
+    grid-template-columns: 70px repeat(7, minmax(0, 1fr));
+}
+
+.weekgrid-header {
+    position: sticky;
+    top: 0;
+    background: var(--brand-background);
+    z-index: 2;
+    border-bottom: 1px solid var(--brand-border);
+}
+
+.weekgrid-corner {
+    height: 44px;
+}
+
+.weekgrid-day {
+    padding: 0.65rem 0.45rem;
+    font-weight: 900;
+    font-size: 0.82rem;
+    border-left: 1px solid var(--brand-border);
+    white-space: nowrap;
+    color: var(--brand-navy);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.weekgrid-row {
+    border-top: 1px solid var(--brand-border);
+}
+
+.weekgrid-time {
+    padding: 0.35rem 0.35rem;
+    font-size: 0.8rem;
+    color: var(--brand-muted);
+}
+
+.weekgrid-cell {
+    min-height: 40px;
+    --slot-pad: 0.3rem;
+    padding: var(--slot-pad);
+    border-left: 1px solid var(--brand-border);
+    overflow: visible;
+    min-width: 0;
+    position: relative;
+    min-height: 72px;
+    background-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(50% - 1px),
+        color-mix(in srgb, var(--brand-border) 55%, transparent) calc(50% - 1px),
+        color-mix(in srgb, var(--brand-border) 55%, transparent) calc(50% + 1px),
+        transparent calc(50% + 1px),
+        transparent 100%
+    );
+}
+
+/* smaller, cleaner weekly chips */
+.week-ev {
+    border-radius: 10px;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 900;
+    border: 1px solid var(--brand-border);
+    position: absolute;
+    left: var(--slot-pad);
+    right: var(--slot-pad);
+    top: calc(var(--slot-pad) + (100% - (var(--slot-pad) * 2)) * var(--event-offset));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-pop {
+    position: fixed;
+    left: 0;
+    top: 0;
+    min-width: 220px;
+    max-width: 280px;
+    background: var(--panel-background);
+    border: 1px solid var(--brand-border);
+    border-radius: 12px;
+    box-shadow: 0 12px 26px rgba(11, 43, 75, 0.18);
+    padding: 0.6rem 0.65rem 0.7rem;
+    z-index: 20;
+}
+
+.calendar-pop-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.calendar-pop-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--brand-muted);
+}
+
+.calendar-pop-close {
+    border: none;
+    background: transparent;
+    color: var(--brand-muted);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.calendar-pop-body {
+    margin-top: 0.35rem;
+    display: grid;
+    gap: 0.25rem;
+}
+
+.calendar-pop-main {
+    font-weight: 900;
+    color: var(--brand-navy);
+    font-size: 1rem;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.calendar-pop-meta {
+    font-size: 0.85rem;
+    color: var(--brand-muted);
+}
+
+.calendar-pop-status {
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid var(--brand-border);
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+}
+
+.calendar-pop-status.ev-progress {
+    background: color-mix(in srgb, var(--status-progress) 18%, transparent);
+    color: var(--status-progress);
+}
+
+.calendar-pop-status.ev-blocked {
+    background: color-mix(in srgb, var(--status-blocked) 22%, transparent);
+    color: #7a5200;
+}
+
+.calendar-pop-status.ev-notstarted {
+    background: color-mix(in srgb, var(--status-notstarted) 22%, transparent);
+    color: var(--brand-muted);
+}
+
+.calendar-pop-status.ev-overdue {
+    background: color-mix(in srgb, var(--status-overdue) 18%, transparent);
+    color: var(--status-overdue);
+}
+
+@media (max-width: 900px) {
+    .calendar-toolbar {
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+
+    .calendar-center {
+        justify-content: start;
+    }
+}

@@ -1,0 +1,136 @@
+@page "/records"
+
+<h1>Records List</h1>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-4">
+        <label class="form-label">Search</label>
+        <input class="form-control" placeholder="Respondent Id, County, State" @bind="SearchText" />
+    </div>
+    <div class="col-6 col-md-2">
+        <label class="form-label">Status</label>
+        <select class="form-select" @bind="StatusFilter">
+            <option value="">All</option>
+            <option>Complete</option>
+            <option>In Review</option>
+            <option>Flagged</option>
+        </select>
+    </div>
+    <div class="col-6 col-md-2">
+        <label class="form-label">State</label>
+        <select class="form-select" @bind="StateFilter">
+            <option value="">All</option>
+            @foreach (var state in States)
+            {
+                <option value="@state">@state</option>
+            }
+        </select>
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Survey</label>
+        <select class="form-select" @bind="SurveyFilter">
+            <option value="">All</option>
+            @foreach (var survey in SurveyOptions)
+            {
+                <option value="@survey">@survey</option>
+            }
+        </select>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Record Id</th>
+                <th>Respondent</th>
+                <th>County/State</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Survey</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in FilteredRecords)
+            {
+                <tr>
+                    <td>@record.RecordId</td>
+                    <td>@record.RespondentId</td>
+                    <td>@record.County, @record.State</td>
+                    <td><span class="badge @StatusBadge(record.Status)">@record.Status</span></td>
+                    <td>@record.LastUpdated.ToString("yyyy-MM-dd")</td>
+                    <td>@record.Survey</td>
+                    <td>
+                        <NavLink class="btn btn-sm btn-outline-primary" href="@($"records/details/{record.RecordId}")">Details</NavLink>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private record RecordRow(
+        int RecordId,
+        string RespondentId,
+        string County,
+        string State,
+        string Status,
+        DateTime LastUpdated,
+        string Survey
+    );
+
+    private readonly List<RecordRow> Records = new()
+    {
+        new(20001, "RESP-8841", "Boone", "IA", "Complete", new DateTime(2026, 1, 15), "1001 Crop Yield"),
+        new(20002, "RESP-1299", "Linn", "IA", "In Review", new DateTime(2026, 1, 16), "1001 Crop Yield"),
+        new(20003, "RESP-5540", "Morrow", "OR", "Flagged", new DateTime(2026, 1, 13), "1209 IWU"),
+        new(20004, "RESP-7744", "Yuma", "AZ", "Complete", new DateTime(2026, 1, 12), "1002 ACP"),
+        new(20005, "RESP-3338", "Madison", "NY", "In Review", new DateTime(2026, 1, 10), "1003 FLS")
+    };
+
+    private string SearchText { get; set; } = "";
+    private string StatusFilter { get; set; } = "";
+    private string StateFilter { get; set; } = "";
+    private string SurveyFilter { get; set; } = "";
+
+    private IEnumerable<string> States => Records.Select(r => r.State).Distinct().OrderBy(s => s);
+    private IEnumerable<string> SurveyOptions => Records.Select(r => r.Survey).Distinct().OrderBy(s => s);
+
+    private IEnumerable<RecordRow> FilteredRecords
+    {
+        get
+        {
+            IEnumerable<RecordRow> query = Records;
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                var term = SearchText.Trim().ToLowerInvariant();
+                query = query.Where(r =>
+                    r.RespondentId.ToLowerInvariant().Contains(term) ||
+                    r.County.ToLowerInvariant().Contains(term) ||
+                    r.State.ToLowerInvariant().Contains(term));
+            }
+
+            if (!string.IsNullOrWhiteSpace(StatusFilter))
+                query = query.Where(r => r.Status.Equals(StatusFilter, StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrWhiteSpace(StateFilter))
+                query = query.Where(r => r.State.Equals(StateFilter, StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrWhiteSpace(SurveyFilter))
+                query = query.Where(r => r.Survey.Equals(SurveyFilter, StringComparison.OrdinalIgnoreCase));
+
+            return query;
+        }
+    }
+
+    private static string StatusBadge(string status) => status switch
+    {
+        "Complete" => "bg-success",
+        "In Review" => "bg-warning text-dark",
+        "Flagged" => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

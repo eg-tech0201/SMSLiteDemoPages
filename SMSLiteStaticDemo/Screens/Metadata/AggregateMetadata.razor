@@ -1,0 +1,76 @@
+@page "/aggregate-metadata"
+
+<h1>Aggregate Metadata / Summary Builder</h1>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-4">
+        <label class="form-label">Group By</label>
+        <select class="form-select" @bind="Grouping">
+            <option>State</option>
+            <option>Region</option>
+            <option>Mode</option>
+            <option>Enumerator</option>
+        </select>
+    </div>
+    <div class="col-12 col-md-8">
+        <label class="form-label">Metrics</label>
+        <div class="d-flex flex-wrap gap-3">
+            @foreach (var metric in Metrics)
+            {
+                <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input me-1" checked="@metric.Selected" />
+                    @metric.Name
+                </label>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>@Grouping</th>
+                <th>Record Count</th>
+                <th>Completion %</th>
+                <th>Average Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in SummaryRows)
+            {
+                <tr>
+                    <td>@row.Group</td>
+                    <td>@row.Count</td>
+                    <td>@row.CompletionRate</td>
+                    <td>@row.AverageDays</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<button class="btn btn-outline-secondary" type="button">Export Summary (stub)</button>
+
+@code {
+    private record MetricOption(string Name, bool Selected);
+    private record SummaryRow(string Group, int Count, string CompletionRate, string AverageDays);
+
+    private string Grouping { get; set; } = "State";
+
+    private readonly List<MetricOption> Metrics = new()
+    {
+        new("Record Count", true),
+        new("Completion %", true),
+        new("Average Days", true),
+        new("Flagged %", false)
+    };
+
+    private readonly List<SummaryRow> SummaryRows = new()
+    {
+        new("IA", 124, "92%", "4.3"),
+        new("OR", 88, "87%", "5.1"),
+        new("AZ", 66, "90%", "4.8"),
+        new("NY", 71, "94%", "3.9")
+    };
+}

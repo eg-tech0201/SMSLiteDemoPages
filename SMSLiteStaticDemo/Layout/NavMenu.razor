@@ -1,0 +1,193 @@
+﻿@inject NavigationManager Navigation
+@inject SMSLiteStaticDemo.Services.DemoUserContextService UserContext
+
+<header class="top-nav">
+    <div class="top-nav-inner">
+        <div class="top-nav-left">
+            <a class="navbar-brand brand-lockup" href="">
+                <img class="brand-logo" src="usda%20logo%20white%20transparent.png" alt="USDA logo" />
+                <span class="brand-text">
+                    <span class="brand-title">United States Department of Agriculture</span>
+                    <span class="brand-subtitle">National Agricultural Statistics Service</span>
+                </span>
+            </a>
+            <nav class="navigation-scrollable">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
+                </NavLink>
+                <div class="nav-group">
+                    <NavLink class="nav-link" href="calendar">
+                        <span class="bi bi-calendar3" aria-hidden="true"></span> Calendar
+                    </NavLink>
+                    <div class="nav-dropdown" role="menu" aria-label="Calendar submenu">
+                        <div class="nav-subgroup">
+                            <a class="nav-subitem" href="calendar/views">
+                                <span>Views</span>
+                                <span class="nav-arrow" aria-hidden="true">›</span>
+                            </a>
+                            <div class="nav-submenu" role="menu">
+                                <a class="nav-subitem" href="calendar/views/month">Month</a>
+                                <a class="nav-subitem" href="calendar/views/week">Week</a>
+                                <a class="nav-subitem" href="calendar/views/timeline">Timeline</a>
+                            </div>
+                        </div>
+                        <div class="nav-subgroup">
+                            <a class="nav-subitem" href="calendar/tasks">
+                                <span>Tasks</span>
+                                <span class="nav-arrow" aria-hidden="true">›</span>
+                            </a>
+                            <div class="nav-submenu" role="menu">
+                                <a class="nav-subitem" href="calendar/tasks/pending">Pending</a>
+                                <a class="nav-subitem" href="calendar/tasks/overdue">Overdue</a>
+                                <a class="nav-subitem" href="calendar/tasks/completed">Completed</a>
+                            </div>
+                        </div>
+                        <div class="nav-subgroup">
+                            <a class="nav-subitem" href="calendar/settings">
+                                <span>Settings</span>
+                                <span class="nav-arrow" aria-hidden="true">›</span>
+                            </a>
+                            <div class="nav-submenu" role="menu">
+                                <a class="nav-subitem" href="calendar/settings/alerts">Alerts</a>
+                                <a class="nav-subitem" href="calendar/settings/integrations">Integrations</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <NavLink class="nav-link" href="surveys">
+                        <span class="bi bi-card-list" aria-hidden="true"></span> Surveys
+                    </NavLink>
+                    <div class="nav-dropdown" role="menu" aria-label="Surveys submenu">
+                        <div class="nav-subgroup">
+                            <a class="nav-subitem" href="surveys">
+                                <span>Survey Search</span>
+                                <span class="nav-arrow" aria-hidden="true">›</span>
+                            </a>
+                            <div class="nav-submenu" role="menu">
+                                <a class="nav-subitem" href="surveys/details">Details</a>
+                                <a class="nav-subitem" href="surveys/details/metadata">Metadata</a>
+                                <a class="nav-subitem" href="surveys/details/exports">Exports</a>
+                            </div>
+                        </div>
+                        <div class="nav-subgroup">
+                            <a class="nav-subitem" href="surveys/results">
+                                <span>Survey Results</span>
+                                <span class="nav-arrow" aria-hidden="true">›</span>
+                            </a>
+                            <div class="nav-submenu" role="menu">
+                                <a class="nav-subitem" href="surveys/results/opdom">OpDom Summary</a>
+                                <a class="nav-subitem" href="surveys/results/dcms">DCMS Summary</a>
+                                <a class="nav-subitem" href="surveys/results/exports">Bulk Exports</a>
+                            </div>
+                        </div>
+                        <div class="nav-subgroup">
+                            <a class="nav-subitem" href="surveys/admin">
+                                <span>Survey Admin</span>
+                                <span class="nav-arrow" aria-hidden="true">›</span>
+                            </a>
+                            <div class="nav-submenu" role="menu">
+                                <a class="nav-subitem" href="surveys/admin/modes">Modes</a>
+                                <a class="nav-subitem" href="surveys/admin/assignments">Assignments</a>
+                                <a class="nav-subitem" href="surveys/admin/metadata">Metadata</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <div class="top-nav-right">
+            <form class="global-search-form" @onsubmit="SubmitGlobalSearch" @onsubmit:preventDefault="true">
+                <input class="global-search-input"
+                       placeholder="Search by FIPS, POID, survey name, or survey ID"
+                       @bind="GlobalSearchText"
+                       @bind:event="oninput" />
+                <button type="submit" class="global-search-button" title="Search">
+                    <span class="bi bi-search" aria-hidden="true"></span>
+                </button>
+            </form>
+            <button type="button" class="icon-button" title="Notifications" @onclick="ToggleNotifs">
+                <span class="bi bi-bell" aria-hidden="true"></span>
+                <span class="badge">4</span>
+            </button>
+            <span class="email">user@usda.gov</span>
+            <button type="button" class="avatar" title="User menu" @onclick="ToggleUserMenu">
+                <span class="bi bi-person-circle" aria-hidden="true"></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+@if (ShowNotifs)
+{
+    <div class="notif-dropdown">
+        <div class="notif-header">Notifications</div>
+        <ul>
+            <li><strong>Survey 1004</strong> — 3 responses due this week</li>
+            <li><strong>Survey 1001</strong> — Enumerator update required</li>
+            <li><strong>My Tasks</strong> — 2 items overdue</li>
+            <li><strong>Calendar</strong> — 1 schedule conflict detected</li>
+        </ul>
+    </div>
+}
+
+@if (ShowUserMenu)
+{
+    <div class="user-menu-backdrop" @onclick="CloseUserMenu"></div>
+    <div class="user-menu" @onclick:stopPropagation="true">
+        <div class="user-menu-header">
+            <span>user@usda.gov</span>
+            <strong>@UserContext.CurrentRole</strong>
+        </div>
+        <div class="user-menu-section-title">Role</div>
+        @foreach (var role in Roles)
+        {
+            <button type="button"
+                    class="user-menu-item @(UserContext.CurrentRole.Equals(role, StringComparison.OrdinalIgnoreCase) ? "is-active" : string.Empty)"
+                    @onclick="() => SelectRole(role)">
+                <span>@role</span>
+                @if (UserContext.CurrentRole.Equals(role, StringComparison.OrdinalIgnoreCase))
+                {
+                    <span class="bi bi-check2" aria-hidden="true"></span>
+                }
+            </button>
+        }
+    </div>
+}
+
+@code {
+    private bool ShowNotifs;
+    private bool ShowUserMenu;
+    private string GlobalSearchText { get; set; } = string.Empty;
+    private readonly string[] Roles =
+    [
+        "Survey Manager",
+        "SMS Administrator",
+        "Enumerator",
+        "Analyst"
+    ];
+
+    private void ToggleNotifs() => ShowNotifs = !ShowNotifs;
+    private void ToggleUserMenu()
+    {
+        ShowUserMenu = !ShowUserMenu;
+        ShowNotifs = false;
+    }
+
+    private void CloseUserMenu() => ShowUserMenu = false;
+
+    private void SelectRole(string role)
+    {
+        UserContext.SetRole(role);
+        ShowUserMenu = false;
+    }
+
+    private void SubmitGlobalSearch()
+    {
+        var target = string.IsNullOrWhiteSpace(GlobalSearchText)
+            ? "/search"
+            : $"/search?q={Uri.EscapeDataString(GlobalSearchText.Trim())}";
+        Navigation.NavigateTo(target);
+    }
+
+}

@@ -1,0 +1,15 @@
+.page-h2 {
+    margin-bottom: 1rem;
+}
+
+.panel {
+    border-radius: 16px;
+    background: var(--brand-background);
+    padding: 0.9rem;
+}
+
+.panel-title {
+    font-weight: 900;
+    margin-bottom: 0.75rem;
+    color: var(--brand-navy);
+}

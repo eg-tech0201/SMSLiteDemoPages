@@ -1,0 +1,70 @@
+@page "/surveys/details/exports"
+@page "/surveys/results/exports"
+@inject IJSRuntime Js
+@inject SMSLiteStaticDemo.Services.DemoUserContextService UserContext
+@inject SMSLiteStaticDemo.Services.DemoAuditTrailService AuditTrailService
+@inject SMSLiteStaticDemo.Services.SurveyInstanceService SurveyInstanceService
+
+<PageTitle>Survey Exports</PageTitle>
+
+<h1 class="page-h1">Survey Exports</h1>
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb breadcrumb-mini mb-0">
+        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="surveys">Surveys</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Exports</li>
+    </ol>
+</nav>
+
+<div class="card exports-card">
+    <div class="card-body">
+        <div class="exports-header">
+            <div>
+                <div class="exports-title">Excel Export Access</div>
+                <div class="exports-subtitle">Current role: @UserContext.CurrentRole</div>
+            </div>
+            <span class="exports-status @(UserContext.CanExport ? "is-allowed" : "is-denied")">
+                @(UserContext.CanExport ? "Authorized" : "Restricted")
+            </span>
+        </div>
+
+        @if (!UserContext.CanExport)
+        {
+            <div class="alert alert-warning mb-0">
+                Export to Excel is restricted to the `SMS Administrator` role. Use the role selector in the top navigation to validate the permission lockout and the authorized path.
+            </div>
+        }
+        else
+        {
+            <div class="export-actions">
+                <button class="button-primary" type="button" @onclick="ExportSurveySummaryAsync">Export Survey Summary</button>
+                <button class="button-lite" type="button" @onclick="ExportAuditTrailAsync">Export Audit Trail</button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private async Task ExportSurveySummaryAsync()
+    {
+        var rows = SurveyInstanceService.Instances
+            .Take(30)
+            .Select(i => $"{i.SurveyId},{i.SampleId},{i.Title},{i.StateAlpha},{i.ReferenceDate:yyyy-MM-dd},{i.Status}")
+            .ToList();
+        rows.Insert(0, "survey_id,sample_id,title,state,reference_date,status");
+        var content = string.Join(Environment.NewLine, rows);
+        await Js.InvokeVoidAsync("smsDownloadText", "sms-survey-export.csv", content, "text/csv;charset=utf-8");
+        AuditTrailService.Log("Export", "Survey Summary", "survey-summary", "sms-survey-export.csv", UserContext.CurrentRole, "CSV export initiated from exports page.");
+    }
+
+    private async Task ExportAuditTrailAsync()
+    {
+        var rows = AuditTrailService.Entries
+            .Select(e => $"{e.Timestamp:O},{e.Action},{e.ArtifactType},{e.ArtifactId},{e.FileName},{e.PerformedBy},{e.Details.Replace(',', ';')}")
+            .ToList();
+        rows.Insert(0, "timestamp,action,artifact_type,artifact_id,file_name,performed_by,details");
+        var content = string.Join(Environment.NewLine, rows);
+        await Js.InvokeVoidAsync("smsDownloadText", "sms-audit-trail.csv", content, "text/csv;charset=utf-8");
+        AuditTrailService.Log("Export", "Audit Trail", "audit-trail", "sms-audit-trail.csv", UserContext.CurrentRole, "Audit export initiated from exports page.");
+    }
+}

@@ -1,0 +1,53 @@
+@page "/business-metadata/edit"
+
+<h1>Business Metadata Entry</h1>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-7">
+        <div class="card">
+            <div class="card-header">Definition</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input class="form-control" value="OMB Expiration" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Definition</label>
+                    <textarea class="form-control" rows="3">Official OMB clearance expiration date for the docket.</textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data Sources</label>
+                    <input class="form-control" value="OMB Registry, Survey Master" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Format</label>
+                    <input class="form-control" value="YYYY-MM-DD" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Dependencies</label>
+                    <input class="form-control" value="OMB Number, Docket Status" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Linked Assets</label>
+                    <input class="form-control" value="OMB-2026-001, Survey 1001" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" type="button">Save Draft</button>
+                    <button class="btn btn-primary" type="button">Publish</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-5">
+        <div class="card">
+            <div class="card-header">Change Log</div>
+            <div class="card-body">
+                <ul>
+                    <li>Definition updated by J. Park — 2026-01-14</li>
+                    <li>Format standardized by M. Lewis — 2026-01-12</li>
+                    <li>Entry created — 2026-01-08</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

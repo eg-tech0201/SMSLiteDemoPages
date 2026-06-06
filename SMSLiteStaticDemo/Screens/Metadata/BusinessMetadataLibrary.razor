@@ -1,0 +1,101 @@
+@page "/business-metadata"
+
+<h1>Business Metadata Library</h1>
+
+<ul class="nav nav-tabs mb-3">
+    @foreach (var tab in Tabs)
+    {
+        <li class="nav-item">
+            <button class="nav-link @(ActiveTab == tab ? "active" : "")" @onclick="() => SetTab(tab)">@tab</button>
+        </li>
+    }
+</ul>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-5">
+        <label class="form-label">Search</label>
+        <input class="form-control" placeholder="Search metadata entries" @bind="SearchText" />
+    </div>
+    <div class="col-6 col-md-3">
+        <label class="form-label">Owner</label>
+        <select class="form-select" @bind="OwnerFilter">
+            <option value="">All</option>
+            @foreach (var owner in Owners)
+            {
+                <option value="@owner">@owner</option>
+            }
+        </select>
+    </div>
+    <div class="col-6 col-md-4 d-flex align-items-end">
+        <NavLink class="btn btn-primary" href="business-metadata/edit">Create Entry</NavLink>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Key</th>
+                <th>Name</th>
+                <th>Definition</th>
+                <th>Owner</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in FilteredEntries)
+            {
+                <tr>
+                    <td>@entry.Key</td>
+                    <td>@entry.Name</td>
+                    <td>@entry.Definition</td>
+                    <td>@entry.Owner</td>
+                    <td>@entry.LastUpdated.ToString("yyyy-MM-dd")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private record MetadataEntry(string Key, string Name, string Definition, string Owner, DateTime LastUpdated, string Category);
+
+    private readonly List<string> Tabs = new() { "OMB", "Project", "Survey", "Sample" };
+    private string ActiveTab { get; set; } = "OMB";
+    private string SearchText { get; set; } = "";
+    private string OwnerFilter { get; set; } = "";
+
+    private readonly List<MetadataEntry> Entries = new()
+    {
+        new("OMB_EXP", "OMB Expiration", "Official OMB clearance expiration date", "J. Park", new DateTime(2026, 1, 14), "OMB"),
+        new("OMB_TITLE", "OMB Title", "Formal OMB docket title", "M. Lewis", new DateTime(2026, 1, 12), "OMB"),
+        new("SURVEY_MODE", "Primary Survey Mode", "Primary data collection mode", "A. Chen", new DateTime(2026, 1, 10), "Survey"),
+        new("SAMPLE_FRAME", "Sample Frame", "Sample frame reference", "D. Khan", new DateTime(2026, 1, 9), "Sample")
+    };
+
+    private IEnumerable<string> Owners => Entries.Select(e => e.Owner).Distinct().OrderBy(o => o);
+
+    private IEnumerable<MetadataEntry> FilteredEntries
+    {
+        get
+        {
+            IEnumerable<MetadataEntry> query = Entries.Where(e => e.Category == ActiveTab);
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                var term = SearchText.Trim().ToLowerInvariant();
+                query = query.Where(e =>
+                    e.Key.ToLowerInvariant().Contains(term) ||
+                    e.Name.ToLowerInvariant().Contains(term) ||
+                    e.Definition.ToLowerInvariant().Contains(term));
+            }
+
+            if (!string.IsNullOrWhiteSpace(OwnerFilter))
+                query = query.Where(e => e.Owner.Equals(OwnerFilter, StringComparison.OrdinalIgnoreCase));
+
+            return query;
+        }
+    }
+
+    private void SetTab(string tab) => ActiveTab = tab;
+}

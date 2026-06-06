@@ -1,0 +1,20 @@
+@page "/surveys/details/metadata"
+@page "/surveys/results/opdom"
+@page "/surveys/results/dcms"
+@page "/surveys/admin"
+@page "/surveys/admin/modes"
+@page "/surveys/admin/assignments"
+@page "/surveys/admin/metadata"
+@inject NavigationManager Nav
+
+<PageTitle>Surveys Demo</PageTitle>
+
+<section class="page">
+    <h1 class="page-h1">Surveys Demo Placeholder</h1>
+    <p class="page-subtitle">This is a demo page for <strong>@CurrentRoute</strong>.</p>
+    <p>Use this space to show the intended layout or content for this section.</p>
+</section>
+
+@code {
+    private string CurrentRoute => new Uri(Nav.Uri).AbsolutePath.TrimStart('/');
+}

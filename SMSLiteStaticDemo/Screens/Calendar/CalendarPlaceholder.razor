@@ -1,0 +1,24 @@
+@page "/calendar/views"
+@page "/calendar/views/month"
+@page "/calendar/views/week"
+@page "/calendar/views/timeline"
+@page "/calendar/tasks"
+@page "/calendar/tasks/pending"
+@page "/calendar/tasks/overdue"
+@page "/calendar/tasks/completed"
+@page "/calendar/settings"
+@page "/calendar/settings/alerts"
+@page "/calendar/settings/integrations"
+@inject NavigationManager Nav
+
+<PageTitle>Calendar Demo</PageTitle>
+
+<section class="page">
+    <h1 class="page-h1">Calendar Demo Placeholder</h1>
+    <p class="page-subtitle">This is a demo page for <strong>@CurrentRoute</strong>.</p>
+    <p>Use this space to show the intended layout or content for this section.</p>
+</section>
+
+@code {
+    private string CurrentRoute => new Uri(Nav.Uri).AbsolutePath.TrimStart('/');
+}

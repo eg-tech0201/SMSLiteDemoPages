@@ -1,0 +1,1035 @@
+@page "/surveys/record"
+@page "/surveys/record/{SurveyId:int?}"
+@using Microsoft.AspNetCore.Components.Web
+@using System.Globalization
+@inject NavigationManager Navigation
+@inject SMSLiteStaticDemo.Services.SurveyInstanceService SurveyInstanceService
+@inject SMSLiteStaticDemo.Services.UserRecentSurveyService RecentSurveyService
+@inject IJSRuntime Js
+
+<PageTitle>@(Detail?.Title is null ? "Record Details" : $"{Detail.Title} Record Details")</PageTitle>
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb breadcrumb-mini mb-0">
+        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="surveys">Surveys</a></li>
+        <li class="breadcrumb-item"><a href="surveys/results">Results</a></li>
+        <li class="breadcrumb-item"><a href="@BuildBackToDetailsUrl()">Survey Details</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Record Details</li>
+    </ol>
+</nav>
+
+@if (IsLoading)
+{
+    <div class="alert alert-info">Loading survey record...</div>
+}
+else if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-warning">@ErrorMessage</div>
+}
+else if (Detail is null)
+{
+    <div class="alert alert-warning">No record found for the selected survey instance.</div>
+}
+else
+{
+    <section class="record-identity mb-3">
+        <div class="record-identity-title">@Detail.Title</div>
+        <div class="record-identity-skey">
+            <span class="skey-chip">SKey: @(string.IsNullOrWhiteSpace(SKey) ? "N/A" : SKey)</span>
+        </div>
+        <div class="record-identity-meta">
+            <span><strong class="identity-key">Survey ID:</strong> <span class="identity-value">@Detail.SurveyId</span></span>
+            <span>
+                <strong class="identity-key">Reference Date:</strong>
+                @if (AvailableReferenceDates.Count > 0)
+                {
+                    <select id="recordReferenceDate" class="identity-select" value="@SelectedReferenceDateString" @onchange="OnReferenceDateChanged">
+                        @foreach (var option in AvailableReferenceDates)
+                        {
+                            var optionValue = option.ToString("yyyy-MM-dd");
+                            var optionText = option.ToString("MM/dd/yyyy");
+                            <option value="@optionValue">@optionText</option>
+                        }
+                    </select>
+                }
+                else
+                {
+                    <span class="identity-value">@Detail.ReferenceDate.ToString("MM/dd/yyyy")</span>
+                }
+            </span>
+            <span><strong class="identity-key">State:</strong> <span class="identity-value">@(string.IsNullOrWhiteSpace(State) ? "N/A" : State)</span></span>
+        </div>
+    </section>
+
+    <div class="record-searchbar">
+        <button class="search-icon-button" type="button">
+            <span class="bi bi-search" aria-hidden="true"></span>
+        </button>
+        <input class="search-input" placeholder="Lookup respondent by POID" @bind="SearchText" @bind:event="oninput" />
+    </div>
+
+    <div class="record-toolbar">
+        <div class="pager">
+            <button class="button-lite" @onclick="PrevPage" disabled="@IsPrevDisabled">‹</button>
+            <span class="pager-text">@PageSummary</span>
+            <button class="button-lite" @onclick="NextPage" disabled="@IsNextDisabled">›</button>
+        </div>
+        <div class="pagesize">
+            <span class="pagesize-label">Rows:</span>
+            <select class="select-lite" @bind="PageSizeString" @bind:after="OnPageSizeChanged">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="All">All</option>
+            </select>
+        </div>
+        <div class="toolbar-actions">
+            <div class="bulk-menu">
+                <button class="button-lite" type="button" @onclick="ToggleBulkMenu">Bulk Edit</button>
+                @if (ShowBulkMenu)
+                {
+                    <div class="columns-backdrop" @onclick="CloseBulkMenu"></div>
+                    <div class="bulk-pop" @onclick:stopPropagation="true">
+                        <div class="columns-header">
+                            <div class="columns-title">Bulk Edit</div>
+                            <button type="button" class="columns-close" @onclick="CloseBulkMenu">×</button>
+                        </div>
+                        <div class="bulk-selection"><span class="bulk-label">Selected: @SelectedRowIds.Count</span></div>
+                        <label class="filters-subtitle" for="bulk-enum-id">Enumerator ID</label>
+                        <input id="bulk-enum-id" class="filter-input" @bind="BulkEnumeratorId" placeholder="Enter enumerator ID" />
+                        <label class="filters-subtitle" for="bulk-manager-id">Manager ID</label>
+                        <input id="bulk-manager-id" class="filter-input" @bind="BulkManagerId" placeholder="Enter manager ID" />
+                        <label class="filters-subtitle" for="bulk-coach-id">Coach ID</label>
+                        <input id="bulk-coach-id" class="filter-input" @bind="BulkCoachId" placeholder="Enter coach ID" />
+                        <div class="view-buttons">
+                            <button class="button-primary compact" type="button" @onclick="ApplyBulkUpdate" disabled="@(!CanApplyBulkUpdate)">Apply</button>
+                            <button class="button-lite compact" type="button" @onclick="SaveChanges">Save changes</button>
+                        </div>
+                    </div>
+                }
+            </div>
+            <button class="button-lite" type="button" @onclick="UndoLastAction" disabled="@(UndoStack.Count == 0)">Undo</button>
+            <div class="columns-menu">
+                <button class="button-lite" type="button" @onclick="ToggleColumnsMenu">Customize Columns</button>
+                @if (ShowColumnsMenu)
+                {
+                    <div class="columns-backdrop" @onclick="CloseColumnsMenu"></div>
+                    <div class="columns-pop" @onclick:stopPropagation="true">
+                        <div class="columns-header">
+                            <div class="columns-title">Customize Columns</div>
+                            <button type="button" class="columns-close" @onclick="CloseColumnsMenu">×</button>
+                        </div>
+
+                        <div class="view-controls">
+                            <input class="filter-input" placeholder="View name" @bind="ViewNameInput" />
+                            <div class="view-buttons">
+                                <button type="button" class="button-lite compact" @onclick="SaveCurrentViewAsync">Save View</button>
+                                <button type="button" class="button-lite compact" @onclick="DeleteSelectedViewAsync" disabled="@string.IsNullOrWhiteSpace(SelectedSavedViewName)">Delete</button>
+                            </div>
+                            <div class="view-load-row">
+                                <select class="select-lite" @bind="SelectedSavedViewName">
+                                    <option value="">Select saved view</option>
+                                    @foreach (var view in SavedViews)
+                                    {
+                                        <option value="@view.Name">@view.Name</option>
+                                    }
+                                </select>
+                                <button type="button" class="button-lite compact" @onclick="ApplySelectedView" disabled="@string.IsNullOrWhiteSpace(SelectedSavedViewName)">Apply</button>
+                            </div>
+                        </div>
+
+                        <div class="columns-body">
+                            @foreach (var column in Columns)
+                            {
+                                <label class="columns-item-label">
+                                    <input type="checkbox" checked="@column.Visible" @onchange="e => ToggleColumn(column, e)" />
+                                    <span>@column.Key</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(StatusMessage))
+    {
+        <div class="status-toast alert-dismissible mt-2 mb-2" role="alert">
+            @StatusMessage
+            <button type="button" class="btn-close" aria-label="Close" @onclick="DismissStatusMessage"></button>
+        </div>
+    }
+
+    <div class="table-wrap">
+        <table class="table-surveys">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" checked="@IsAllVisibleSelected" @onchange="ToggleSelectAllVisible" />
+                    </th>
+                    @foreach (var column in VisibleColumns)
+                    {
+                        <th>
+                            <div class="th-head">
+                                <button type="button" class="column-sort" @onclick="() => ApplySort(column.Key)">
+                                    @GetColumnLabel(column.Key)
+                                    @if (SortKey == column.Key)
+                                    {
+                                        <span>@(SortAscending ? "▲" : "▼")</span>
+                                    }
+                                </button>
+                                <span role="button"
+                                      tabindex="0"
+                                      class="th-filter-btn"
+                                      title="Column options"
+                                      aria-label="@($"Column options for {GetColumnLabel(column.Key)}")"
+                                      @onclick="e => OpenColumnMenu(column.Key, e)">
+                                    @((MarkupString)FilterIconSvg)
+                                </span>
+                            </div>
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in PagedRows)
+                {
+                    <tr class="survey-row" @onclick="() => OpenRespondent(row)">
+                        <td @onclick:stopPropagation="true">
+                            <input type="checkbox" checked="@SelectedRowIds.Contains(row.RespondentId)" @onchange="e => ToggleRowSelection(row.RespondentId, e)" />
+                        </td>
+                        @foreach (var column in VisibleColumns)
+                        {
+                            <td>
+                                @if (IsEditableColumn(column.Key))
+                                {
+                                    <input class="cell-edit-input" value="@GetCellValue(row, column.Key)" @onchange="e => UpdateEditableCell(row, column.Key, e.Value?.ToString() ?? string.Empty)" @onclick:stopPropagation="true" />
+                                }
+                                else if (IsDrilldownColumn(column.Key))
+                                {
+                                    var stateId = GetCellValue(row, "state_id");
+                                    var poid = GetCellValue(row, "poid");
+                                    <a class="table-link" href="@BuildRespondentHref(stateId, poid, row)" @onclick:stopPropagation="true">@GetCellValue(row, column.Key)</a>
+                                }
+                                else
+                                {
+                                    @GetCellValue(row, column.Key)
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ActiveColumnMenuKey))
+    {
+        var activeKey = ActiveColumnMenuKey!;
+        <div class="column-menu-floating" style="top:@($"{ColumnMenuTop}px"); left:@($"{ColumnMenuLeft}px")">
+            <div class="column-menu-header">
+                <div class="column-menu-title">@activeKey</div>
+                <button type="button" class="column-menu-close" @onclick="CloseColumnMenu" aria-label="Close">×</button>
+            </div>
+            <button class="column-menu-pill" type="button" @onclick="() => ApplySort(activeKey, true)">@GetSortAscendingLabel(activeKey)</button>
+            <button class="column-menu-pill" type="button" @onclick="() => ApplySort(activeKey, false)">@GetSortDescendingLabel(activeKey)</button>
+            <button class="column-menu-pill" type="button" @onclick="ClearSort">Clear sorting</button>
+            <label class="column-menu-label">Filter contains</label>
+            <input class="column-menu-input" @bind="ColumnFilterDraft" @bind:event="oninput" />
+            <div class="column-menu-actions">
+                <button class="column-menu-pill" type="button" @onclick="ApplyColumnFilter">Apply filter</button>
+                <button class="column-menu-pill" type="button" @onclick="() => ClearColumnFilter(activeKey)">Clear filter</button>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int? SurveyId { get; set; }
+    [SupplyParameterFromQuery(Name = "surveyId")] public int? SurveyIdQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "sampleId")] public string? SampleId { get; set; }
+    [SupplyParameterFromQuery(Name = "referenceDate")] public string? ReferenceDate { get; set; }
+    [SupplyParameterFromQuery(Name = "skey")] public string? SKey { get; set; }
+    [SupplyParameterFromQuery(Name = "state")] public string? State { get; set; }
+
+    private SMSLiteStaticDemo.Services.SurveyInstanceDetailResponse? Detail { get; set; }
+    private string? ErrorMessage { get; set; }
+    private bool IsLoading { get; set; }
+    private const string DemoUserId = "demo-user";
+
+    private List<RespondentRow> RespondentRows { get; set; } = [];
+    private List<ColumnOption> Columns { get; set; } = [];
+    private List<SavedViewModel> SavedViews { get; set; } = [];
+    private List<DateTime> AvailableReferenceDates { get; set; } = [];
+
+    private bool ShowColumnsMenu { get; set; }
+    private bool ShowBulkMenu { get; set; }
+    private string? ActiveColumnMenuKey { get; set; }
+    private double ColumnMenuTop { get; set; }
+    private double ColumnMenuLeft { get; set; }
+    private string ColumnFilterDraft { get; set; } = string.Empty;
+    private readonly Dictionary<string, string> ColumnFilters = new(StringComparer.OrdinalIgnoreCase);
+
+    private string SortKey { get; set; } = "poid";
+    private bool SortAscending { get; set; } = true;
+
+    private string SearchText { get; set; } = string.Empty;
+
+    private readonly HashSet<int> SelectedRowIds = [];
+    private readonly Stack<UndoActionModel> UndoStack = new();
+
+    private string BulkEnumeratorId { get; set; } = string.Empty;
+    private string BulkManagerId { get; set; } = string.Empty;
+    private string BulkCoachId { get; set; } = string.Empty;
+
+    private string ViewNameInput { get; set; } = string.Empty;
+    private string SelectedSavedViewName { get; set; } = string.Empty;
+
+    private string SelectedReferenceDateString { get; set; } = string.Empty;
+    private string? StatusMessage { get; set; }
+    private int PageIndex { get; set; }
+    private int PageSize { get; set; } = 10;
+    private string PageSizeString { get; set; } = "10";
+
+    private static readonly HashSet<string> EditableColumns =
+    [
+        "enumerator_id",
+        "manager_id",
+        "coach_id",
+        "enum_notes"
+    ];
+
+    private static readonly HashSet<string> NumericSortColumns = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "survey_id",
+        "state_id",
+        "target_poid",
+        "poid",
+        "tract",
+        "subtract",
+        "zip5",
+        "zip4",
+        "op_zip5",
+        "op_zip4",
+        "phone_char",
+        "op_county_id",
+        "mseqnum",
+        "samp_no",
+        "latitude",
+        "longitude"
+    };
+
+    private static readonly HashSet<string> DateSortColumns = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "respdate",
+        "survey_date",
+        "mail_start_date",
+        "mail_stop_date",
+        "casi_start_date",
+        "casi_stop_date",
+        "capi_start_date",
+        "capi_stop_date",
+        "cati_start_date",
+        "cati_stop_date"
+    };
+
+    private static readonly string[] DefaultRecordGridColumns =
+    [
+        "poid",
+        "whole_name",
+        "first_name",
+        "middle_name",
+        "last_name",
+        "state_id",
+        "survey_date",
+        "enumerator_name",
+        "enum_notes"
+    ];
+
+    private const string FilterIconSvg =
+        "<svg class=\"filter-icon\" viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" aria-hidden=\"true\">" +
+        "<path fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3 5h18l-7 8v5l-4 2v-7L3 5z\" />" +
+        "</svg>";
+
+    private IEnumerable<ColumnOption> VisibleColumns => Columns.Where(c => c.Visible);
+
+    private bool IsAllVisibleSelected => PagedRows.Count > 0 && PagedRows.All(r => SelectedRowIds.Contains(r.RespondentId));
+
+    private bool CanApplyBulkUpdate =>
+        SelectedRowIds.Count > 0 &&
+        (!string.IsNullOrWhiteSpace(BulkEnumeratorId) ||
+         !string.IsNullOrWhiteSpace(BulkManagerId) ||
+         !string.IsNullOrWhiteSpace(BulkCoachId));
+
+    private List<RespondentRow> SortedRows
+    {
+        get
+        {
+            IEnumerable<RespondentRow> rows = RespondentRows;
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                var search = SearchText.Trim();
+                rows = rows.Where(r => GetCellValue(r, "poid").Contains(search, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (ColumnFilters.Count > 0)
+            {
+                rows = rows.Where(r =>
+                {
+                    foreach (var filter in ColumnFilters)
+                    {
+                        if (!GetCellValue(r, filter.Key).Contains(filter.Value, StringComparison.OrdinalIgnoreCase))
+                            return false;
+                    }
+
+                    return true;
+                });
+            }
+
+            var list = rows.ToList();
+            list.Sort((left, right) =>
+            {
+                var comparison = CompareCellValues(GetCellValue(left, SortKey), GetCellValue(right, SortKey), SortKey);
+                if (!SortAscending)
+                    comparison = -comparison;
+
+                if (comparison != 0)
+                    return comparison;
+
+                return left.RespondentId.CompareTo(right.RespondentId);
+            });
+
+            return list;
+        }
+    }
+
+    private List<RespondentRow> PagedRows
+    {
+        get
+        {
+            var rows = SortedRows;
+            if (PageSize <= 0 || rows.Count == 0)
+                return rows;
+
+            var maxPage = Math.Max(0, (int)Math.Ceiling(rows.Count / (double)PageSize) - 1);
+            if (PageIndex > maxPage)
+                PageIndex = maxPage;
+
+            return rows.Skip(PageIndex * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private string PageSummary
+    {
+        get
+        {
+            var total = SortedRows.Count;
+            if (total == 0)
+                return "0 results";
+
+            if (PageSize <= 0)
+                return $"1–{total} of {total}";
+
+            var start = PageIndex * PageSize + 1;
+            var end = Math.Min(total, (PageIndex + 1) * PageSize);
+            return $"{start}–{end} of {total}";
+        }
+    }
+
+    private bool IsPrevDisabled => PageIndex <= 0 || PageSize <= 0;
+    private bool IsNextDisabled
+    {
+        get
+        {
+            if (PageSize <= 0)
+                return true;
+            var total = SortedRows.Count;
+            return (PageIndex + 1) * PageSize >= total;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ErrorMessage = null;
+        Detail = null;
+        RespondentRows = [];
+        Columns = [];
+        SelectedRowIds.Clear();
+        UndoStack.Clear();
+        StatusMessage = null;
+        PageIndex = 0;
+
+        var surveyId = SurveyIdQuery ?? SurveyId;
+        if (!surveyId.HasValue || string.IsNullOrWhiteSpace(SampleId) || string.IsNullOrWhiteSpace(ReferenceDate))
+        {
+            ErrorMessage = "Missing record keys. Open this page from Survey Details or Survey Results.";
+            return;
+        }
+
+        if (!DateTime.TryParse(ReferenceDate, out var parsedReferenceDate))
+        {
+            ErrorMessage = "Invalid reference date.";
+            return;
+        }
+
+        var instance = SurveyInstanceService.FindInstance(parsedReferenceDate, surveyId.Value, SampleId);
+        var fallbackInstance = SurveyInstanceService.Instances
+            .Where(i => i.SurveyId == surveyId.Value && i.SampleId.Equals(SampleId, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(i => i.ReferenceDate)
+            .FirstOrDefault();
+        var effectiveInstance = instance ?? fallbackInstance;
+
+        if (effectiveInstance is null || string.IsNullOrWhiteSpace(effectiveInstance.SampleId) || effectiveInstance.Status.Equals("IN HQ REVIEW", StringComparison.OrdinalIgnoreCase))
+        {
+            ErrorMessage = "The selected survey instance is not yet available (sample not populated or status is IN HQ REVIEW).";
+            return;
+        }
+
+        IsLoading = true;
+        try
+        {
+            Detail = SurveyInstanceService.GetDetail(parsedReferenceDate, surveyId.Value, SampleId);
+
+            BuildRespondentGrid(parsedReferenceDate, surveyId.Value, SampleId, SKey);
+            AvailableReferenceDates = SurveyInstanceService.GetReferenceDatesForSurveySample(surveyId.Value, SampleId).ToList();
+            SelectedReferenceDateString = parsedReferenceDate.ToString("yyyy-MM-dd");
+
+            RecentSurveyService.Track(DemoUserId, parsedReferenceDate, surveyId.Value, SampleId!, "Worked");
+            await LoadSavedViewsAsync();
+        }
+        catch
+        {
+            ErrorMessage = "Unable to load survey record. Please try again.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void BuildRespondentGrid(DateTime referenceDate, int surveyId, string sampleId, string? skey)
+    {
+        var respondents = SurveyInstanceService.GetRespondentsForInstance(referenceDate, surveyId, sampleId, skey, 30);
+
+        RespondentRows = respondents
+            .Select(r =>
+            {
+                var values = r.Fields.ToDictionary(f => f.Field, f => f.Value, StringComparer.OrdinalIgnoreCase);
+                AddDerivedNameFields(values);
+                return new RespondentRow(
+                    r.RespondentId,
+                    r.StateId,
+                    r.StateAlpha,
+                    r.SKey,
+                    values);
+            })
+            .ToList();
+
+        if (RespondentRows.Count == 0)
+            return;
+
+        var defaultVisible = new HashSet<string>(DefaultRecordGridColumns, StringComparer.OrdinalIgnoreCase);
+        var allKeys = DefaultRecordGridColumns
+            .Concat(RespondentRows
+            .SelectMany(r => r.Values.Keys)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Columns = allKeys
+            .Select(key =>
+            {
+                var visible = defaultVisible.Contains(key);
+                return new ColumnOption(key, visible);
+            })
+            .ToList();
+
+        if (!Columns.Any(c => c.Visible))
+        {
+            foreach (var col in Columns.Take(10))
+                col.Visible = true;
+        }
+
+        if (!Columns.Any(c => c.Key.Equals(SortKey, StringComparison.OrdinalIgnoreCase)))
+            SortKey = Columns.FirstOrDefault(c => c.Visible)?.Key ?? Columns.FirstOrDefault()?.Key ?? "poid";
+    }
+
+    private static string GetCellValue(RespondentRow row, string key)
+        => row.Values.TryGetValue(key, out var value) ? value : string.Empty;
+
+    private static string GetColumnLabel(string key)
+        => key switch
+        {
+            "poid" => "POID",
+            "whole_name" => "Whole Name",
+            "first_name" => "First",
+            "middle_name" => "Middle",
+            "last_name" => "Last",
+            "state_id" => "State FIPS",
+            "survey_date" => "Date",
+            "enumerator_name" => "Enum",
+            "enum_notes" => "Notes",
+            _ => key
+        };
+
+    private static void AddDerivedNameFields(Dictionary<string, string> values)
+    {
+        var wholeName = values.GetValueOrDefault("whole_name", "");
+        if (string.IsNullOrWhiteSpace(wholeName))
+            return;
+
+        var parts = wholeName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        values.TryAdd("first_name", parts.ElementAtOrDefault(0) ?? "");
+        values.TryAdd("middle_name", parts.Length > 2 ? string.Join(" ", parts.Skip(1).Take(parts.Length - 2)) : "");
+        values.TryAdd("last_name", parts.Length > 1 ? parts[^1] : "");
+    }
+
+    private bool IsEditableColumn(string key)
+        => EditableColumns.Contains(key);
+
+    private static bool IsDrilldownColumn(string key)
+        => key.Equals("state_id", StringComparison.OrdinalIgnoreCase) || key.Equals("poid", StringComparison.OrdinalIgnoreCase);
+
+    private void UpdateEditableCell(RespondentRow row, string key, string newValue)
+    {
+        if (!row.Values.TryGetValue(key, out var oldValue))
+            oldValue = string.Empty;
+
+        if (string.Equals(oldValue, newValue, StringComparison.Ordinal))
+            return;
+
+        row.Values[key] = newValue;
+        UndoStack.Push(new UndoActionModel($"individual cell edit ({key})", [new CellEdit(row.RespondentId, key, oldValue, newValue)]));
+        StatusMessage = $"Updated {key} for respondent {row.RespondentId}.";
+    }
+
+    private void ToggleSelectAllVisible(ChangeEventArgs e)
+    {
+        if (e.Value is bool selected && selected)
+        {
+            foreach (var row in PagedRows)
+                SelectedRowIds.Add(row.RespondentId);
+            return;
+        }
+
+        foreach (var row in PagedRows)
+            SelectedRowIds.Remove(row.RespondentId);
+    }
+
+    private void ToggleRowSelection(int respondentId, ChangeEventArgs e)
+    {
+        if (e.Value is bool selected && selected)
+        {
+            SelectedRowIds.Add(respondentId);
+            return;
+        }
+
+        SelectedRowIds.Remove(respondentId);
+    }
+
+    private void ApplyBulkUpdate()
+    {
+        if (!CanApplyBulkUpdate)
+        {
+            StatusMessage = "Select rows and enter at least one ID value to apply bulk edit.";
+            return;
+        }
+
+        var edits = new List<CellEdit>();
+        var touchedFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in RespondentRows.Where(r => SelectedRowIds.Contains(r.RespondentId)))
+        {
+            if (!string.IsNullOrWhiteSpace(BulkEnumeratorId))
+            {
+                const string key = "enumerator_id";
+                var oldValue = GetCellValue(row, key);
+                if (!string.Equals(oldValue, BulkEnumeratorId, StringComparison.Ordinal))
+                {
+                    row.Values[key] = BulkEnumeratorId;
+                    edits.Add(new CellEdit(row.RespondentId, key, oldValue, BulkEnumeratorId));
+                    touchedFields.Add(key);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(BulkManagerId))
+            {
+                const string key = "manager_id";
+                var oldValue = GetCellValue(row, key);
+                if (!string.Equals(oldValue, BulkManagerId, StringComparison.Ordinal))
+                {
+                    row.Values[key] = BulkManagerId;
+                    edits.Add(new CellEdit(row.RespondentId, key, oldValue, BulkManagerId));
+                    touchedFields.Add(key);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(BulkCoachId))
+            {
+                const string key = "coach_id";
+                var oldValue = GetCellValue(row, key);
+                if (!string.Equals(oldValue, BulkCoachId, StringComparison.Ordinal))
+                {
+                    row.Values[key] = BulkCoachId;
+                    edits.Add(new CellEdit(row.RespondentId, key, oldValue, BulkCoachId));
+                    touchedFields.Add(key);
+                }
+            }
+        }
+
+        if (edits.Count == 0)
+        {
+            StatusMessage = "No rows changed during bulk edit.";
+            return;
+        }
+
+        var fieldText = string.Join(", ", touchedFields.OrderBy(f => f, StringComparer.OrdinalIgnoreCase));
+        UndoStack.Push(new UndoActionModel($"bulk edit ({fieldText})", edits));
+        StatusMessage = $"Bulk updated {edits.Count} field value(s) across selected respondents.";
+    }
+
+    private void UndoLastAction()
+    {
+        if (UndoStack.Count == 0)
+        {
+            StatusMessage = "Nothing to undo.";
+            return;
+        }
+
+        var action = UndoStack.Pop();
+        var rowById = RespondentRows.ToDictionary(r => r.RespondentId);
+
+        foreach (var edit in action.Changes)
+        {
+            if (rowById.TryGetValue(edit.RespondentId, out var row))
+            {
+                row.Values[edit.Key] = edit.OldValue;
+            }
+        }
+
+        StatusMessage = $"Undid {action.Description}.";
+    }
+
+    private void SaveChanges()
+    {
+        StatusMessage = "Changes saved for this demo session.";
+    }
+
+    private void DismissStatusMessage() => StatusMessage = null;
+
+    private void ApplySort(string key)
+    {
+        if (SortKey == key)
+        {
+            SortAscending = !SortAscending;
+            return;
+        }
+
+        SortKey = key;
+        SortAscending = true;
+    }
+
+    private string GetSortAscendingLabel(string key)
+        => IsNumericSortColumn(key) || IsDateSortColumn(key) ? "Sort low → high" : "Sort A → Z";
+
+    private string GetSortDescendingLabel(string key)
+        => IsNumericSortColumn(key) || IsDateSortColumn(key) ? "Sort high → low" : "Sort Z → A";
+
+    private static int CompareCellValues(string left, string right, string key)
+    {
+        if (IsDateSortColumn(key))
+        {
+            var leftDateParsed = DateTime.TryParse(left, CultureInfo.InvariantCulture, DateTimeStyles.None, out var leftDate);
+            var rightDateParsed = DateTime.TryParse(right, CultureInfo.InvariantCulture, DateTimeStyles.None, out var rightDate);
+
+            if (leftDateParsed && rightDateParsed)
+                return leftDate.CompareTo(rightDate);
+            if (leftDateParsed)
+                return -1;
+            if (rightDateParsed)
+                return 1;
+        }
+
+        if (IsNumericSortColumn(key))
+        {
+            var leftNumParsed = TryParseNumericValue(left, out var leftNumber);
+            var rightNumParsed = TryParseNumericValue(right, out var rightNumber);
+
+            if (leftNumParsed && rightNumParsed)
+                return leftNumber.CompareTo(rightNumber);
+            if (leftNumParsed)
+                return -1;
+            if (rightNumParsed)
+                return 1;
+        }
+
+        return string.Compare(left, right, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsNumericSortColumn(string key) => NumericSortColumns.Contains(key);
+    private static bool IsDateSortColumn(string key) => DateSortColumns.Contains(key);
+
+    private static bool TryParseNumericValue(string input, out decimal value)
+    {
+        value = 0m;
+        if (string.IsNullOrWhiteSpace(input))
+            return false;
+
+        var trimmed = input.Trim();
+        if (decimal.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out var direct))
+        {
+            value = direct;
+            return true;
+        }
+
+        var digitsOnly = new string(trimmed.Where(char.IsDigit).ToArray());
+        if (digitsOnly.Length == 0)
+            return false;
+
+        return decimal.TryParse(digitsOnly, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+    }
+
+    private void ApplySort(string key, bool ascending)
+    {
+        SortKey = key;
+        SortAscending = ascending;
+    }
+
+    private void ClearSort()
+    {
+        SortKey = Columns.FirstOrDefault(c => c.Visible)?.Key ?? Columns.FirstOrDefault()?.Key ?? "poid";
+        SortAscending = true;
+    }
+
+    private void OpenColumnMenu(string key, MouseEventArgs e)
+    {
+        ActiveColumnMenuKey = key;
+        ColumnFilterDraft = ColumnFilters.TryGetValue(key, out var existing) ? existing : string.Empty;
+        ColumnMenuTop = Math.Max(12, e.ClientY + 10);
+        ColumnMenuLeft = Math.Max(12, e.ClientX - 6);
+    }
+
+    private void CloseColumnMenu()
+    {
+        ActiveColumnMenuKey = null;
+    }
+
+    private void ApplyColumnFilter()
+    {
+        if (string.IsNullOrWhiteSpace(ActiveColumnMenuKey))
+            return;
+
+        var key = ActiveColumnMenuKey!;
+        var value = ColumnFilterDraft.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            ColumnFilters.Remove(key);
+        }
+        else
+        {
+            ColumnFilters[key] = value;
+        }
+    }
+
+    private void ClearColumnFilter(string key)
+    {
+        ColumnFilters.Remove(key);
+        if (key.Equals(ActiveColumnMenuKey, StringComparison.OrdinalIgnoreCase))
+            ColumnFilterDraft = string.Empty;
+    }
+
+    private void OnPageSizeChanged()
+    {
+        if (string.Equals(PageSizeString, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            PageSize = 0;
+            PageIndex = 0;
+            return;
+        }
+
+        if (int.TryParse(PageSizeString, out var parsed) && parsed > 0)
+        {
+            PageSize = parsed;
+            PageIndex = 0;
+            return;
+        }
+
+        PageSize = 10;
+        PageSizeString = "10";
+        PageIndex = 0;
+    }
+
+    private void PrevPage()
+    {
+        if (!IsPrevDisabled)
+            PageIndex--;
+    }
+
+    private void NextPage()
+    {
+        if (!IsNextDisabled)
+            PageIndex++;
+    }
+
+    private void ToggleColumnsMenu() => ShowColumnsMenu = !ShowColumnsMenu;
+    private void CloseColumnsMenu() => ShowColumnsMenu = false;
+    private void ToggleBulkMenu() => ShowBulkMenu = !ShowBulkMenu;
+    private void CloseBulkMenu() => ShowBulkMenu = false;
+
+    private void ToggleColumn(ColumnOption option, ChangeEventArgs e)
+    {
+        option.Visible = e.Value is bool isChecked && isChecked;
+    }
+
+    private async Task SaveCurrentViewAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ViewNameInput))
+        {
+            StatusMessage = "Enter a view name before saving.";
+            return;
+        }
+
+        var model = new SavedViewModel(
+            ViewNameInput.Trim(),
+            Columns.Where(c => c.Visible).Select(c => c.Key).ToList(),
+            SortKey,
+            SortAscending,
+            SearchText);
+
+        SavedViews.RemoveAll(v => v.Name.Equals(model.Name, StringComparison.OrdinalIgnoreCase));
+        SavedViews.Add(model);
+        SavedViews = SavedViews.OrderBy(v => v.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        SelectedSavedViewName = model.Name;
+
+        await PersistViewsAsync();
+        StatusMessage = $"Saved view '{model.Name}'.";
+    }
+
+    private void ApplySelectedView()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedSavedViewName))
+            return;
+
+        var model = SavedViews.FirstOrDefault(v => v.Name.Equals(SelectedSavedViewName, StringComparison.OrdinalIgnoreCase));
+        if (model is null)
+            return;
+
+        var visibleSet = new HashSet<string>(model.VisibleColumns, StringComparer.OrdinalIgnoreCase);
+        foreach (var column in Columns)
+            column.Visible = visibleSet.Contains(column.Key);
+
+        SortKey = model.SortKey;
+        SortAscending = model.SortAscending;
+        SearchText = model.SearchText;
+        StatusMessage = $"Applied view '{model.Name}'.";
+    }
+
+    private async Task DeleteSelectedViewAsync()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedSavedViewName))
+            return;
+
+        SavedViews.RemoveAll(v => v.Name.Equals(SelectedSavedViewName, StringComparison.OrdinalIgnoreCase));
+        await PersistViewsAsync();
+        StatusMessage = $"Deleted view '{SelectedSavedViewName}'.";
+        SelectedSavedViewName = string.Empty;
+    }
+
+    private async Task PersistViewsAsync()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(SavedViews);
+        await Js.InvokeVoidAsync("localStorage.setItem", "sms-record-grid-views", json);
+    }
+
+    private async Task LoadSavedViewsAsync()
+    {
+        try
+        {
+            var json = await Js.InvokeAsync<string?>("localStorage.getItem", "sms-record-grid-views");
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                SavedViews = [];
+                return;
+            }
+
+            SavedViews = System.Text.Json.JsonSerializer.Deserialize<List<SavedViewModel>>(json) ?? [];
+        }
+        catch
+        {
+            SavedViews = [];
+        }
+    }
+
+    private void OpenRespondent(RespondentRow row)
+    {
+        var stateId = GetCellValue(row, "state_id");
+        var poid = GetCellValue(row, "poid");
+        Navigation.NavigateTo(BuildRespondentHref(stateId, poid, row));
+    }
+
+    private string BuildRespondentHref(string stateId, string poid, RespondentRow row)
+    {
+        var surveyId = SurveyIdQuery ?? SurveyId;
+        var referenceDate = ReferenceDate ?? row.ReferenceDate.ToString("yyyy-MM-dd");
+        return $"respondents/details?stateId={Uri.EscapeDataString(stateId)}&poid={Uri.EscapeDataString(poid)}&surveyId={surveyId}&sampleId={Uri.EscapeDataString(SampleId ?? row.SampleId)}&referenceDate={Uri.EscapeDataString(referenceDate)}";
+    }
+
+    private string BuildBackToDetailsUrl()
+    {
+        var surveyId = SurveyIdQuery ?? SurveyId;
+        if (!surveyId.HasValue || string.IsNullOrWhiteSpace(SampleId) || string.IsNullOrWhiteSpace(ReferenceDate))
+            return "surveys/results";
+
+        return $"surveys/details?referenceDate={Uri.EscapeDataString(ReferenceDate)}&surveyId={surveyId.Value}&sampleId={Uri.EscapeDataString(SampleId)}";
+    }
+
+    private void OnReferenceDateChanged(ChangeEventArgs e)
+    {
+        var newDate = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(newDate))
+            return;
+
+        SelectedReferenceDateString = newDate;
+        var surveyId = SurveyIdQuery ?? SurveyId;
+        if (!surveyId.HasValue || string.IsNullOrWhiteSpace(SampleId))
+            return;
+
+        var url = $"surveys/record?referenceDate={Uri.EscapeDataString(newDate)}&surveyId={surveyId.Value}&sampleId={Uri.EscapeDataString(SampleId)}";
+        if (!string.IsNullOrWhiteSpace(SKey))
+            url += $"&skey={Uri.EscapeDataString(SKey)}";
+        if (!string.IsNullOrWhiteSpace(State))
+            url += $"&state={Uri.EscapeDataString(State)}";
+
+        Navigation.NavigateTo(url);
+    }
+
+    private sealed class ColumnOption(string key, bool visible)
+    {
+        public string Key { get; } = key;
+        public bool Visible { get; set; } = visible;
+    }
+
+    private sealed record RespondentRow(
+        int RespondentId,
+        string StateId,
+        string StateAlpha,
+        string SKey,
+        Dictionary<string, string> Values)
+    {
+        public string SampleId => Values.TryGetValue("sample_id", out var value) ? value : string.Empty;
+        public DateTime ReferenceDate => DateTime.TryParse(Values.GetValueOrDefault("survey_date"), out var parsed) ? parsed : DateTime.MinValue;
+    }
+
+    private sealed record CellEdit(int RespondentId, string Key, string OldValue, string NewValue);
+
+    private sealed record UndoActionModel(string Description, List<CellEdit> Changes);
+
+    private sealed record SavedViewModel(
+        string Name,
+        List<string> VisibleColumns,
+        string SortKey,
+        bool SortAscending,
+        string SearchText);
+}
