@@ -185,8 +185,8 @@
     private void SubmitGlobalSearch()
     {
         var target = string.IsNullOrWhiteSpace(GlobalSearchText)
-            ? "/search"
-            : $"/search?q={Uri.EscapeDataString(GlobalSearchText.Trim())}";
+            ? "search"
+            : $"search?q={Uri.EscapeDataString(GlobalSearchText.Trim())}";
         Navigation.NavigateTo(target);
     }
 
