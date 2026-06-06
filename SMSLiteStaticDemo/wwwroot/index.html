@@ -5,15 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SMSLiteStaticDemo</title>
-    <script>
-        (function () {
-            var segments = window.location.pathname.split('/').filter(Boolean);
-            var basePath = window.location.hostname.endsWith('github.io') && segments.length > 0
-                ? '/' + segments[0] + '/'
-                : '/';
-            document.write('<base href="' + basePath + '" />');
-        })();
-    </script>
+    <base href="/" />
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />

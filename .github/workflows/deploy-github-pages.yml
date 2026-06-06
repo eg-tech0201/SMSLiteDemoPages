@@ -31,6 +31,13 @@ jobs:
       - name: Publish static site
         run: dotnet publish SMSLiteStaticDemo/SMSLiteStaticDemo.csproj -c Release -o publish
 
+      - name: Configure GitHub Pages base path
+        shell: bash
+        run: |
+          repo_name="${GITHUB_REPOSITORY#*/}"
+          sed -i "s|<base href=\"/\" />|<base href=\"/${repo_name}/\" />|g" publish/wwwroot/index.html publish/wwwroot/404.html
+          touch publish/wwwroot/.nojekyll
+
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
