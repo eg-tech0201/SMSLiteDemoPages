@@ -13,6 +13,7 @@ public sealed class MySqlSurveyInstanceRepository(
     ILogger<MySqlSurveyInstanceRepository> logger) : ISurveyInstanceRepository
 {
     private readonly SmsLiteDatabaseOptions _options = options.Value;
+    private const string GetSurveyInstancesProcedure = SmsLiteStoredProcedures.GetSurveyInstancesTest;
 
     public async Task<IReadOnlyList<SurveyGridRow>> GetSurveyInstancesAsync(CancellationToken cancellationToken)
     {
@@ -27,14 +28,14 @@ public sealed class MySqlSurveyInstanceRepository(
         try
         {
             await fileLogger.LogAsync(
-                $"Executing stored procedure '{_options.StoredProcedure}' against '{_options.Database}' on '{_options.Host}:{_options.Port}' using source view '{_options.SourceView}'.",
+                $"Executing stored procedure '{GetSurveyInstancesProcedure}' against '{_options.Database}' on '{_options.Host}:{_options.Port}'.",
                 cancellationToken: cancellationToken);
 
             await using var connection = new MySqlConnection(BuildConnectionString());
             await connection.OpenAsync(cancellationToken);
 
             await using var command = connection.CreateCommand();
-            command.CommandText = _options.StoredProcedure;
+            command.CommandText = GetSurveyInstancesProcedure;
             command.CommandType = CommandType.StoredProcedure;
             command.CommandTimeout = 120;
 
@@ -221,7 +222,7 @@ public sealed class MySqlSurveyInstanceRepository(
             }
 
             await fileLogger.LogAsync(
-                $"Stored procedure '{_options.StoredProcedure}' completed successfully. Rows returned: {rows.Count}.",
+                $"Stored procedure '{GetSurveyInstancesProcedure}' completed successfully. Rows returned: {rows.Count}.",
                 cancellationToken: cancellationToken);
 
             return rows;
@@ -229,10 +230,10 @@ public sealed class MySqlSurveyInstanceRepository(
         catch (Exception ex)
         {
             await fileLogger.LogAsync(
-                $"Stored procedure '{_options.StoredProcedure}' failed for host '{_options.Host}:{_options.Port}' database '{_options.Database}'.",
+                $"Stored procedure '{GetSurveyInstancesProcedure}' failed for host '{_options.Host}:{_options.Port}' database '{_options.Database}'.",
                 ex,
                 cancellationToken);
-            logger.LogError(ex, "Failed to load survey instances from MySQL stored procedure {StoredProcedure}.", _options.StoredProcedure);
+            logger.LogError(ex, "Failed to load survey instances from MySQL stored procedure {StoredProcedure}.", GetSurveyInstancesProcedure);
             throw;
         }
     }
