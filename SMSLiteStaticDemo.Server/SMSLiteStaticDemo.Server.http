@@ -1,6 +1,0 @@
-@SMSLiteStaticDemo.Server_HostAddress = http://localhost:5098
-
-GET {{SMSLiteStaticDemo.Server_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

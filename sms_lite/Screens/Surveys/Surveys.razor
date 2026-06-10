@@ -1,0 +1,350 @@
+@page "/surveys/results"
+@using SMSLiteStaticDemo.Services
+@inject HttpClient Http
+@inject IJSRuntime Js
+
+<h1 class="page-h1">Surveys</h1>
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb breadcrumb-mini mb-0">
+        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Surveys</li>
+    </ol>
+</nav>
+
+<div class="surveys-toolbar">
+    <div class="toolbar-left">
+        <div class="search-shell">
+            <div class="search-input-row">
+                <button class="search-icon-button" type="button" title="Search">
+                    <span class="bi bi-search" aria-hidden="true"></span>
+                </button>
+                <input class="survey-search search-input"
+                       placeholder="Search survey results"
+                       @bind="GridSearchText"
+                       @bind:event="oninput" />
+                <button class="search-filter-button" type="button" @onclick="ClearGridFiltersAsync" title="Clear filters">
+                    <span class="bi bi-sliders" aria-hidden="true"></span>
+                    <span class="filter-label">Filters</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="table-wrap dx-grid-wrap">
+    @if (IsLoading)
+    {
+        <div class="grid-loading">
+            <div class="app-loading-spiral" aria-hidden="true">
+                <span></span>
+            </div>
+            <span>Loading survey results...</span>
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(LoadError))
+    {
+        <div class="grid-error">@LoadError</div>
+    }
+    else
+    {
+        <div class="survey-grid-actions">
+            <div class="survey-grid-hint">Drag a column header left or right to reorder columns.</div>
+            <button class="button-lite grid-action-button" type="button" @onclick="ShowColumnChooserAsync">Customize Columns</button>
+            <button class="button-lite grid-action-button" type="button" @onclick="SaveGridViewAsync">Save View</button>
+            <button class="button-lite grid-action-button" type="button" @onclick="ResetGridViewAsync">Reset View</button>
+        </div>
+        <div class="survey-grid-scroll">
+        <DxGrid @ref="SurveyGrid"
+                Data="@Rows"
+                CssClass="survey-dx-grid"
+                PageSize="20"
+                PageSizeSelectorVisible="true"
+                PageSizeSelectorItems="@PageSizeOptions"
+                SearchText="@GridSearchText"
+                ShowSearchBox="false"
+                ShowFilterRow="false"
+                FilterMenuButtonDisplayMode="GridFilterMenuButtonDisplayMode.Always"
+                ShowGroupPanel="false"
+                AllowGroup="false"
+                AllowSort="true"
+                AllowColumnReorder="true"
+                SelectionMode="GridSelectionMode.Multiple"
+                SelectAllCheckboxMode="GridSelectAllCheckboxMode.Page"
+                VirtualScrollingEnabled="true"
+                ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
+                TextWrapEnabled="false"
+                LayoutAutoLoading="OnGridLayoutAutoLoading"
+                LayoutAutoSaving="OnGridLayoutAutoSaving">
+            <Columns>
+                <DxGridSelectionColumn Width="48px" />
+                @foreach (var column in SurveyColumns)
+                {
+                    <DxGridDataColumn FieldName="@column.FieldName"
+                                      Caption="@column.Caption"
+                                      DisplayFormat="@column.DisplayFormat"
+                                      MinWidth="@column.MinWidth" />
+                }
+            </Columns>
+        </DxGrid>
+        </div>
+    }
+</div>
+
+@code {
+    private const string SurveyGridLayoutStorageKey = "sms.surveys.results.dxgrid.layout.v3";
+
+    private IGrid? SurveyGrid { get; set; }
+    private List<SurveyGridRow> Rows { get; set; } = new();
+    private int[] PageSizeOptions { get; } = [10, 20, 50, 100];
+    private bool IsLoading { get; set; } = true;
+    private string? LoadError { get; set; }
+    private string GridSearchText { get; set; } = "";
+
+    private static readonly IReadOnlyList<GridColumnSpec> SurveyColumns =
+    [
+        new(nameof(SurveyGridRow.SampleId), "Sample ID", 140),
+        new(nameof(SurveyGridRow.Fips), "FIPS", 110),
+        new(nameof(SurveyGridRow.SurveyId), "Survey ID", 120),
+        new(nameof(SurveyGridRow.StateId), "State ID", 110),
+        new(nameof(SurveyGridRow.SurveyDate), "Survey Date", 140, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.SKey), "S-Key", 110),
+        new(nameof(SurveyGridRow.Poid), "POID", 130),
+        new(nameof(SurveyGridRow.TargetPoid), "Target POID", 140),
+        new(nameof(SurveyGridRow.Tract), "Tract", 110),
+        new(nameof(SurveyGridRow.Subtract), "Subtract", 120),
+        new(nameof(SurveyGridRow.FrameId), "Frame ID", 120),
+        new(nameof(SurveyGridRow.OperationId), "Operation ID", 140),
+        new(nameof(SurveyGridRow.PersonId), "Person ID", 120),
+        new(nameof(SurveyGridRow.ObjectiveYieldId), "Objective Yield ID", 170),
+        new(nameof(SurveyGridRow.CommentFlag), "Comment Flag", 140),
+        new(nameof(SurveyGridRow.Comments), "Comments", 260),
+        new(nameof(SurveyGridRow.OfficeNotes), "Office Notes", 240),
+        new(nameof(SurveyGridRow.PeriodId), "Period ID", 120),
+        new(nameof(SurveyGridRow.Stratum), "Stratum", 120),
+        new(nameof(SurveyGridRow.PartnerNo), "Partner No.", 130),
+        new(nameof(SurveyGridRow.Rep), "Rep", 100),
+        new(nameof(SurveyGridRow.KZero), "K Zero", 110),
+        new(nameof(SurveyGridRow.X1), "X1", 90),
+        new(nameof(SurveyGridRow.X2), "X2", 90),
+        new(nameof(SurveyGridRow.X3), "X3", 90),
+        new(nameof(SurveyGridRow.X4), "X4", 90),
+        new(nameof(SurveyGridRow.X5), "X5", 90),
+        new(nameof(SurveyGridRow.Flag1), "Flag 1", 100),
+        new(nameof(SurveyGridRow.Flag2), "Flag 2", 100),
+        new(nameof(SurveyGridRow.Flag3), "Flag 3", 100),
+        new(nameof(SurveyGridRow.Flag4), "Flag 4", 100),
+        new(nameof(SurveyGridRow.Flag5), "Flag 5", 100),
+        new(nameof(SurveyGridRow.HoldFlag), "Hold Flag", 120),
+        new(nameof(SurveyGridRow.SZeroFlag), "S Zero Flag", 130),
+        new(nameof(SurveyGridRow.Label1), "Label 1", 110),
+        new(nameof(SurveyGridRow.Label2), "Label 2", 110),
+        new(nameof(SurveyGridRow.Label3), "Label 3", 110),
+        new(nameof(SurveyGridRow.Label4), "Label 4", 110),
+        new(nameof(SurveyGridRow.Label5), "Label 5", 110),
+        new(nameof(SurveyGridRow.OtherField), "Other Field", 120),
+        new(nameof(SurveyGridRow.CatiFlag), "CATI Flag", 120),
+        new(nameof(SurveyGridRow.CatiGroup), "CATI Group", 130),
+        new(nameof(SurveyGridRow.CapiFlag), "CAPI Flag", 120),
+        new(nameof(SurveyGridRow.PhoneOnlyFlag), "Phone Only Flag", 150),
+        new(nameof(SurveyGridRow.CawiFlag), "CAWI Flag", 120),
+        new(nameof(SurveyGridRow.MailFlag), "Mail Flag", 110),
+        new(nameof(SurveyGridRow.PmcMailFlag), "PMC Mail Flag", 140),
+        new(nameof(SurveyGridRow.RfoMailFlag), "RFO Mail Flag", 140),
+        new(nameof(SurveyGridRow.MailStartDate), "Mail Start Date", 150, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.MailStopDate), "Mail Stop Date", 150, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.CawiStartDate), "CAWI Start Date", 150, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.CawiStopDate), "CAWI Stop Date", 150, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.CapiStartDate), "CAPI Start Date", 150, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.CapiStopDate), "CAPI Stop Date", 150, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.CatiStartDate), "CATI Start Date", 150, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.CatiStopDate), "CATI Stop Date", 150, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.CatiApp), "CATI App", 120),
+        new(nameof(SurveyGridRow.ActiveStatusId), "Active Status ID", 150),
+        new(nameof(SurveyGridRow.OpDomStatusId), "OpDom Status ID", 150),
+        new(nameof(SurveyGridRow.ManagerFlag), "Manager Flag", 140),
+        new(nameof(SurveyGridRow.ManagerFlagChar), "Manager Flag (char)", 170),
+        new(nameof(SurveyGridRow.StatePoid), "State POID", 140),
+        new(nameof(SurveyGridRow.OperationName), "Operation Name", 180),
+        new(nameof(SurveyGridRow.OperationAddress), "Operation Address", 220),
+        new(nameof(SurveyGridRow.OperationOtherAddress), "Operation Other Address", 230),
+        new(nameof(SurveyGridRow.OperationPlaceName), "Operation Place Name", 190),
+        new(nameof(SurveyGridRow.OperationStateAbbreviation), "Operation State Abbreviation", 240),
+        new(nameof(SurveyGridRow.OperationZip5), "Operation Zip 5", 140),
+        new(nameof(SurveyGridRow.OperationZip4), "Operation Zip 4", 140),
+        new(nameof(SurveyGridRow.OperationPhone), "Operation Phone", 160),
+        new(nameof(SurveyGridRow.OperationPhoneChar), "Operation Phone (char)", 190),
+        new(nameof(SurveyGridRow.OperationCellPhoneFlag), "Operation Cell Phone Flag", 220),
+        new(nameof(SurveyGridRow.OperationCellPhoneFlagChar), "Operation Cell Phone Flag (char)", 260),
+        new(nameof(SurveyGridRow.OperationFax), "Operation Fax", 150),
+        new(nameof(SurveyGridRow.OperationFaxChar), "Operation Fax (char)", 180),
+        new(nameof(SurveyGridRow.OperationFarmFlag), "Operation Farm Flag", 180),
+        new(nameof(SurveyGridRow.AgriculturalBusinessFlag), "Agricultural Business Flag", 230),
+        new(nameof(SurveyGridRow.TaggedId), "Tagged ID", 120),
+        new(nameof(SurveyGridRow.OperationCountyId), "Operation County ID", 180),
+        new(nameof(SurveyGridRow.OperationDistrictId), "Operation District ID", 190),
+        new(nameof(SurveyGridRow.OperationEmail), "Operation Email", 220),
+        new(nameof(SurveyGridRow.PersonStatusId), "Person Status ID", 160),
+        new(nameof(SurveyGridRow.LastName), "Last Name", 150),
+        new(nameof(SurveyGridRow.FirstName), "First Name", 150),
+        new(nameof(SurveyGridRow.MiddleName), "Middle Name", 150),
+        new(nameof(SurveyGridRow.SuffixId), "Suffix ID", 120),
+        new(nameof(SurveyGridRow.WholeName), "Whole Name", 170),
+        new(nameof(SurveyGridRow.Address), "Address", 220),
+        new(nameof(SurveyGridRow.OtherAddress), "Other Address", 220),
+        new(nameof(SurveyGridRow.PersonPlaceName), "Person Place Name", 180),
+        new(nameof(SurveyGridRow.PersonStateAbbreviation), "Person State Abbreviation", 230),
+        new(nameof(SurveyGridRow.PersonZip5), "Person Zip 5", 130),
+        new(nameof(SurveyGridRow.PersonZip4), "Person Zip 4", 130),
+        new(nameof(SurveyGridRow.PersonPhone), "Person Phone", 150),
+        new(nameof(SurveyGridRow.PersonPhoneChar), "Person Phone Char", 170),
+        new(nameof(SurveyGridRow.PersonCellPhoneFlag), "Person Cell Phone Flag", 210),
+        new(nameof(SurveyGridRow.PersonCellPhoneFlagChar), "Person Cell Phone Flag (char)", 250),
+        new(nameof(SurveyGridRow.PersonOtherPhone), "Person Other Phone", 190),
+        new(nameof(SurveyGridRow.PersonOtherPhoneChar), "Person Other Phone (char)", 230),
+        new(nameof(SurveyGridRow.PersonOtherCellPhoneFlag), "Person Other Cell Phone Flag", 260),
+        new(nameof(SurveyGridRow.PersonOtherCellPhoneFlagChar), "Person Other Cell Phone Flag (char)", 300),
+        new(nameof(SurveyGridRow.PersonFaxPhone), "Person Fax Phone", 180),
+        new(nameof(SurveyGridRow.PersonFaxPhoneChar), "Person Fax Phone (char)", 220),
+        new(nameof(SurveyGridRow.CountyId), "County ID", 120),
+        new(nameof(SurveyGridRow.DistrictId), "District ID", 120),
+        new(nameof(SurveyGridRow.PersonEmail), "Person Email", 220),
+        new(nameof(SurveyGridRow.LanguageId), "Language ID", 130),
+        new(nameof(SurveyGridRow.Latitude), "Latitude", 120),
+        new(nameof(SurveyGridRow.Longitude), "Longitude", 120),
+        new(nameof(SurveyGridRow.DataCollectionModeCodeId), "Data Collection Mode Code ID", 260),
+        new(nameof(SurveyGridRow.DcmsCodeId), "DCMS Code ID", 140),
+        new(nameof(SurveyGridRow.PermSupervisorId), "Perm Supervisor ID", 170),
+        new(nameof(SurveyGridRow.PermEnumeratorId), "Perm Enumerator ID", 180),
+        new(nameof(SurveyGridRow.SurveyCode), "Survey Code", 180),
+        new(nameof(SurveyGridRow.Barcode), "Barcode", 220),
+        new(nameof(SurveyGridRow.RfoReviewFlag), "RFO Review Flag", 160),
+        new(nameof(SurveyGridRow.MarkedFlag), "Marked Flag", 130),
+        new(nameof(SurveyGridRow.Mseqnum), "Mseqnum", 120),
+        new(nameof(SurveyGridRow.CountyName), "County Name", 180),
+        new(nameof(SurveyGridRow.OperationCountyName), "Operation County Name", 210),
+        new(nameof(SurveyGridRow.RespDate), "Resp Date", 140, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.DataPull), "Data Pull", 140, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.ResponseCode), "Response Code", 150),
+        new(nameof(SurveyGridRow.RespondentCode), "Respondent Code", 160),
+        new(nameof(SurveyGridRow.ReportingModeCode), "Reporting Mode Code", 190),
+        new(nameof(SurveyGridRow.DataCaptureCode), "Data Capture Code", 180),
+        new(nameof(SurveyGridRow.DataCollectionEnumeratorId), "Data Collection Enumerator ID", 260),
+        new(nameof(SurveyGridRow.DataCollectionDate), "Data Collection Date", 180, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.ReviewFlag), "Review Flag", 120),
+        new(nameof(SurveyGridRow.StartedFlag), "Started Flag", 130),
+        new(nameof(SurveyGridRow.SavedFlag), "Saved Flag", 120),
+        new(nameof(SurveyGridRow.OutOfBusinessId), "Out of Business ID", 170),
+        new(nameof(SurveyGridRow.XStateLink), "XState Link", 150),
+        new(nameof(SurveyGridRow.CoordinationId), "Coordination ID", 160),
+        new(nameof(SurveyGridRow.SurveyTitle), "Survey Title", 240),
+        new(nameof(SurveyGridRow.SurveySubtitle), "Survey Subtitle", 240),
+        new(nameof(SurveyGridRow.Version), "Version", 160),
+        new(nameof(SurveyGridRow.StateName), "State Name", 170),
+        new(nameof(SurveyGridRow.StateAbbreviation), "State Abbreviation", 180),
+        new(nameof(SurveyGridRow.OperationComments), "Operation Comments", 260),
+        new(nameof(SurveyGridRow.PersonComments), "Person Comments", 260),
+        new(nameof(SurveyGridRow.BackupDcmsCode), "Backup DCMS Code", 170),
+        new(nameof(SurveyGridRow.BackupEnumeratorId), "Backup Enumerator ID", 190),
+        new(nameof(SurveyGridRow.SupervisorId), "Supervisor ID", 150),
+        new(nameof(SurveyGridRow.EnumeratorId), "Enumerator ID", 150),
+        new(nameof(SurveyGridRow.EnumeratorName), "Enumerator Name", 180),
+        new(nameof(SurveyGridRow.SupervisorName), "Supervisor Name", 180),
+        new(nameof(SurveyGridRow.BackupSupervisorId), "Backup Supervisor ID", 190),
+        new(nameof(SurveyGridRow.SmsCheckIn), "SMS Check In", 140),
+        new(nameof(SurveyGridRow.HistoricResponsePercentage1Year), "Historic Response Percentage 1 Year", 300),
+        new(nameof(SurveyGridRow.HistoricResponseSurveys1Year), "Historic Response Surveys 1 Year", 280),
+        new(nameof(SurveyGridRow.HistoricResponseMode1Year), "Historic Response Mode 1 Year", 260),
+        new(nameof(SurveyGridRow.HistoricResponsePercentage3Years), "Historic Response Percentage 3 Years", 310),
+        new(nameof(SurveyGridRow.HistoricResponseSurveys3Years), "Historic Response Surveys 3 Years", 290),
+        new(nameof(SurveyGridRow.HistoricResponseMode3Years), "Historic Response Mode 3 Years", 270),
+        new(nameof(SurveyGridRow.HistoricResponsePercentage5Years), "Historic Response Percentage 5 Years", 310),
+        new(nameof(SurveyGridRow.HistoricResponseSurveys5Years), "Historic Response Surveys 5 Years", 290),
+        new(nameof(SurveyGridRow.HistoricResponseMode5Years), "Historic Response Mode 5 Years", 270),
+        new(nameof(SurveyGridRow.StartDcDcmsCode), "Start DC DCMS Code", 180),
+        new(nameof(SurveyGridRow.StartDcEnumerator), "Start DC Enumerator", 180),
+        new(nameof(SurveyGridRow.StartDcSupervisor), "Start DC Supervisor", 180),
+        new(nameof(SurveyGridRow.PartnershipFlag), "Partnership Flag", 160),
+        new(nameof(SurveyGridRow.AddedRecordFlag), "Added Record Flag", 170),
+        new(nameof(SurveyGridRow.EnumeratorNotes), "Enumerator Notes", 260),
+        new(nameof(SurveyGridRow.CapiAppointmentFlag), "CAPI Appointment Flag", 200),
+        new(nameof(SurveyGridRow.CapiAttemptedContacts), "CAPI Attempted Contacts", 210),
+        new(nameof(SurveyGridRow.Tier), "Tier", 100),
+        new(nameof(SurveyGridRow.ReactivatedFlag), "Reactivated Flag", 160),
+        new(nameof(SurveyGridRow.ReactivatedFlagDate), "Reactivated Flag Date", 190, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.ManagerId), "Manager ID", 140),
+        new(nameof(SurveyGridRow.ManagerName), "Manager Name", 170),
+        new(nameof(SurveyGridRow.ComputedSkill), "Computed Skill", 150),
+        new(nameof(SurveyGridRow.ManualSkill), "Manual Skill", 140),
+        new(nameof(SurveyGridRow.CoordinationFlag), "Coordination Flag", 160),
+        new(nameof(SurveyGridRow.Ruid), "RUID", 110)
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Rows = await Http.GetFromJsonAsync<List<SurveyGridRow>>("api/survey-instances") ?? [];
+        }
+        catch (Exception ex)
+        {
+            LoadError = $"Survey results could not be loaded from the server endpoint. {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void ShowColumnChooserAsync()
+    {
+        if (SurveyGrid is not null)
+        {
+            SurveyGrid.ShowColumnChooser();
+        }
+    }
+
+    private async Task ClearGridFiltersAsync()
+    {
+        if (SurveyGrid is not null)
+        {
+            SurveyGrid.ClearFilter();
+        }
+        GridSearchText = "";
+        await SaveGridViewAsync();
+    }
+
+    private async Task SaveGridViewAsync()
+    {
+        if (SurveyGrid is null)
+            return;
+
+        var layout = SurveyGrid.SaveLayout();
+        await Js.InvokeVoidAsync("smsSaveJson", SurveyGridLayoutStorageKey, layout);
+    }
+
+    private async Task ResetGridViewAsync()
+    {
+        await Js.InvokeVoidAsync("smsRemoveStorage", SurveyGridLayoutStorageKey);
+        if (SurveyGrid is not null)
+        {
+            SurveyGrid.LoadLayout(new GridPersistentLayout());
+        }
+        GridSearchText = "";
+    }
+
+    private async Task OnGridLayoutAutoLoading(GridPersistentLayoutEventArgs e)
+    {
+        var layout = await Js.InvokeAsync<GridPersistentLayout?>("smsLoadJson", SurveyGridLayoutStorageKey);
+        if (layout is not null)
+        {
+            e.Layout = layout;
+        }
+    }
+
+    private async Task OnGridLayoutAutoSaving(GridPersistentLayoutEventArgs e)
+    {
+        await Js.InvokeVoidAsync("smsSaveJson", SurveyGridLayoutStorageKey, e.Layout);
+    }
+
+    private sealed record GridColumnSpec(string FieldName, string Caption, int MinWidth, string? DisplayFormat = null);
+}

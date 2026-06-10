@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SMS Lite</title>
+    <base href="/" />
+    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="bootstrap-icons/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="sms_lite.styles.css" />
+    @DxResourceManager.RegisterTheme(Themes.Fluent)
+    @DxResourceManager.RegisterScripts()
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    <div class="scaled-root">
+        <Routes @rendermode="InteractiveServer" />
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">×</span>
+    </div>
+
+    <script src="_framework/blazor.web.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

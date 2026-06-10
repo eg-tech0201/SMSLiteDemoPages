@@ -1,0 +1,649 @@
+@page "/search"
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject SMSLiteStaticDemo.Services.SurveyInstanceService SurveyInstanceService
+@using System.Text.Json
+@using System.Diagnostics
+
+<PageTitle>Global Search</PageTitle>
+
+<h1 class="page-h1">Global Search</h1>
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb breadcrumb-mini mb-0">
+        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Global Search</li>
+    </ol>
+</nav>
+
+<div class="search-page-shell">
+    <div class="card search-toolbar-card">
+        <div class="card-body">
+            <form class="search-form" @onsubmit="ApplySearch" @onsubmit:preventDefault="true">
+                <input class="search-input" placeholder="Search by FIPS, POID, survey name, or survey ID" @bind="SearchText" @bind:event="oninput" />
+                <button class="button-primary" type="submit">Search</button>
+                <button class="button-lite" type="button" @onclick="ToggleAdvanced">@(ShowAdvanced ? "Hide Filters" : "Advanced Filters")</button>
+                <button class="button-lite" type="button" @onclick="ClearAllFilters">Clear</button>
+            </form>
+
+            @if (ShowAdvanced)
+            {
+                <div class="advanced-panel">
+                    <div class="advanced-panel-header">
+                        <div>
+                            <div class="advanced-panel-title">Advanced Search Filters</div>
+                        </div>
+                        <div class="advanced-panel-actions">
+                            <span class="criteria-count">@ActiveCriteriaCount active</span>
+                            <button class="button-lite" type="button" @onclick="ClearAdvancedFilters">Reset Filters</button>
+                        </div>
+                    </div>
+
+                    <div class="advanced-grid">
+                        <label>
+                            <span>Record Type</span>
+                            <select class="select-lite" @bind="RecordTypeFilter">
+                                <option value="">All</option>
+                                <option value="SMS Survey">SMS Survey</option>
+                                <option value="SMS Respondent">SMS Respondent</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Status</span>
+                            <select class="select-lite" @bind="StatusFilter">
+                                <option value="">All</option>
+                                @foreach (var status in StatusOptions)
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            <span>Survey Type</span>
+                            <select class="select-lite" @bind="SurveyTypeFilter">
+                                <option value="">All</option>
+                                @foreach (var surveyType in SurveyTypeOptions)
+                                {
+                                    <option value="@surveyType">@surveyType</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            <span>Geographic Area</span>
+                            <select class="select-lite" @bind="GeographicAreaFilter">
+                                <option value="">All</option>
+                                @foreach (var area in GeographicAreaOptions)
+                                {
+                                    <option value="@area">@area</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            <span>Date Range Start</span>
+                            <InputDate class="select-lite" @bind-Value="StartDateFilter" />
+                        </label>
+                        <label>
+                            <span>Date Range End</span>
+                            <InputDate class="select-lite" @bind-Value="EndDateFilter" />
+                        </label>
+                    </div>
+
+                    <div class="advanced-grid exact-grid">
+                        <label>
+                            <span>POID</span>
+                            <input class="search-input compact-input" placeholder="Exact POID" @bind="PoidFilter" />
+                        </label>
+                        <label>
+                            <span>Respondent ID</span>
+                            <input class="search-input compact-input" placeholder="Exact respondent ID" @bind="RespondentIdFilter" />
+                        </label>
+                        <label>
+                            <span>Tracking Number</span>
+                            <input class="search-input compact-input" placeholder="Survey or respondent tracking #" @bind="TrackingFilter" />
+                        </label>
+                    </div>
+                </div>
+            }
+
+            @* Filter chips are shown inside the Advanced Filters panel; remove inline chips here *@
+
+            <div class="saved-search-row">
+                <input class="search-input saved-search-input" placeholder="Saved search name" @bind="SavedSearchName" />
+                <button class="button-lite" type="button" @onclick="SaveCurrentSearchAsync">Save Search</button>
+                <select class="select-lite" @bind="SelectedSavedSearch">
+                    <option value="">Saved searches</option>
+                    @foreach (var search in SavedSearches)
+                    {
+                        <option value="@search.Name">@search.Name</option>
+                    }
+                </select>
+                <button class="button-lite" type="button" @onclick="ApplySavedSearchAsync" disabled="@string.IsNullOrWhiteSpace(SelectedSavedSearch)">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-results-toolbar">
+        <div class="pager">
+            <button class="button-lite" @onclick="PrevPage" disabled="@IsPrevDisabled">‹</button>
+            <span class="pager-text">@PageSummary</span>
+            <button class="button-lite" @onclick="NextPage" disabled="@IsNextDisabled">›</button>
+        </div>
+        <div class="pagesize">
+            <span class="pagesize-label">Rows:</span>
+            <select class="select-lite" @bind="PageSizeString" @bind:after="OnPageSizeChanged">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="All">All</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="search-summary">@SearchSummaryText</div>
+
+    @if (!string.IsNullOrWhiteSpace(StatusMessage))
+    {
+        <div class="search-status-message">@StatusMessage</div>
+    }
+
+    @foreach (var group in GroupedResults)
+    {
+        <div class="card results-card">
+            <div class="card-body">
+                <div class="results-group-title">@group.Label</div>
+                @if (group.Items.Count == 0)
+                {
+                    <div class="text-muted">No matching @group.Label records.</div>
+                }
+                else
+                {
+                    <div class="results-list">
+                        @foreach (var result in group.Items)
+                        {
+                            <a class="result-item" href="@result.Link">
+                                <div class="result-title">@result.Title</div>
+                                <div class="result-meta">@result.Subtitle</div>
+                                <div class="result-meta">Tracking: @result.TrackingNumber • State: @result.GeographicArea • Date: @result.Date.ToString("MM/dd/yyyy")</div>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "q")] public string? Query { get; set; }
+    [SupplyParameterFromQuery(Name = "recordType")] public string? RecordTypeQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "status")] public string? StatusQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "surveyType")] public string? SurveyTypeQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "geo")] public string? GeographicQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "start")] public DateTime? StartDateQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "end")] public DateTime? EndDateQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "poid")] public string? PoidQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "respondentId")] public string? RespondentIdQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "tracking")] public string? TrackingQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "size")] public string? SizeQuery { get; set; }
+
+    private const string SavedSearchStorageKey = "sms.global-search.saved";
+    private string SearchText { get; set; } = string.Empty;
+    private string RecordTypeFilter { get; set; } = string.Empty;
+    private string StatusFilter { get; set; } = string.Empty;
+    private string SurveyTypeFilter { get; set; } = string.Empty;
+    private string GeographicAreaFilter { get; set; } = string.Empty;
+    private DateTime? StartDateFilter { get; set; }
+    private DateTime? EndDateFilter { get; set; }
+    private string PoidFilter { get; set; } = string.Empty;
+    private string RespondentIdFilter { get; set; } = string.Empty;
+    private string TrackingFilter { get; set; } = string.Empty;
+    private bool ShowAdvanced { get; set; }
+    private string SavedSearchName { get; set; } = string.Empty;
+    private string SelectedSavedSearch { get; set; } = string.Empty;
+    private List<SavedSearchModel> SavedSearches { get; set; } = [];
+    private List<SearchResultRow> VisibleResults { get; set; } = [];
+    private double LastSearchElapsedMs { get; set; }
+    private string? StatusMessage { get; set; }
+    private int PageIndex { get; set; }
+    private int PageSize { get; set; } = 10;
+    private string PageSizeString { get; set; } = "10";
+
+    private int ActiveCriteriaCount =>
+        CountActiveCriteria(SearchText, RecordTypeFilter, StatusFilter, SurveyTypeFilter, GeographicAreaFilter, PoidFilter, RespondentIdFilter, TrackingFilter)
+        + (StartDateFilter.HasValue ? 1 : 0)
+        + (EndDateFilter.HasValue ? 1 : 0);
+
+    private List<ResultGroup> GroupedResults =>
+        new()
+        {
+            new ResultGroup("SMS Survey", PagedResults.Where(r => r.RecordType == "SMS Survey").ToList()),
+            new ResultGroup("SMS Respondent", PagedResults.Where(r => r.RecordType == "SMS Respondent").ToList())
+        };
+
+    private string SearchSummaryText =>
+        $"{VisibleResults.Count} result(s) across SMS surveys and respondents. {ActiveCriteriaCount} active criteria. Demo runtime: {LastSearchElapsedMs:0.##} ms.";
+
+    private List<SearchResultRow> PagedResults
+    {
+        get
+        {
+            if (PageSize <= 0 || VisibleResults.Count == 0)
+                return VisibleResults;
+
+            var maxPage = Math.Max(0, (int)Math.Ceiling(VisibleResults.Count / (double)PageSize) - 1);
+            if (PageIndex > maxPage)
+                PageIndex = maxPage;
+
+            return VisibleResults.Skip(PageIndex * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private string PageSummary
+    {
+        get
+        {
+            var total = VisibleResults.Count;
+            if (total == 0)
+                return "0 results";
+
+            if (PageSize <= 0)
+                return $"1-{total} of {total} • Page 1 of 1";
+
+            var start = PageIndex * PageSize + 1;
+            var end = Math.Min(total, (PageIndex + 1) * PageSize);
+            var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)PageSize));
+            return $"{start}-{end} of {total} • Page {PageIndex + 1} of {totalPages}";
+        }
+    }
+
+    private bool IsPrevDisabled => PageIndex <= 0 || PageSize <= 0;
+    private bool IsNextDisabled => PageSize <= 0 || (PageIndex + 1) * PageSize >= VisibleResults.Count;
+
+    private List<FilterChipModel> ActiveFilterChips => BuildActiveFilterChips();
+
+    private IEnumerable<string> StatusOptions => SurveyInstanceService.Instances.Select(i => i.Status).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s);
+    private IEnumerable<string> SurveyTypeOptions => SurveyInstanceService.Instances.Select(i => i.SurveyFrequency).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s);
+    private IEnumerable<string> GeographicAreaOptions => SurveyInstanceService.Instances.Select(i => i.StateAlpha).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        SearchText = Query ?? string.Empty;
+        RecordTypeFilter = RecordTypeQuery ?? string.Empty;
+        StatusFilter = StatusQuery ?? string.Empty;
+        SurveyTypeFilter = SurveyTypeQuery ?? string.Empty;
+        GeographicAreaFilter = GeographicQuery ?? string.Empty;
+        StartDateFilter = StartDateQuery;
+        EndDateFilter = EndDateQuery;
+        PoidFilter = PoidQuery ?? string.Empty;
+        RespondentIdFilter = RespondentIdQuery ?? string.Empty;
+        TrackingFilter = TrackingQuery ?? string.Empty;
+        ApplyPageSizeQuery();
+        ShowAdvanced = HasAdvancedFilters();
+        SavedSearches = await LoadSavedSearchesAsync();
+        RefreshResults();
+    }
+
+    private void ApplySearch()
+    {
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(SearchText))
+            query.Add($"q={Uri.EscapeDataString(SearchText.Trim())}");
+        if (!string.IsNullOrWhiteSpace(RecordTypeFilter))
+            query.Add($"recordType={Uri.EscapeDataString(RecordTypeFilter)}");
+        if (!string.IsNullOrWhiteSpace(StatusFilter))
+            query.Add($"status={Uri.EscapeDataString(StatusFilter)}");
+        if (!string.IsNullOrWhiteSpace(SurveyTypeFilter))
+            query.Add($"surveyType={Uri.EscapeDataString(SurveyTypeFilter)}");
+        if (!string.IsNullOrWhiteSpace(GeographicAreaFilter))
+            query.Add($"geo={Uri.EscapeDataString(GeographicAreaFilter)}");
+        if (StartDateFilter.HasValue)
+            query.Add($"start={StartDateFilter.Value:yyyy-MM-dd}");
+        if (EndDateFilter.HasValue)
+            query.Add($"end={EndDateFilter.Value:yyyy-MM-dd}");
+        if (!string.IsNullOrWhiteSpace(PoidFilter))
+            query.Add($"poid={Uri.EscapeDataString(PoidFilter.Trim())}");
+        if (!string.IsNullOrWhiteSpace(RespondentIdFilter))
+            query.Add($"respondentId={Uri.EscapeDataString(RespondentIdFilter.Trim())}");
+        if (!string.IsNullOrWhiteSpace(TrackingFilter))
+            query.Add($"tracking={Uri.EscapeDataString(TrackingFilter.Trim())}");
+        if (!string.IsNullOrWhiteSpace(PageSizeString) && !PageSizeString.Equals("10", StringComparison.OrdinalIgnoreCase))
+            query.Add($"size={Uri.EscapeDataString(PageSizeString)}");
+
+        Navigation.NavigateTo($"search{(query.Count == 0 ? string.Empty : $"?{string.Join("&", query)}")}");
+    }
+
+    private void ToggleAdvanced() => ShowAdvanced = !ShowAdvanced;
+
+    private void ClearAllFilters()
+    {
+        SearchText = string.Empty;
+        ClearAdvancedFilters();
+        SavedSearchName = string.Empty;
+        SelectedSavedSearch = string.Empty;
+        Navigation.NavigateTo("search");
+    }
+
+    private void ClearAdvancedFilters()
+    {
+        RecordTypeFilter = string.Empty;
+        StatusFilter = string.Empty;
+        SurveyTypeFilter = string.Empty;
+        GeographicAreaFilter = string.Empty;
+        StartDateFilter = null;
+        EndDateFilter = null;
+        PoidFilter = string.Empty;
+        RespondentIdFilter = string.Empty;
+        TrackingFilter = string.Empty;
+    }
+
+    private async Task SaveCurrentSearchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(SavedSearchName))
+            return;
+
+        var model = new SavedSearchModel
+        {
+            Name = SavedSearchName.Trim(),
+            SearchText = SearchText,
+            RecordType = RecordTypeFilter,
+            Status = StatusFilter,
+            SurveyType = SurveyTypeFilter,
+            GeographicArea = GeographicAreaFilter,
+            StartDate = StartDateFilter,
+            EndDate = EndDateFilter,
+            Poid = PoidFilter,
+            RespondentId = RespondentIdFilter,
+            TrackingNumber = TrackingFilter
+        };
+        SavedSearches.RemoveAll(s => s.Name.Equals(model.Name, StringComparison.OrdinalIgnoreCase));
+        SavedSearches.Add(model);
+        SavedSearches = SavedSearches.OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        await Js.InvokeVoidAsync("localStorage.setItem", SavedSearchStorageKey, JsonSerializer.Serialize(SavedSearches));
+        SelectedSavedSearch = model.Name;
+        StatusMessage = $"Saved search '{model.Name}'.";
+    }
+
+    private async Task ApplySavedSearchAsync()
+    {
+        var model = SavedSearches.FirstOrDefault(s => s.Name.Equals(SelectedSavedSearch, StringComparison.OrdinalIgnoreCase));
+        if (model is null)
+            return;
+
+        SearchText = model.SearchText;
+        RecordTypeFilter = model.RecordType;
+        StatusFilter = model.Status;
+        SurveyTypeFilter = model.SurveyType;
+        GeographicAreaFilter = model.GeographicArea;
+        StartDateFilter = model.StartDate;
+        EndDateFilter = model.EndDate;
+        PoidFilter = model.Poid;
+        RespondentIdFilter = model.RespondentId;
+        TrackingFilter = model.TrackingNumber;
+        ApplySearch();
+        await Task.CompletedTask;
+    }
+
+    private async Task<List<SavedSearchModel>> LoadSavedSearchesAsync()
+    {
+        try
+        {
+            var json = await Js.InvokeAsync<string?>("localStorage.getItem", SavedSearchStorageKey);
+            return string.IsNullOrWhiteSpace(json)
+                ? []
+                : JsonSerializer.Deserialize<List<SavedSearchModel>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private List<SearchResultRow> BuildResults()
+    {
+        var results = new List<SearchResultRow>();
+        var term = SearchText.Trim();
+
+        foreach (var survey in SurveyInstanceService.Instances)
+        {
+            var trackingNumber = $"{survey.SurveyId}-{survey.SampleId}";
+            var relevance = ComputeRelevance(term, survey.SurveyId.ToString(), trackingNumber, survey.Title, survey.StateId, survey.StateAlpha);
+            results.Add(new SearchResultRow(
+                "SMS Survey",
+                survey.Title,
+                $"{survey.SampleName} • {survey.Status} • {survey.SurveyFrequency}",
+                trackingNumber,
+                survey.ReferenceDate,
+                survey.Status,
+                survey.SurveyFrequency,
+                survey.StateAlpha,
+                $"surveys/details?referenceDate={survey.ReferenceDate:yyyy-MM-dd}&surveyId={survey.SurveyId}&sampleId={Uri.EscapeDataString(survey.SampleId)}",
+                relevance,
+                string.Empty,
+                string.Empty,
+                survey.SurveyId.ToString(),
+                survey.SampleId));
+        }
+
+        foreach (var surveyId in SurveyInstanceService.Instances.Select(i => i.SurveyId).Distinct())
+        {
+            foreach (var respondent in SurveyInstanceService.GetSurveyRespondentRecords(surveyId))
+            {
+                var values = respondent.Fields.ToDictionary(f => NormalizeFieldKey(f.Field), f => f.Value, StringComparer.OrdinalIgnoreCase);
+                var poid = values.GetValueOrDefault("poid", string.Empty);
+                var trackingNumber = respondent.SKey;
+                var relevance = ComputeRelevance(term, poid, respondent.RespondentId.ToString(), trackingNumber, respondent.StateId, respondent.StateAlpha, values.GetValueOrDefault("whole_name", string.Empty));
+                results.Add(new SearchResultRow(
+                    "SMS Respondent",
+                    $"POID {poid}",
+                    $"{values.GetValueOrDefault("whole_name", "Respondent")} • {values.GetValueOrDefault("response_code", "Unknown")}",
+                    trackingNumber,
+                respondent.ReferenceDate,
+                values.GetValueOrDefault("response_code", string.Empty),
+                "Respondent",
+                respondent.StateAlpha,
+                $"respondents/details?stateId={Uri.EscapeDataString(respondent.StateId)}&poid={Uri.EscapeDataString(poid)}&surveyId={respondent.SurveyId}&sampleId={Uri.EscapeDataString(respondent.SampleId)}&referenceDate={respondent.ReferenceDate:yyyy-MM-dd}",
+                    relevance,
+                    poid,
+                    respondent.RespondentId.ToString(),
+                    respondent.SurveyId.ToString(),
+                    respondent.SampleId));
+            }
+        }
+
+        return results;
+    }
+
+    private bool PassesFilters(SearchResultRow row)
+    {
+        if (!string.IsNullOrWhiteSpace(SearchText) && row.Relevance == 0)
+            return false;
+        if (!string.IsNullOrWhiteSpace(RecordTypeFilter) && !row.RecordType.Equals(RecordTypeFilter, StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (!string.IsNullOrWhiteSpace(StatusFilter) && !row.Status.Equals(StatusFilter, StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (!string.IsNullOrWhiteSpace(SurveyTypeFilter) && !row.SurveyType.Equals(SurveyTypeFilter, StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (!string.IsNullOrWhiteSpace(GeographicAreaFilter) && !row.GeographicArea.Equals(GeographicAreaFilter, StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (!string.IsNullOrWhiteSpace(PoidFilter) && !row.Poid.Equals(PoidFilter.Trim(), StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (!string.IsNullOrWhiteSpace(RespondentIdFilter) && !row.RespondentId.Equals(RespondentIdFilter.Trim(), StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (!string.IsNullOrWhiteSpace(TrackingFilter) && !row.TrackingNumber.Contains(TrackingFilter.Trim(), StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (StartDateFilter.HasValue && row.Date.Date < StartDateFilter.Value.Date)
+            return false;
+        if (EndDateFilter.HasValue && row.Date.Date > EndDateFilter.Value.Date)
+            return false;
+        return true;
+    }
+
+    private static int ComputeRelevance(string term, params string[] values)
+    {
+        if (string.IsNullOrWhiteSpace(term))
+            return 1;
+
+        var normalized = term.Trim();
+        var score = 0;
+        foreach (var value in values.Where(v => !string.IsNullOrWhiteSpace(v)))
+        {
+            if (value.Equals(normalized, StringComparison.OrdinalIgnoreCase))
+                score += 10;
+            else if (value.Contains(normalized, StringComparison.OrdinalIgnoreCase))
+                score += 5;
+        }
+
+        return score;
+    }
+
+    private static string NormalizeFieldKey(string field)
+    {
+        var lowered = field.Trim().ToLowerInvariant();
+        var chars = lowered.Select(ch => char.IsLetterOrDigit(ch) ? ch : '_').ToArray();
+        return new string(chars).Replace("__", "_").Trim('_');
+    }
+
+    private void RefreshResults()
+    {
+        var stopwatch = Stopwatch.StartNew();
+        VisibleResults = BuildResults()
+            .Where(PassesFilters)
+            .OrderBy(r => r.RecordType)
+            .ThenByDescending(r => r.Relevance)
+            .ThenByDescending(r => r.Date)
+            .ToList();
+        PageIndex = 0;
+        stopwatch.Stop();
+        LastSearchElapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+        StatusMessage = ActiveCriteriaCount >= 2
+            ? "Advanced filter criteria applied."
+            : "Use one or more criteria to search. Two or more criteria will narrow results more effectively.";
+    }
+
+    private bool HasAdvancedFilters() =>
+        !string.IsNullOrWhiteSpace(RecordTypeFilter) ||
+        !string.IsNullOrWhiteSpace(StatusFilter) ||
+        !string.IsNullOrWhiteSpace(SurveyTypeFilter) ||
+        !string.IsNullOrWhiteSpace(GeographicAreaFilter) ||
+        StartDateFilter.HasValue ||
+        EndDateFilter.HasValue ||
+        !string.IsNullOrWhiteSpace(PoidFilter) ||
+        !string.IsNullOrWhiteSpace(RespondentIdFilter) ||
+        !string.IsNullOrWhiteSpace(TrackingFilter);
+
+    private List<FilterChipModel> BuildActiveFilterChips()
+    {
+        var chips = new List<FilterChipModel>();
+
+        // Search text is not a filter chip — it's the free-text query used by the search action
+        AddChip(chips, RecordTypeFilter, "Record Type", () => RecordTypeFilter = string.Empty);
+        AddChip(chips, StatusFilter, "Status", () => StatusFilter = string.Empty);
+        AddChip(chips, SurveyTypeFilter, "Survey Type", () => SurveyTypeFilter = string.Empty);
+        AddChip(chips, GeographicAreaFilter, "Area", () => GeographicAreaFilter = string.Empty);
+        AddChip(chips, PoidFilter, "POID", () => PoidFilter = string.Empty);
+        AddChip(chips, RespondentIdFilter, "Respondent", () => RespondentIdFilter = string.Empty);
+        AddChip(chips, TrackingFilter, "Tracking", () => TrackingFilter = string.Empty);
+
+        if (StartDateFilter.HasValue)
+            chips.Add(new FilterChipModel($"Start: {StartDateFilter.Value:MM/dd/yyyy}", RemoveAndSearch(() => StartDateFilter = null)));
+        if (EndDateFilter.HasValue)
+            chips.Add(new FilterChipModel($"End: {EndDateFilter.Value:MM/dd/yyyy}", RemoveAndSearch(() => EndDateFilter = null)));
+
+        return chips;
+    }
+
+    private static int CountActiveCriteria(params string[] values) =>
+        values.Count(value => !string.IsNullOrWhiteSpace(value));
+
+    private Action RemoveAndSearch(Action remove) => () =>
+    {
+        remove();
+        ApplySearch();
+    };
+
+    private void AddChip(List<FilterChipModel> chips, string? value, string label, Action remove)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+            chips.Add(new FilterChipModel($"{label}: {value.Trim()}", RemoveAndSearch(remove)));
+    }
+
+    private void PrevPage()
+    {
+        if (PageIndex > 0)
+            PageIndex--;
+    }
+
+    private void NextPage()
+    {
+        if (!IsNextDisabled)
+            PageIndex++;
+    }
+
+    private void OnPageSizeChanged()
+    {
+        PageIndex = 0;
+        PageSizeString = PageSizeString?.Trim() ?? "10";
+        if (PageSizeString.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            PageSize = 0;
+            PageSizeString = "All";
+            return;
+        }
+
+        if (int.TryParse(PageSizeString, out var parsed) && parsed > 0)
+        {
+            PageSize = parsed;
+            return;
+        }
+
+        PageSize = 10;
+        PageSizeString = "10";
+    }
+
+    private void ApplyPageSizeQuery()
+    {
+        if (string.IsNullOrWhiteSpace(SizeQuery))
+        {
+            PageSize = 10;
+            PageSizeString = "10";
+            return;
+        }
+
+        PageSizeString = SizeQuery;
+        OnPageSizeChanged();
+    }
+
+    private sealed record SearchResultRow(
+        string RecordType,
+        string Title,
+        string Subtitle,
+        string TrackingNumber,
+        DateTime Date,
+        string Status,
+        string SurveyType,
+        string GeographicArea,
+        string Link,
+        int Relevance,
+        string Poid,
+        string RespondentId,
+        string SurveyId,
+        string SampleId
+    );
+
+    private sealed class SavedSearchModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string SearchText { get; set; } = string.Empty;
+        public string RecordType { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string SurveyType { get; set; } = string.Empty;
+        public string GeographicArea { get; set; } = string.Empty;
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public string Poid { get; set; } = string.Empty;
+        public string RespondentId { get; set; } = string.Empty;
+        public string TrackingNumber { get; set; } = string.Empty;
+    }
+
+    private sealed record ResultGroup(string Label, List<SearchResultRow> Items);
+    private sealed record FilterChipModel(string Label, Action RemoveAndSearch);
+}
