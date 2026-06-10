@@ -1,9 +1,8 @@
 @page "/surveys"
-@using SMSLiteStaticDemo.Services
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
-@inject SMSLiteStaticDemo.Services.SurveyInstanceService SurveyInstanceService
+@inject sms_lite.Services.SurveyInstanceService SurveyInstanceService
 
 <h1 class="page-h1">Surveys</h1>
 <nav aria-label="breadcrumb" class="mb-2">
@@ -174,38 +173,7 @@
     <span class="search-hint-text">or refine with filters.</span>
 </div>
 
-<section class="recent-surveys-panel">
-    <div class="panel-title-row">
-        <div class="panel-title">My Recent Surveys</div>
-        <a class="button-lite" href="surveys/results">View all</a>
-    </div>
-    @if (IsRecentSurveysLoading)
-    {
-        <div class="empty-hint">Loading recent surveys...</div>
-    }
-    else if (!string.IsNullOrWhiteSpace(RecentSurveysError))
-    {
-        <div class="empty-hint">@RecentSurveysError</div>
-    }
-    else
-    {
-        <div class="table-wrap">
-            <DxGrid Data="@RecentSurveyRows"
-                    CssClass="recent-surveys-grid"
-                    PageSize="10"
-                    PagerVisible="false"
-                    ShowFilterRow="false"
-                    ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
-                    TextWrapEnabled="false">
-                <Columns>
-                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyId)" Caption="Survey ID" MinWidth="120" />
-                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyDate)" Caption="Survey Date" DisplayFormat="MM/dd/yyyy" MinWidth="140" />
-                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SampleId)" Caption="Sample ID" MinWidth="140" />
-                </Columns>
-            </DxGrid>
-        </div>
-    }
-</section>
+<RecentSurveysGrid />
 
 @code {
     private string SearchText { get; set; } = "";
@@ -235,27 +203,6 @@
     private int? ReferenceMonth { get; set; }
     private int? ReferenceDay { get; set; }
     private int? ReferenceYear { get; set; }
-    private List<SurveyGridRow> RecentSurveyRows { get; set; } = new();
-    private bool IsRecentSurveysLoading { get; set; } = true;
-    private string? RecentSurveysError { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            var rows = await Http.GetFromJsonAsync<List<SurveyGridRow>>("api/survey-instances") ?? [];
-            RecentSurveyRows = rows.Take(10).ToList();
-        }
-        catch (Exception ex)
-        {
-            RecentSurveysError = $"Recent surveys could not be loaded. {ex.Message}";
-        }
-        finally
-        {
-            IsRecentSurveysLoading = false;
-        }
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (ShowFilters)

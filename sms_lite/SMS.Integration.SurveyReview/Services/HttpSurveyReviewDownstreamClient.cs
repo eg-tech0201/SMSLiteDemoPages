@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using SMS.Integration.SurveyReview.Configuration;
 using Microsoft.Extensions.Options;
-using SMSLiteStaticDemo.Models.Integrations;
+using sms_lite.Models.Integrations;
 
 namespace SMS.Integration.SurveyReview.Services;
 

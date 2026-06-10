@@ -4,7 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>SMSLiteStaticDemo</RootNamespace>
+    <RootNamespace>sms_lite</RootNamespace>
+    <DefaultItemExcludes>$(DefaultItemExcludes);External.ELMA.Client/**;SMS.Integration.SurveyReview/**;bin/**;obj/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\elma\External.ELMA.Client.csproj" />
-    <ProjectReference Include="..\survey_review\SMS.Integration.SurveyReview.csproj" />
+    <ProjectReference Include="External.ELMA.Client\External.ELMA.Client.csproj" />
+    <ProjectReference Include="SMS.Integration.SurveyReview\SMS.Integration.SurveyReview.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-namespace SMSLiteStaticDemo.Models.Workflows;
+namespace sms_lite.Models.Workflows;
 
 public sealed record GlobalSearchQueryDto(
     string? SearchText = null,

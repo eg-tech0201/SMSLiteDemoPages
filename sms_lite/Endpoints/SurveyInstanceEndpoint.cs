@@ -1,5 +1,5 @@
-﻿using SMSLiteStaticDemo.Services;
-using SMSLiteStaticDemo.Server.Services;
+﻿using sms_lite.Services;
+using sms_lite.Server.Services;
 
 public static class SurveyInstanceEndpoints
 {

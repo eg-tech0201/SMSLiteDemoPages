@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Options;
-using SMSLiteStaticDemo.Server.Configuration;
+using sms_lite.Server.Configuration;
 using System.Text;
 
-namespace SMSLiteStaticDemo.Server.Logging;
+namespace sms_lite.Server.Logging;
 
 public sealed class UserFileLogger(IOptions<SmsLiteDatabaseOptions> options) : IUserFileLogger
 {

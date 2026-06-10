@@ -1,4 +1,4 @@
-namespace SMSLiteStaticDemo.Services;
+namespace sms_lite.Services;
 
 public sealed class DemoAuditTrailService
 {

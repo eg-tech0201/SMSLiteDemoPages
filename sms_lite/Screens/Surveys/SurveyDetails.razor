@@ -3,10 +3,10 @@
 @using Microsoft.AspNetCore.Components.Web
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
-@inject SMSLiteStaticDemo.Services.SurveyInstanceService SurveyInstanceService
-@inject SMSLiteStaticDemo.Services.UserRecentSurveyService RecentSurveyService
-@inject SMSLiteStaticDemo.Services.DemoAuditTrailService AuditTrailService
-@inject SMSLiteStaticDemo.Services.DemoUserContextService UserContext
+@inject sms_lite.Services.SurveyInstanceService SurveyInstanceService
+@inject sms_lite.Services.UserRecentSurveyService RecentSurveyService
+@inject sms_lite.Services.DemoAuditTrailService AuditTrailService
+@inject sms_lite.Services.DemoUserContextService UserContext
 
 <PageTitle>@(Detail?.Title ?? "Survey Details")</PageTitle>
 <nav aria-label="breadcrumb" class="mb-2">
@@ -308,12 +308,12 @@ else
     [SupplyParameterFromQuery(Name = "sampleId")] public string? SampleId { get; set; }
     [SupplyParameterFromQuery(Name = "referenceDate")] public string? ReferenceDate { get; set; }
 
-    private SMSLiteStaticDemo.Services.SurveyInstanceDetailResponse? Detail { get; set; }
+    private sms_lite.Services.SurveyInstanceDetailResponse? Detail { get; set; }
     private string? ErrorMessage { get; set; }
     private bool IsLoading { get; set; }
     private string PoidLookupText { get; set; } = "";
     private string? PoidLookupMessage { get; set; }
-    private List<SMSLiteStaticDemo.Services.SurveyRecordIndexItem> RelatedSurveyRecords { get; set; } = new();
+    private List<sms_lite.Services.SurveyRecordIndexItem> RelatedSurveyRecords { get; set; } = new();
     private List<InstanceGridRow> InstanceRows { get; set; } = new();
     private int InstancePageIndex { get; set; }
     private int InstancePageSize { get; set; } = 10;
@@ -338,15 +338,15 @@ else
         "#d66a6a"
     };
     private const string DemoUserId = "demo-user";
-    private List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation> VisibleSurveyDesignerAssociations =>
-        Detail is null ? new List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation>() : FilterAssociationsByRole(Detail.SurveyDesignerAssociations, "NASS");
+    private List<sms_lite.Services.SurveyDesignerAssociation> VisibleSurveyDesignerAssociations =>
+        Detail is null ? new List<sms_lite.Services.SurveyDesignerAssociation>() : FilterAssociationsByRole(Detail.SurveyDesignerAssociations, "NASS");
     private List<CountSlice> OpDomChartItems => BuildChartSlices(Detail?.OpDomCounts.Select(c => (c.Code, c.Definition, c.Count)));
     private List<CountSlice> DcmsChartItems => BuildChartSlices(Detail?.DcmsCounts.Select(c => (c.Code, c.Definition, c.Count)));
     private double ReceivedPercent => GetPercent(Detail?.TotalReceived ?? 0, (Detail?.TotalReceived ?? 0) + (Detail?.TotalDeleted ?? 0));
     private double DeletedPercent => GetPercent(Detail?.TotalDeleted ?? 0, (Detail?.TotalReceived ?? 0) + (Detail?.TotalDeleted ?? 0));
     private List<string> MaterialFilterOptions => new() { "All", "EDR", "CAPI", "CATI", "Mail" };
-    private List<SMSLiteStaticDemo.Services.CollectionMaterial> FilteredCollectionMaterials =>
-        (Detail?.CollectionMaterials ?? new List<SMSLiteStaticDemo.Services.CollectionMaterial>())
+    private List<sms_lite.Services.CollectionMaterial> FilteredCollectionMaterials =>
+        (Detail?.CollectionMaterials ?? new List<sms_lite.Services.CollectionMaterial>())
             .Where(m => SelectedMaterialMode == "All" || m.CollectionMode.Equals(SelectedMaterialMode, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
@@ -522,7 +522,7 @@ else
             .ToList();
     }
 
-    private static string ResolveGridStatus(List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation> associations)
+    private static string ResolveGridStatus(List<sms_lite.Services.SurveyDesignerAssociation> associations)
     {
         var status = associations.FirstOrDefault()?.QuestionnaireStatus ?? "Published";
         return status.ToUpperInvariant();
@@ -724,7 +724,7 @@ else
         return href;
     }
 
-    private string BuildMaterialViewerHref(SMSLiteStaticDemo.Services.CollectionMaterial material)
+    private string BuildMaterialViewerHref(sms_lite.Services.CollectionMaterial material)
     {
         var title = Uri.EscapeDataString(material.MaterialName);
         var mode = Uri.EscapeDataString(material.CollectionMode);
@@ -735,7 +735,7 @@ else
         return $"surveys/document-viewer?title={title}&mode={mode}&version={version}&format={format}&documentId={documentId}&fileName={fileName}&materialType={Uri.EscapeDataString(material.MaterialType)}";
     }
 
-    private async Task DownloadMaterialAsync(SMSLiteStaticDemo.Services.CollectionMaterial material)
+    private async Task DownloadMaterialAsync(sms_lite.Services.CollectionMaterial material)
     {
         var content = BuildDownloadContent(material.MaterialName, material.MaterialType, material.CollectionMode, material.Version, material.FileName);
         await Js.InvokeVoidAsync("smsDownloadText", material.FileName, content, "text/plain;charset=utf-8");
@@ -785,8 +785,8 @@ else
             "External Survey Review integration is still pending API specifications."
         });
 
-    private static List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation> FilterAssociationsByRole(
-        List<SMSLiteStaticDemo.Services.SurveyDesignerAssociation> associations,
+    private static List<sms_lite.Services.SurveyDesignerAssociation> FilterAssociationsByRole(
+        List<sms_lite.Services.SurveyDesignerAssociation> associations,
         string staffRole)
     {
         if (string.Equals(staffRole, "NASDA", StringComparison.OrdinalIgnoreCase))

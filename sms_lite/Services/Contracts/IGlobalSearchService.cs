@@ -1,6 +1,6 @@
-using SMSLiteStaticDemo.Models.Workflows;
+using sms_lite.Models.Workflows;
 
-namespace SMSLiteStaticDemo.Services.Contracts;
+namespace sms_lite.Services.Contracts;
 
 public interface IGlobalSearchService
 {

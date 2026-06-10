@@ -1,6 +1,6 @@
-using SMSLiteStaticDemo.Services;
+using sms_lite.Services;
 
-namespace SMSLiteStaticDemo.Server.Services;
+namespace sms_lite.Server.Services;
 
 public interface ISurveyInstanceRepository
 {

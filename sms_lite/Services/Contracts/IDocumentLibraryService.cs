@@ -1,6 +1,6 @@
-using SMSLiteStaticDemo.Workflows;
+using sms_lite.Workflows;
 
-namespace SMSLiteStaticDemo.Services.Contracts;
+namespace sms_lite.Services.Contracts;
 
 public interface IDocumentLibraryService
 {

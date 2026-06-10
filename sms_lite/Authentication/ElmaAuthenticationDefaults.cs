@@ -1,4 +1,4 @@
-namespace SMSLiteStaticDemo.Server.Authentication;
+namespace sms_lite.Server.Authentication;
 
 public static class ElmaAuthenticationDefaults
 {

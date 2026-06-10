@@ -1,8 +1,8 @@
 using SMS.Integration.SurveyReview.Configuration;
-using SMSLiteStaticDemo.Workflows;
+using sms_lite.Workflows;
 using Microsoft.Extensions.Options;
-using SMSLiteStaticDemo.Models.Integrations;
-using SMSLiteStaticDemo.Services.Contracts.Integration;
+using sms_lite.Models.Integrations;
+using sms_lite.Services.Contracts.Integration;
 using Microsoft.Extensions.Logging;
 
 namespace SMS.Integration.SurveyReview.Services;

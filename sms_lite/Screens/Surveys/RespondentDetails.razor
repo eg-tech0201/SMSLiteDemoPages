@@ -1,7 +1,7 @@
 @page "/respondents/details"
 @inject NavigationManager Navigation
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
-@inject SMSLiteStaticDemo.Services.SurveyInstanceService SurveyInstanceService
+@inject sms_lite.Services.SurveyInstanceService SurveyInstanceService
 @using System.Diagnostics
 
 <PageTitle>Respondent Details</PageTitle>
@@ -212,7 +212,7 @@ else
     private string? ErrorMessage { get; set; }
     private RespondentViewModel? Respondent { get; set; }
     private List<BurdenMetric> BurdenMetrics { get; set; } = [];
-    private List<SMSLiteStaticDemo.Services.RespondentTimelineEvent> Timeline { get; set; } = [];
+    private List<sms_lite.Services.RespondentTimelineEvent> Timeline { get; set; } = [];
     private string SelectedBurdenWindow { get; set; } = "Last 12 Months";
     private double BurdenComputationMs { get; set; }
     private const string DefaultElmaUrl = "https://elma.nass.usda.gov/FO/FOUpdateRequest.aspx";
@@ -398,7 +398,7 @@ else
 
     private static BurdenSummary BuildBurdenSummary(
         BurdenMetric metric,
-        IReadOnlyList<SMSLiteStaticDemo.Services.RespondentTimelineEvent> timeline)
+        IReadOnlyList<sms_lite.Services.RespondentTimelineEvent> timeline)
     {
         var completionMinutes = metric.EstimatedMinutes;
         var followUpCallMinutes = timeline.Count(item => item.EventType.Equals("Call Attempt", StringComparison.OrdinalIgnoreCase)) * 8;

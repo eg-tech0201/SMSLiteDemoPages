@@ -1,4 +1,4 @@
-namespace SMSLiteStaticDemo.Server.Configuration;
+namespace sms_lite.Server.Configuration;
 
 public sealed class SmsLiteDatabaseOptions
 {

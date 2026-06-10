@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Options;
 using MySqlConnector;
-using SMSLiteStaticDemo.Server.Configuration;
-using SMSLiteStaticDemo.Server.Logging;
-using SMSLiteStaticDemo.Services;
+using sms_lite.Server.Configuration;
+using sms_lite.Server.Logging;
+using sms_lite.Services;
 using System.Data;
 
-namespace SMSLiteStaticDemo.Server.Services;
+namespace sms_lite.Server.Services;
 
 public sealed class MySqlSurveyInstanceRepository(
     IOptions<SmsLiteDatabaseOptions> options,

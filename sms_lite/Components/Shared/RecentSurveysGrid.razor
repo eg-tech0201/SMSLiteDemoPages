@@ -1,0 +1,67 @@
+@using sms_lite.Services
+@inject HttpClient Http
+
+<section class="@SectionCssClass">
+    <div class="panel-title-row">
+        <div class="panel-title">@Title</div>
+        @if (!string.IsNullOrWhiteSpace(ViewAllHref))
+        {
+            <a class="button-lite" href="@ViewAllHref">View all</a>
+        }
+    </div>
+    @if (IsLoading)
+    {
+        <div class="empty-hint">Loading recent surveys...</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <div class="empty-hint">@Error</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <DxGrid Data="@Rows"
+                    CssClass="recent-surveys-grid"
+                    PageSize="@PageSize"
+                    PagerVisible="false"
+                    ShowFilterRow="false"
+                    ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
+                    TextWrapEnabled="false">
+                <Columns>
+                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyId)" Caption="Survey ID" MinWidth="120" />
+                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyTitle)" Caption="Survey Name" MinWidth="220" />
+                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyDate)" Caption="Survey Date" DisplayFormat="MM/dd/yyyy" MinWidth="140" />
+                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SampleId)" Caption="Sample ID" MinWidth="140" />
+                </Columns>
+            </DxGrid>
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter] public string SectionCssClass { get; set; } = "recent-surveys-panel";
+    [Parameter] public string Title { get; set; } = "My Recent Surveys";
+    [Parameter] public string? ViewAllHref { get; set; } = "surveys/results";
+    [Parameter] public int PageSize { get; set; } = 10;
+
+    private List<SurveyGridRow> Rows { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+    private string? Error { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var rows = await Http.GetFromJsonAsync<List<SurveyGridRow>>("api/survey-instances") ?? [];
+            Rows = rows.Take(PageSize).ToList();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Recent surveys could not be loaded. {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

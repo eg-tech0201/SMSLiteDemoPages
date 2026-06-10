@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace SMSLiteStaticDemo.Services;
+namespace sms_lite.Services;
 
 // "SurveyInstance" is an in-memory demo source representing a unique
 // (ReferenceDate, SurveyId, SampleId) combination. Randomly generated data for now.

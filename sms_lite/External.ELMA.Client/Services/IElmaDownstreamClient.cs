@@ -1,4 +1,4 @@
-using SMSLiteStaticDemo.Models.Integrations;
+using sms_lite.Models.Integrations;
 
 namespace External.ELMA.Client.Services;
 

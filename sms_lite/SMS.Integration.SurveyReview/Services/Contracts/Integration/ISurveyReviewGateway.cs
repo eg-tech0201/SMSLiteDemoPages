@@ -1,7 +1,7 @@
-using SMSLiteStaticDemo.Workflows;
-using SMSLiteStaticDemo.Models.Integrations;
+using sms_lite.Workflows;
+using sms_lite.Models.Integrations;
 
-namespace SMSLiteStaticDemo.Services.Contracts.Integration;
+namespace sms_lite.Services.Contracts.Integration;
 
 public interface ISurveyReviewGateway
 {

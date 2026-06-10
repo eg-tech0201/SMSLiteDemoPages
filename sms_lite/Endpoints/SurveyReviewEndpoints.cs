@@ -2,10 +2,10 @@ using SMS.Integration.SurveyReview.Configuration;
 using SMS.Integration.SurveyReview.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using SMSLiteStaticDemo.Models.Integrations;
-using SMSLiteStaticDemo.Services.Contracts.Integration;
+using sms_lite.Models.Integrations;
+using sms_lite.Services.Contracts.Integration;
 
-namespace SMSLiteStaticDemo.Server.Endpoints;
+namespace sms_lite.Server.Endpoints;
 
 public static class SurveyReviewEndpoints
 {

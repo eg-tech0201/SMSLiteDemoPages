@@ -1,4 +1,4 @@
-namespace SMSLiteStaticDemo.Server.Logging;
+namespace sms_lite.Server.Logging;
 
 public interface IUserFileLogger
 {

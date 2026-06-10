@@ -2,10 +2,10 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
-using SMSLiteStaticDemo.Models.Integrations;
+using sms_lite.Models.Integrations;
 using External.ELMA.Client.Configuration;
 
-namespace SMSLiteStaticDemo.Server.Authentication;
+namespace sms_lite.Server.Authentication;
 
 public sealed class ElmaClientAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {

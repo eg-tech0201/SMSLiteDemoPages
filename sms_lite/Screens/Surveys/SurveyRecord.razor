@@ -3,8 +3,8 @@
 @using Microsoft.AspNetCore.Components.Web
 @using System.Globalization
 @inject NavigationManager Navigation
-@inject SMSLiteStaticDemo.Services.SurveyInstanceService SurveyInstanceService
-@inject SMSLiteStaticDemo.Services.UserRecentSurveyService RecentSurveyService
+@inject sms_lite.Services.SurveyInstanceService SurveyInstanceService
+@inject sms_lite.Services.UserRecentSurveyService RecentSurveyService
 @inject IJSRuntime Js
 
 <PageTitle>@(Detail?.Title is null ? "Record Details" : $"{Detail.Title} Record Details")</PageTitle>
@@ -253,7 +253,7 @@ else
     [SupplyParameterFromQuery(Name = "skey")] public string? SKey { get; set; }
     [SupplyParameterFromQuery(Name = "state")] public string? State { get; set; }
 
-    private SMSLiteStaticDemo.Services.SurveyInstanceDetailResponse? Detail { get; set; }
+    private sms_lite.Services.SurveyInstanceDetailResponse? Detail { get; set; }
     private string? ErrorMessage { get; set; }
     private bool IsLoading { get; set; }
     private const string DemoUserId = "demo-user";

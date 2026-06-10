@@ -1,4 +1,4 @@
-using SMSLiteStaticDemo.Models.Integrations;
+using sms_lite.Models.Integrations;
 
 namespace SMS.Integration.SurveyReview.Services;
 

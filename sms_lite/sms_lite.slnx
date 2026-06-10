@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="..\elma\External.ELMA.Client.csproj" />
-  <Project Path="..\survey_review\SMS.Integration.SurveyReview.csproj" />
+  <Project Path="External.ELMA.Client\External.ELMA.Client.csproj" />
+  <Project Path="SMS.Integration.SurveyReview\SMS.Integration.SurveyReview.csproj" />
   <Project Path="sms_lite.csproj" />
 </Solution>

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
-using SMSLiteStaticDemo.Services.Contracts.Integration;
-using SMSLiteStaticDemo.Models.Integrations;
+using sms_lite.Services.Contracts.Integration;
+using sms_lite.Models.Integrations;
 using External.ELMA.Client.Configuration;
 using Microsoft.Extensions.Logging;
 

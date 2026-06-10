@@ -1,4 +1,4 @@
-namespace SMSLiteStaticDemo.Models.Integrations;
+namespace sms_lite.Models.Integrations;
 
 public sealed record SurveyReviewSKeyInstance(
     DateTime SurveyDate,

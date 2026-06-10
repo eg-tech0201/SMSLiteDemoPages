@@ -1,6 +1,6 @@
-using SMSLiteStaticDemo.Models.Integrations;
+using sms_lite.Models.Integrations;
 
-namespace SMSLiteStaticDemo.Services.Contracts.Integration;
+namespace sms_lite.Services.Contracts.Integration;
 
 public interface IElmaGateway
 {

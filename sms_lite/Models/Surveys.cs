@@ -1,4 +1,4 @@
-namespace SMSLiteStaticDemo.Models;
+namespace sms_lite.Models;
 
 public class Survey
 {

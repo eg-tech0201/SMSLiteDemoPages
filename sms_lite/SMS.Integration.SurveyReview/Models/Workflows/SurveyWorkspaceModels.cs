@@ -1,4 +1,4 @@
-namespace SMSLiteStaticDemo.Workflows;
+namespace sms_lite.Workflows;
 
 public sealed record SurveyInstanceKey(
     int SurveyId,

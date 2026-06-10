@@ -1,4 +1,4 @@
-namespace SMSLiteStaticDemo.Server.Services;
+namespace sms_lite.Server.Services;
 
 public static class SmsLiteStoredProcedures
 {
