@@ -1,7 +1,9 @@
 using External.ELMA.Client.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using sms_lite.Models.Integrations;
 using sms_lite.Services.Contracts.Integration;
+using sms_lite.Server.Authentication;
 
 namespace sms_lite.Server.Endpoints;
 
@@ -10,7 +12,10 @@ public static class ElmaClientEndpoints
     public static IEndpointRouteBuilder MapElmaClientEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/elma")
-            .RequireAuthorization()
+            .RequireAuthorization(new AuthorizeAttribute
+            {
+                AuthenticationSchemes = ElmaAuthenticationDefaults.SchemeName
+            })
             .WithTags("ELMA Client");
 
         group.MapGet("/capabilities", async (IElmaGateway gateway, CancellationToken cancellationToken) =>

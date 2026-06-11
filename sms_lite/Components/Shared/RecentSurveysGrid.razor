@@ -28,10 +28,10 @@
                     ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
                     TextWrapEnabled="false">
                 <Columns>
-                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyId)" Caption="Survey ID" MinWidth="120" />
+                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyId)" Caption="Survey ID" DisplayFormat="0" MinWidth="120" />
                     <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyTitle)" Caption="Survey Name" MinWidth="220" />
                     <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyDate)" Caption="Survey Date" DisplayFormat="MM/dd/yyyy" MinWidth="140" />
-                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SampleId)" Caption="Sample ID" MinWidth="140" />
+                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SampleId)" Caption="Sample ID" DisplayFormat="0" MinWidth="140" />
                 </Columns>
             </DxGrid>
         </div>

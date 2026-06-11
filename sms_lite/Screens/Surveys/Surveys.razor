@@ -57,7 +57,8 @@
         <DxGrid @ref="SurveyGrid"
                 Data="@Rows"
                 CssClass="survey-dx-grid"
-                PageSize="20"
+                PageSize="10"
+                PagerVisible="true"
                 PageSizeSelectorVisible="true"
                 PageSizeSelectorItems="@PageSizeOptions"
                 SearchText="@GridSearchText"
@@ -70,7 +71,6 @@
                 AllowColumnReorder="true"
                 SelectionMode="GridSelectionMode.Multiple"
                 SelectAllCheckboxMode="GridSelectAllCheckboxMode.Page"
-                VirtualScrollingEnabled="true"
                 ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
                 TextWrapEnabled="false"
                 LayoutAutoLoading="OnGridLayoutAutoLoading"
@@ -81,7 +81,7 @@
                 {
                     <DxGridDataColumn FieldName="@column.FieldName"
                                       Caption="@column.Caption"
-                                      DisplayFormat="@column.DisplayFormat"
+                                      DisplayFormat="@ResolveDisplayFormat(column)"
                                       MinWidth="@column.MinWidth" />
                 }
             </Columns>
@@ -344,6 +344,36 @@
     private async Task OnGridLayoutAutoSaving(GridPersistentLayoutEventArgs e)
     {
         await Js.InvokeVoidAsync("smsSaveJson", SurveyGridLayoutStorageKey, e.Layout);
+    }
+
+    private static string? ResolveDisplayFormat(GridColumnSpec column)
+    {
+        if (!string.IsNullOrWhiteSpace(column.DisplayFormat))
+            return column.DisplayFormat;
+
+        var property = typeof(SurveyGridRow).GetProperty(column.FieldName);
+        var propertyType = Nullable.GetUnderlyingType(property?.PropertyType ?? typeof(string))
+            ?? property?.PropertyType;
+
+        if (propertyType is null)
+            return null;
+
+        if (propertyType == typeof(decimal) || propertyType == typeof(double) || propertyType == typeof(float))
+            return "0.################";
+
+        if (propertyType == typeof(byte) ||
+            propertyType == typeof(short) ||
+            propertyType == typeof(int) ||
+            propertyType == typeof(long) ||
+            propertyType == typeof(sbyte) ||
+            propertyType == typeof(ushort) ||
+            propertyType == typeof(uint) ||
+            propertyType == typeof(ulong))
+        {
+            return "0";
+        }
+
+        return null;
     }
 
     private sealed record GridColumnSpec(string FieldName, string Caption, int MinWidth, string? DisplayFormat = null);

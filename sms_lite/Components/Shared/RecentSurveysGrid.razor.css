@@ -1,0 +1,22 @@
+.recent-surveys-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.panel-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.panel-title {
+    color: #1e3b2d;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}

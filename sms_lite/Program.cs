@@ -2,6 +2,7 @@ using External.ELMA.Client.Configuration;
 using External.ELMA.Client.Services;
 using DevExpress.Blazor;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using SMS.Integration.SurveyReview.Configuration;
 using SMS.Integration.SurveyReview.Services;
@@ -49,7 +50,7 @@ builder.Services.AddScoped(sp =>
 });
 
 // Auth
-builder.Services.AddAuthentication(ElmaAuthenticationDefaults.SchemeName)
+builder.Services.AddAuthentication()
     .AddScheme<AuthenticationSchemeOptions, ElmaClientAuthenticationHandler>(ElmaAuthenticationDefaults.SchemeName, _ => { });
 
 builder.Services.AddAuthorization();
