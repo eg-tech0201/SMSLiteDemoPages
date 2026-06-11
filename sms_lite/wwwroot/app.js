@@ -79,6 +79,45 @@ window.smsPositionPopover = (eventEl, pop) => {
   }
 };
 
+window.smsPositionFilterPopover = (anchorEl, pop) => {
+  try {
+    if (!anchorEl || !pop) {
+      return;
+    }
+
+    const pad = 8;
+    const anchorRect = anchorEl.getBoundingClientRect();
+
+    pop.style.position = "fixed";
+    pop.style.transform = "none";
+    pop.style.width = `${Math.round(anchorRect.width)}px`;
+
+    let left = anchorRect.left;
+    let top = anchorRect.bottom - 1;
+
+    pop.style.left = `${Math.round(left)}px`;
+    pop.style.top = `${Math.round(top)}px`;
+
+    const popRect = pop.getBoundingClientRect();
+
+    if (popRect.right > window.innerWidth - pad) {
+      left = Math.max(pad, window.innerWidth - pad - popRect.width);
+    }
+    if (left < pad) {
+      left = pad;
+    }
+    if (popRect.bottom > window.innerHeight - pad) {
+      top = Math.max(pad, anchorRect.top - popRect.height + 1);
+    }
+
+    pop.style.left = `${Math.round(left)}px`;
+    pop.style.top = `${Math.round(top)}px`;
+  } catch (err) {
+    try { window.smsLogDiag('error', 'smsPositionFilterPopover failed', { message: err && err.message ? err.message : String(err) }); } catch {}
+    try { console.error('[SMSDiag] smsPositionFilterPopover failed', err); } catch {}
+  }
+};
+
 
 window.smsFocusElement = (el) => {
   if (!el) {
