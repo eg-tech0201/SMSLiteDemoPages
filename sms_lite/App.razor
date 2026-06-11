@@ -12,12 +12,12 @@
     <link rel="stylesheet" href="sms_lite.styles.css" />
     @DxResourceManager.RegisterTheme(Themes.Fluent)
     @DxResourceManager.RegisterScripts()
-    <HeadOutlet @rendermode="InteractiveServer" />
+    <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: false)" />
 </head>
 
 <body>
     <div class="scaled-root">
-        <Routes @rendermode="InteractiveServer" />
+        <Routes @rendermode="new InteractiveServerRenderMode(prerender: false)" />
     </div>
 
     <div id="blazor-error-ui">

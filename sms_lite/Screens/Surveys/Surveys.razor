@@ -72,9 +72,7 @@
                 SelectionMode="GridSelectionMode.Multiple"
                 SelectAllCheckboxMode="GridSelectAllCheckboxMode.Page"
                 ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
-                TextWrapEnabled="false"
-                LayoutAutoLoading="OnGridLayoutAutoLoading"
-                LayoutAutoSaving="OnGridLayoutAutoSaving">
+                TextWrapEnabled="false">
             <Columns>
                 <DxGridSelectionColumn Width="48px" />
                 @foreach (var column in SurveyColumns)
@@ -295,6 +293,25 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || SurveyGrid is null)
+            return;
+
+        try
+        {
+            var layout = await Js.InvokeAsync<GridPersistentLayout?>("smsLoadJson", SurveyGridLayoutStorageKey);
+            if (layout is not null)
+            {
+                SurveyGrid.LoadLayout(layout);
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop is unavailable during prerender/static rendering.
+        }
+    }
+
     private void ShowColumnChooserAsync()
     {
         if (SurveyGrid is not null)
@@ -330,20 +347,6 @@
             SurveyGrid.LoadLayout(new GridPersistentLayout());
         }
         GridSearchText = "";
-    }
-
-    private async Task OnGridLayoutAutoLoading(GridPersistentLayoutEventArgs e)
-    {
-        var layout = await Js.InvokeAsync<GridPersistentLayout?>("smsLoadJson", SurveyGridLayoutStorageKey);
-        if (layout is not null)
-        {
-            e.Layout = layout;
-        }
-    }
-
-    private async Task OnGridLayoutAutoSaving(GridPersistentLayoutEventArgs e)
-    {
-        await Js.InvokeVoidAsync("smsSaveJson", SurveyGridLayoutStorageKey, e.Layout);
     }
 
     private static string? ResolveDisplayFormat(GridColumnSpec column)
