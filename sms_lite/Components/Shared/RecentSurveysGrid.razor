@@ -28,7 +28,14 @@
                     ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
                     TextWrapEnabled="false">
                 <Columns>
-                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyId)" Caption="Survey ID" DisplayFormat="0" MinWidth="120" />
+                    <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyId)" Caption="Survey ID" DisplayFormat="0" MinWidth="120">
+                        <CellDisplayTemplate>
+                            @{
+                                var row = (SurveyGridRow)context.DataItem;
+                            }
+                            <a class="table-link" href="@BuildDetailHref(row)">@FormatValue(row.SurveyId)</a>
+                        </CellDisplayTemplate>
+                    </DxGridDataColumn>
                     <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyTitle)" Caption="Survey Name" MinWidth="220" />
                     <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyDate)" Caption="Survey Date" DisplayFormat="MM/dd/yyyy" MinWidth="140" />
                     <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SampleId)" Caption="Sample ID" DisplayFormat="0" MinWidth="140" />
@@ -53,7 +60,7 @@
         try
         {
             var rows = await Http.GetFromJsonAsync<List<SurveyGridRow>>("api/survey-instances") ?? [];
-            Rows = rows.Take(PageSize).ToList();
+            Rows = BuildUniqueInstanceRows(rows).Take(PageSize).ToList();
         }
         catch (Exception ex)
         {
@@ -63,5 +70,31 @@
         {
             IsLoading = false;
         }
+    }
+
+    private static List<SurveyGridRow> BuildUniqueInstanceRows(IEnumerable<SurveyGridRow> rows)
+        => rows
+            .Where(row => row.SurveyId.HasValue && row.SurveyDate.HasValue && row.SampleId.HasValue)
+            .GroupBy(row => new { row.SurveyId, SurveyDate = row.SurveyDate!.Value.Date, row.SampleId })
+            .Select(group => group
+                .OrderBy(row => row.SKey ?? int.MaxValue)
+                .First())
+            .OrderByDescending(row => row.SurveyDate)
+            .ThenBy(row => row.SurveyId)
+            .ThenBy(row => row.SampleId)
+            .ToList();
+
+    private static string BuildDetailHref(SurveyGridRow row)
+    {
+        if (!row.SurveyId.HasValue || !row.SurveyDate.HasValue || !row.SampleId.HasValue)
+            return "surveys/results";
+
+        return $"surveys/details?referenceDate={row.SurveyDate.Value:yyyy-MM-dd}&surveyId={row.SurveyId.Value}&sampleId={Uri.EscapeDataString(row.SampleId.Value.ToString())}";
+    }
+
+    private static string FormatValue(object? value)
+    {
+        var text = Convert.ToString(value);
+        return string.IsNullOrWhiteSpace(text) ? "N/A" : text;
     }
 }

@@ -3,7 +3,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
-@inject sms_lite.Services.SurveyInstanceService SurveyInstanceService
+@inject HttpClient Http
 @inject sms_lite.Services.UserRecentSurveyService RecentSurveyService
 @inject sms_lite.Services.DemoAuditTrailService AuditTrailService
 @inject sms_lite.Services.DemoUserContextService UserContext
@@ -60,21 +60,33 @@ else
                     </div>
                     <div class="count-stack-meta">
                         <span class="count-stack-received-text">Received: @Detail.TotalReceived (@ReceivedPercent.ToString("0.0")%)</span>
-                        <span class="count-stack-deleted-text">Deleted: @Detail.TotalDeleted (@DeletedPercent.ToString("0.0")%)</span>
+                        <span class="count-stack-deleted-text">Not Received: @Detail.TotalDeleted (@DeletedPercent.ToString("0.0")%)</span>
                     </div>
                 </div>
                 <div class="survey-overview-grid compact-overview">
                     <div class="survey-overview-item"><span class="overview-label">Sample ID</span><span class="overview-value">@Detail.SampleId</span></div>
                     <div class="survey-overview-item"><span class="overview-label">Sample</span><span class="overview-value">@Detail.SampleName</span></div>
                     <div class="survey-overview-item"><span class="overview-label">Survey Frequency</span><span class="overview-value">@Detail.SurveyFrequency</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">Version</span><span class="overview-value">@Detail.Version</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">HQ Survey Admin</span><span class="overview-value">@Detail.HqSurveyAdmin</span></div>
                     <div class="survey-overview-item"><span class="overview-label">Project Code</span><span class="overview-value">@Detail.ProjectCode</span></div>
-                    <div class="survey-overview-item">
+                    <div class="survey-overview-item"><span class="overview-label">OMB Docket</span><span class="overview-value">@Detail.OmbDocket</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">OMB Expiration</span><span class="overview-value">@Detail.OmbExpiration</span></div>
+                    <div class="survey-overview-item survey-overview-item-wide">
                         <span class="overview-label">Date Range</span>
-                        <span class="overview-value">Start: @Detail.SurveyStartDate.ToString("MM/dd/yyyy")<span class="date-range-gap"></span>End Date: @Detail.SurveyStopDate.ToString("MM/dd/yyyy")</span>
+                        <span class="overview-value mode-window-list">
+                            @if (Detail.Modes.Any())
+                            {
+                                @foreach (var mode in Detail.Modes)
+                                {
+                                    <span>@mode.Mode: @FormatDate(mode.StartDate) - @FormatDate(mode.StopDate)</span>
+                                }
+                            }
+                            else
+                            {
+                                <span>N/A</span>
+                            }
+                        </span>
                     </div>
-                    <div class="survey-overview-item"><span class="overview-label">Budget Allocation</span><span class="overview-value">@Detail.BudgetAllocation.ToString("C0")</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">Budget Allocation</span><span class="overview-value">N/A</span></div>
                 </div>
             </div>
         </div>
@@ -82,21 +94,21 @@ else
         <div class="card chart-panel-card">
             <div class="card-body top-card-body">
                 <div class="count-chart-card">
-                    <div class="count-chart-title">OpDom Status Distribution</div>
+                    <div class="count-chart-title">Data Collection Status</div>
                     <div class="count-chart-visual">
-                        <div class="response-pie response-pie-sm" style="background:@BuildCountPie(OpDomChartItems);">
+                        <div class="response-pie response-pie-sm" style="background:@BuildCountPie(DataCollectionStatusChartItems);">
                             <div class="response-pie-center response-pie-center-sm">
-                                <div class="response-pie-label">OpDom Total</div>
-                                <div class="response-pie-value">@GetChartTotal(OpDomChartItems)</div>
+                                <div class="response-pie-label">Total</div>
+                                <div class="response-pie-value">@Detail.TotalSample</div>
                             </div>
                         </div>
                         <div class="response-legend response-legend-wide">
-                            @foreach (var item in OpDomChartItems)
+                            @foreach (var item in DataCollectionStatusChartItems)
                             {
                                 <div class="legend-item">
                                     <span class="legend-swatch" style="background:@item.Color"></span>
                                     <span class="legend-label">@item.Label</span>
-                                    <span class="legend-value">@($"{item.Count} ({GetChartPercent(item.Count, OpDomChartItems)})")</span>
+                                    <span class="legend-value">@($"{item.Count} ({GetChartPercent(item.Count, DataCollectionStatusChartItems)})")</span>
                                 </div>
                             }
                         </div>
@@ -108,21 +120,21 @@ else
         <div class="card chart-panel-card">
             <div class="card-body top-card-body">
                 <div class="count-chart-card">
-                    <div class="count-chart-title">Data Collection Mode Status Distribution</div>
+                    <div class="count-chart-title">Reports Received by Mode</div>
                     <div class="count-chart-visual">
-                        <div class="response-pie response-pie-sm" style="background:@BuildCountPie(DcmsChartItems);">
+                        <div class="response-pie response-pie-sm" style="background:@BuildCountPie(ReportsReceivedByModeChartItems);">
                             <div class="response-pie-center response-pie-center-sm">
-                                <div class="response-pie-label">Mode Total</div>
-                                <div class="response-pie-value">@GetChartTotal(DcmsChartItems)</div>
+                                <div class="response-pie-label">Total</div>
+                                <div class="response-pie-value">@Detail.TotalReceived</div>
                             </div>
                         </div>
                         <div class="response-legend response-legend-wide">
-                            @foreach (var item in DcmsChartItems)
+                            @foreach (var item in ReportsReceivedByModeChartItems)
                             {
                                 <div class="legend-item">
                                     <span class="legend-swatch" style="background:@item.Color"></span>
                                     <span class="legend-label">@item.Label</span>
-                                    <span class="legend-value">@($"{item.Count} ({GetChartPercent(item.Count, DcmsChartItems)})")</span>
+                                    <span class="legend-value">@($"{item.Count} ({GetChartPercent(item.Count, ReportsReceivedByModeChartItems)})")</span>
                                 </div>
                             }
                         </div>
@@ -313,7 +325,6 @@ else
     private bool IsLoading { get; set; }
     private string PoidLookupText { get; set; } = "";
     private string? PoidLookupMessage { get; set; }
-    private List<sms_lite.Services.SurveyRecordIndexItem> RelatedSurveyRecords { get; set; } = new();
     private List<InstanceGridRow> InstanceRows { get; set; } = new();
     private int InstancePageIndex { get; set; }
     private int InstancePageSize { get; set; } = 10;
@@ -340,10 +351,10 @@ else
     private const string DemoUserId = "demo-user";
     private List<sms_lite.Services.SurveyDesignerAssociation> VisibleSurveyDesignerAssociations =>
         Detail is null ? new List<sms_lite.Services.SurveyDesignerAssociation>() : FilterAssociationsByRole(Detail.SurveyDesignerAssociations, "NASS");
-    private List<CountSlice> OpDomChartItems => BuildChartSlices(Detail?.OpDomCounts.Select(c => (c.Code, c.Definition, c.Count)));
-    private List<CountSlice> DcmsChartItems => BuildChartSlices(Detail?.DcmsCounts.Select(c => (c.Code, c.Definition, c.Count)));
-    private double ReceivedPercent => GetPercent(Detail?.TotalReceived ?? 0, (Detail?.TotalReceived ?? 0) + (Detail?.TotalDeleted ?? 0));
-    private double DeletedPercent => GetPercent(Detail?.TotalDeleted ?? 0, (Detail?.TotalReceived ?? 0) + (Detail?.TotalDeleted ?? 0));
+    private List<CountSlice> DataCollectionStatusChartItems => BuildChartSlices(Detail?.DataCollectionStatusCounts.Select(c => (c.Code, c.Definition, c.Count)));
+    private List<CountSlice> ReportsReceivedByModeChartItems => BuildChartSlices(Detail?.ReportsReceivedByModeCounts.Select(c => (c.Code, c.Definition, c.Count)));
+    private double ReceivedPercent => GetPercent(Detail?.TotalReceived ?? 0, Detail?.TotalSample ?? 0);
+    private double DeletedPercent => GetPercent(Detail?.TotalDeleted ?? 0, Detail?.TotalSample ?? 0);
     private List<string> MaterialFilterOptions => new() { "All", "EDR", "CAPI", "CATI", "Mail" };
     private List<sms_lite.Services.CollectionMaterial> FilteredCollectionMaterials =>
         (Detail?.CollectionMaterials ?? new List<sms_lite.Services.CollectionMaterial>())
@@ -441,10 +452,11 @@ else
         }
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         ErrorMessage = null;
         Detail = null;
+        InstanceRows = new();
 
         var surveyId = SurveyIdQuery ?? SurveyId;
         if (!surveyId.HasValue || string.IsNullOrWhiteSpace(SampleId) || string.IsNullOrWhiteSpace(ReferenceDate))
@@ -459,25 +471,23 @@ else
             return;
         }
 
-        var instance = SurveyInstanceService.FindInstance(parsedReferenceDate, surveyId.Value, SampleId);
-        var fallbackInstance = SurveyInstanceService.Instances
-            .Where(i => i.SurveyId == surveyId.Value && i.SampleId.Equals(SampleId, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(i => i.ReferenceDate)
-            .FirstOrDefault();
-        var effectiveInstance = instance ?? fallbackInstance;
-
-        if (effectiveInstance is null || string.IsNullOrWhiteSpace(effectiveInstance.SampleId) || effectiveInstance.Status.Equals("IN HQ REVIEW", StringComparison.OrdinalIgnoreCase))
-        {
-            ErrorMessage = "The selected survey instance is not yet available (sample not populated or status is IN HQ REVIEW).";
-            return;
-        }
-
         IsLoading = true;
         try
         {
-            Detail = SurveyInstanceService.GetDetail(parsedReferenceDate, surveyId.Value, SampleId);
-            LoadSurveySummaries(surveyId.Value);
+            var href = $"api/survey-instances/detail?referenceDate={parsedReferenceDate:yyyy-MM-dd}&surveyId={surveyId.Value}&sampleId={Uri.EscapeDataString(SampleId)}";
+            Detail = await Http.GetFromJsonAsync<sms_lite.Services.SurveyInstanceDetailResponse>(href);
+            if (Detail is null)
+            {
+                ErrorMessage = "No survey detail found for the selected Survey ID, Survey Date, and Sample ID.";
+                return;
+            }
+
+            LoadSurveySummaries();
             RecentSurveyService.Track(DemoUserId, parsedReferenceDate, surveyId.Value, SampleId!, "Reviewed");
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            ErrorMessage = "No survey detail found for the selected Survey ID, Survey Date, and Sample ID.";
         }
         catch
         {
@@ -489,23 +499,22 @@ else
         }
     }
 
-    private void LoadSurveySummaries(int surveyId)
+    private void LoadSurveySummaries()
     {
         InstancePageIndex = 0;
-        RelatedSurveyRecords = SurveyInstanceService.GetSurveyRecordIndex(surveyId).ToList();
         var association = VisibleSurveyDesignerAssociations;
         var paper = association.FirstOrDefault(a => a.QuestionnaireFormat.Equals("Paper", StringComparison.OrdinalIgnoreCase));
         var cawi = association.FirstOrDefault(a => a.CollectionMode.Equals("CAWI", StringComparison.OrdinalIgnoreCase));
         var capi = association.FirstOrDefault(a => a.CollectionMode.Equals("CAPI", StringComparison.OrdinalIgnoreCase));
 
-        InstanceRows = RelatedSurveyRecords
+        InstanceRows = (Detail?.RecordRows ?? [])
             .Select(r =>
             {
                 return new InstanceGridRow(
-                    r.StateId,
-                    r.StateAlpha,
+                    r.Fips,
+                    r.State,
                     r.SKey,
-                    ResolveGridStatus(association),
+                    r.Status,
                     r.Poid,
                     r.TargetPoid,
                     r.SampleId,
@@ -845,6 +854,9 @@ else
         var percent = (decimal)count / total * 100m;
         return $"{Math.Round(percent, 1)}%";
     }
+
+    private static string FormatDate(DateTime? value)
+        => value.HasValue ? value.Value.ToString("MM/dd/yyyy") : "N/A";
 
     private static double GetPercent(int count, int total)
     {

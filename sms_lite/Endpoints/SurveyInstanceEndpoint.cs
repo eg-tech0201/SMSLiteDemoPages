@@ -13,11 +13,14 @@ public static class SurveyInstanceEndpoints
             return Results.Ok(rows);
         });
 
-        app.MapGet("/api/survey-instances/detail",
-        (HttpContext ctx, SurveyInstanceService svc,
-         DateTime referenceDate, int surveyId, string sampleId) =>
+        app.MapGet("/api/survey-instances/detail", async (
+            ISurveyInstanceRepository repository,
+            DateTime referenceDate,
+            int surveyId,
+            string sampleId,
+            CancellationToken cancellationToken) =>
         {
-            var detail = svc.GetDetail(referenceDate, surveyId, sampleId);
+            var detail = await repository.GetSurveyInstanceDetailAsync(referenceDate, surveyId, sampleId, cancellationToken);
             return detail is null
                 ? Results.NotFound()
                 : Results.Ok(detail);

@@ -14,6 +14,7 @@ public sealed class MySqlSurveyInstanceRepository(
 {
     private readonly SmsLiteDatabaseOptions _options = options.Value;
     private const string GetSurveyInstancesProcedure = SmsLiteStoredProcedures.GetSurveyInstancesTest;
+    private const string MissingValue = "N/A";
 
     public async Task<IReadOnlyList<SurveyGridRow>> GetSurveyInstancesAsync(CancellationToken cancellationToken)
     {
@@ -236,6 +237,186 @@ public sealed class MySqlSurveyInstanceRepository(
             logger.LogError(ex, "Failed to load survey instances from MySQL stored procedure {StoredProcedure}.", GetSurveyInstancesProcedure);
             throw;
         }
+    }
+
+    public async Task<SurveyInstanceDetailResponse?> GetSurveyInstanceDetailAsync(
+        DateTime referenceDate,
+        int surveyId,
+        string sampleId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await GetSurveyInstancesAsync(cancellationToken);
+        var instanceRows = rows
+            .Where(row =>
+                row.SurveyId == surveyId &&
+                row.SurveyDate.HasValue &&
+                row.SurveyDate.Value.Date == referenceDate.Date &&
+                string.Equals(FormatValue(row.SampleId), sampleId, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (instanceRows.Count == 0)
+            return null;
+
+        var first = instanceRows[0];
+        var totalSample = instanceRows.Count;
+        var totalReceived = instanceRows.Count(row => row.RespDate.HasValue);
+        var totalNotReceived = Math.Max(0, totalSample - totalReceived);
+
+        return new SurveyInstanceDetailResponse(
+            SampleId: FormatValue(first.SampleId),
+            SampleName: MissingValue,
+            SurveyId: surveyId,
+            Title: FormatValue(first.SurveyTitle),
+            SubTitle: FormatValue(first.SurveySubtitle),
+            SurveyFrequency: MissingValue,
+            Version: FormatValue(first.SurveyCode),
+            SurveyDate: first.SurveyDate?.Date ?? referenceDate.Date,
+            ReferenceDate: referenceDate.Date,
+            SurveyStartDate: GetEarliestModeStart(first) ?? referenceDate.Date,
+            SurveyStopDate: GetLatestModeStop(first) ?? referenceDate.Date,
+            HqSurveyAdmin: MissingValue,
+            ProjectCode: FormatValue(first.SurveyCode),
+            OmbDocket: MissingValue,
+            OmbExpiration: MissingValue,
+            Modes: BuildModeWindows(first),
+            OpDomCounts: [],
+            DcmsCounts: [],
+            DataCollectionStatusCounts: BuildDataCollectionStatusCounts(instanceRows),
+            ReportsReceivedByModeCounts: BuildReportsReceivedByModeCounts(instanceRows),
+            TotalSample: totalSample,
+            TotalReceived: totalReceived,
+            TotalDeleted: totalNotReceived,
+            BudgetAllocation: 0m,
+            RespondentInstancesLast1Year: 0,
+            RespondentInstancesLast3Years: 0,
+            RespondentInstancesLast5Years: 0,
+            ResponseHistoryRate: 0m,
+            ResponseHistoryBreakdown: [],
+            SurveyDesignerAssociations: [],
+            CollectionMaterials: [],
+            RecordRows: instanceRows
+                .Select(row => new SurveyDetailRecordRow(
+                    Fips: FormatValue(row.Fips),
+                    State: FormatValue(row.StateAbbreviation ?? row.StateName ?? row.PersonStateAbbreviation ?? row.OperationStateAbbreviation),
+                    SKey: FormatValue(row.SKey),
+                    Status: ResolveRecordStatus(row),
+                    Poid: FormatValue(row.Poid),
+                    TargetPoid: FormatValue(row.TargetPoid),
+                    SampleId: FormatValue(row.SampleId),
+                    ReferenceDate: referenceDate.Date))
+                .OrderBy(row => row.Fips)
+                .ThenBy(row => row.SKey)
+                .ToList(),
+            FullRecord: BuildFullRecord(first));
+    }
+
+    private static List<ModeWindow> BuildModeWindows(SurveyGridRow row)
+    {
+        var modes = new List<ModeWindow>
+        {
+            new("Mail", row.MailStartDate, row.MailStopDate),
+            new("CAWI", row.CawiStartDate, row.CawiStopDate),
+            new("CAPI", row.CapiStartDate, row.CapiStopDate),
+            new("CATI", row.CatiStartDate, row.CatiStopDate)
+        };
+
+        return modes
+            .Where(mode => mode.StartDate.HasValue || mode.StopDate.HasValue)
+            .ToList();
+    }
+
+    private static DateTime? GetEarliestModeStart(SurveyGridRow row)
+        => new[] { row.MailStartDate, row.CawiStartDate, row.CapiStartDate, row.CatiStartDate }
+            .Where(date => date.HasValue)
+            .Min();
+
+    private static DateTime? GetLatestModeStop(SurveyGridRow row)
+        => new[] { row.MailStopDate, row.CawiStopDate, row.CapiStopDate, row.CatiStopDate }
+            .Where(date => date.HasValue)
+            .Max();
+
+    private static List<CountItem> BuildDataCollectionStatusCounts(IReadOnlyCollection<SurveyGridRow> rows)
+    {
+        return
+        [
+            new("1", "Complete", rows.Count(row => row.RespDate.HasValue && row.ResponseCode == 1)),
+            new("2", "Refusal", rows.Count(row => row.RespDate.HasValue && row.ResponseCode == 2)),
+            new("3", "Inaccessible", rows.Count(row => row.RespDate.HasValue && row.ResponseCode == 3)),
+            new("Other", "Other Complete", rows.Count(row => row.RespDate.HasValue && row.ResponseCode is not (1 or 2 or 3))),
+            new("900+", "Office Hold", rows.Count(row => !row.RespDate.HasValue && row.DcmsCodeId.GetValueOrDefault() >= 900)),
+            new("Active", "Active and Not Checked-In", rows.Count(row => !row.RespDate.HasValue && (!row.DcmsCodeId.HasValue || row.DcmsCodeId < 900)))
+        ];
+    }
+
+    private static List<CountItem> BuildReportsReceivedByModeCounts(IReadOnlyCollection<SurveyGridRow> rows)
+    {
+        return rows
+            .Where(row => row.RespDate.HasValue)
+            .GroupBy(row => ResolveCaptureMode(row.DataCaptureCode))
+            .Select(group => new CountItem(group.Key, group.Key, group.Count()))
+            .OrderBy(item => GetCaptureModeSort(item.Code))
+            .ToList();
+    }
+
+    private static string ResolveCaptureMode(int? dataCaptureCode)
+        => dataCaptureCode switch
+        {
+            1 => "Mail",
+            5 => "CAWI",
+            6 => "CAPI",
+            10 => "READI",
+            > 0 => "Other",
+            _ => "N/A"
+        };
+
+    private static int GetCaptureModeSort(string mode)
+        => mode switch
+        {
+            "Mail" => 1,
+            "CAWI" => 2,
+            "CAPI" => 3,
+            "READI" => 4,
+            "Other" => 5,
+            _ => 6
+        };
+
+    private static string ResolveRecordStatus(SurveyGridRow row)
+    {
+        if (row.RespDate.HasValue && row.ResponseCode == 1)
+            return "Complete";
+        if (row.RespDate.HasValue && row.ResponseCode == 2)
+            return "Refusal";
+        if (row.RespDate.HasValue && row.ResponseCode == 3)
+            return "Inaccessible";
+        if (row.RespDate.HasValue)
+            return "Other Complete";
+        if (row.DcmsCodeId.GetValueOrDefault() >= 900)
+            return "Office Hold";
+        return "Active and Not Checked-In";
+    }
+
+    private static List<DetailField> BuildFullRecord(SurveyGridRow row)
+        =>
+        [
+            new("sample_id", FormatValue(row.SampleId)),
+            new("survey_id", FormatValue(row.SurveyId)),
+            new("survey_date", FormatDate(row.SurveyDate)),
+            new("survey_title", FormatValue(row.SurveyTitle)),
+            new("survey_subtitle", FormatValue(row.SurveySubtitle)),
+            new("survey_code", FormatValue(row.SurveyCode)),
+            new("respdate", FormatDate(row.RespDate)),
+            new("response_code", FormatValue(row.ResponseCode)),
+            new("dcms_code_id", FormatValue(row.DcmsCodeId)),
+            new("data_capture_code", FormatValue(row.DataCaptureCode))
+        ];
+
+    private static string FormatDate(DateTime? value)
+        => value.HasValue ? value.Value.ToString("MM/dd/yyyy") : MissingValue;
+
+    private static string FormatValue(object? value)
+    {
+        var text = Convert.ToString(value);
+        return string.IsNullOrWhiteSpace(text) ? MissingValue : text;
     }
 
     private string BuildConnectionString()

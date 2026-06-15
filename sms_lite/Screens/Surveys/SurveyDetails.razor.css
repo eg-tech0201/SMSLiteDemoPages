@@ -273,6 +273,11 @@
     line-height: 1.2;
 }
 
+.mode-window-list {
+    display: grid;
+    gap: 0.18rem;
+}
+
 .date-range-gap {
     display: inline-block;
     width: 1.2rem;

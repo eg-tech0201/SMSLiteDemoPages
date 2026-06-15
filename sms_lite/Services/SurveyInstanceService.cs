@@ -97,9 +97,14 @@ public sealed class SurveyInstanceService
             resolved.SurveyStopDate,
             resolved.HqSurveyAdmin,
             resolved.ProjectCode,
+            "N/A",
+            "N/A",
             resolved.Modes.Select(m => new ModeWindow(m.Mode, m.StartDate, m.StopDate)).ToList(),
             resolved.OpDomCounts.Select(c => new CountItem(c.Code, c.Definition, c.Count)).ToList(),
             resolved.DcmsCounts.Select(c => new CountItem(c.Code, c.Definition, c.Count)).ToList(),
+            resolved.OpDomCounts.Select(c => new CountItem(c.Code, c.Definition, c.Count)).ToList(),
+            resolved.DcmsCounts.Select(c => new CountItem(c.Code, c.Definition, c.Count)).ToList(),
+            resolved.TotalReceived + resolved.TotalDeleted,
             resolved.TotalReceived,
             resolved.TotalDeleted,
             resolved.BudgetAllocation,
@@ -110,6 +115,10 @@ public sealed class SurveyInstanceService
             resolved.ResponseHistoryBreakdown.Select(b => new ResponseHistoryItem(b.Label, b.Count)).ToList(),
             surveyDesignerAssociations,
             BuildCollectionMaterials(resolved),
+            GetSurveyRecordIndex(resolved.SurveyId)
+                .Where(r => r.SampleId.Equals(resolved.SampleId, StringComparison.OrdinalIgnoreCase) && r.ReferenceDate.Date == resolved.ReferenceDate.Date)
+                .Select(r => new SurveyDetailRecordRow(r.StateId, r.StateAlpha, r.SKey, "PUBLISHED", r.Poid, r.TargetPoid, r.SampleId, r.ReferenceDate))
+                .ToList(),
             fullRecord
         );
     }
@@ -263,7 +272,10 @@ public sealed class SurveyInstanceService
             SurveyStartDate = source.SurveyStartDate.Add(delta),
             SurveyStopDate = source.SurveyStopDate.Add(delta),
             Modes = source.Modes
-                .Select(m => new ModeWindow(m.Mode, m.StartDate.Add(delta), m.StopDate.Add(delta)))
+                .Select(m => new ModeWindow(
+                    m.Mode,
+                    m.StartDate.HasValue ? m.StartDate.Value.Add(delta) : null,
+                    m.StopDate.HasValue ? m.StopDate.Value.Add(delta) : null))
                 .ToList()
         };
     }
@@ -937,6 +949,9 @@ public sealed class SurveyInstanceService
         return records;
     }
 
+    private static string FormatModeDate(DateTime? value)
+        => value.HasValue ? value.Value.ToString("yyyy-MM-dd") : "N/A";
+
     private static List<DetailField> BuildFullRecord(SurveyInstance instance, int variation = 0)
     {
         var rand = CreateStableRandom(instance.SurveyId, instance.SampleId, instance.ReferenceDate, variation);
@@ -1032,14 +1047,14 @@ public sealed class SurveyInstanceService
             new("casi_flag", instance.Modes.Any(m => m.Mode == "CASI") ? "Y" : "N"),
             new("capi_flag", instance.Modes.Any(m => m.Mode == "CAPI") ? "Y" : "N"),
             new("cati_flag", instance.Modes.Any(m => m.Mode == "CATI") ? "Y" : "N"),
-            new("mail_start_date", instance.Modes.FirstOrDefault(m => m.Mode == "MAIL")?.StartDate.ToString("yyyy-MM-dd") ?? "N/A"),
-            new("mail_stop_date", instance.Modes.FirstOrDefault(m => m.Mode == "MAIL")?.StopDate.ToString("yyyy-MM-dd") ?? "N/A"),
-            new("casi_start_date", instance.Modes.FirstOrDefault(m => m.Mode == "CASI")?.StartDate.ToString("yyyy-MM-dd") ?? "N/A"),
-            new("casi_stop_date", instance.Modes.FirstOrDefault(m => m.Mode == "CASI")?.StopDate.ToString("yyyy-MM-dd") ?? "N/A"),
-            new("capi_start_date", instance.Modes.FirstOrDefault(m => m.Mode == "CAPI")?.StartDate.ToString("yyyy-MM-dd") ?? "N/A"),
-            new("capi_stop_date", instance.Modes.FirstOrDefault(m => m.Mode == "CAPI")?.StopDate.ToString("yyyy-MM-dd") ?? "N/A"),
-            new("cati_start_date", instance.Modes.FirstOrDefault(m => m.Mode == "CATI")?.StartDate.ToString("yyyy-MM-dd") ?? "N/A"),
-            new("cati_stop_date", instance.Modes.FirstOrDefault(m => m.Mode == "CATI")?.StopDate.ToString("yyyy-MM-dd") ?? "N/A"),
+            new("mail_start_date", FormatModeDate(instance.Modes.FirstOrDefault(m => m.Mode == "MAIL")?.StartDate)),
+            new("mail_stop_date", FormatModeDate(instance.Modes.FirstOrDefault(m => m.Mode == "MAIL")?.StopDate)),
+            new("casi_start_date", FormatModeDate(instance.Modes.FirstOrDefault(m => m.Mode == "CASI")?.StartDate)),
+            new("casi_stop_date", FormatModeDate(instance.Modes.FirstOrDefault(m => m.Mode == "CASI")?.StopDate)),
+            new("capi_start_date", FormatModeDate(instance.Modes.FirstOrDefault(m => m.Mode == "CAPI")?.StartDate)),
+            new("capi_stop_date", FormatModeDate(instance.Modes.FirstOrDefault(m => m.Mode == "CAPI")?.StopDate)),
+            new("cati_start_date", FormatModeDate(instance.Modes.FirstOrDefault(m => m.Mode == "CATI")?.StartDate)),
+            new("cati_stop_date", FormatModeDate(instance.Modes.FirstOrDefault(m => m.Mode == "CATI")?.StopDate)),
             new("op_county_id", countyId),
             new("opcounty_name", $"{placeName} County"),
             new("op_dom_status_id", instance.OpDomStatusId),
@@ -1537,9 +1552,14 @@ public sealed record SurveyInstanceDetailResponse(
     DateTime SurveyStopDate,
     string HqSurveyAdmin,
     string ProjectCode,
+    string OmbDocket,
+    string OmbExpiration,
     List<ModeWindow> Modes,
     List<CountItem> OpDomCounts,
     List<CountItem> DcmsCounts,
+    List<CountItem> DataCollectionStatusCounts,
+    List<CountItem> ReportsReceivedByModeCounts,
+    int TotalSample,
     int TotalReceived,
     int TotalDeleted,
     decimal BudgetAllocation,
@@ -1550,16 +1570,28 @@ public sealed record SurveyInstanceDetailResponse(
     List<ResponseHistoryItem> ResponseHistoryBreakdown,
     List<SurveyDesignerAssociation> SurveyDesignerAssociations,
     List<CollectionMaterial> CollectionMaterials,
+    List<SurveyDetailRecordRow> RecordRows,
     List<DetailField> FullRecord
 );
 
-public sealed record ModeWindow(string Mode, DateTime StartDate, DateTime StopDate);
+public sealed record ModeWindow(string Mode, DateTime? StartDate, DateTime? StopDate);
 
 public sealed record CountItem(string Code, string Definition, int Count);
 
 public sealed record ResponseHistoryItem(string Label, int Count);
 
 public sealed record DetailField(string Field, string Value);
+
+public sealed record SurveyDetailRecordRow(
+    string Fips,
+    string State,
+    string SKey,
+    string Status,
+    string Poid,
+    string TargetPoid,
+    string SampleId,
+    DateTime ReferenceDate
+);
 
 public sealed record SurveyDesignerAssociation(
     string SKey,
