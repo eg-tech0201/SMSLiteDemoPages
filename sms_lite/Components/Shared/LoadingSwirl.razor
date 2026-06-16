@@ -2,12 +2,12 @@
     <div class="app-loading-spiral" aria-hidden="true">
         <span></span>
     </div>
-    <div class="app-loading-text">@Text</div>
+    <span>@Text</span>
 </div>
 
 @code {
     [Parameter] public string Text { get; set; } = "Loading";
     [Parameter] public bool FullPage { get; set; }
 
-    private string CssClass => FullPage ? "app-loading-shell loading-swirl" : "loading-swirl";
+    private string CssClass => FullPage ? "app-loading-shell" : "grid-loading";
 }
