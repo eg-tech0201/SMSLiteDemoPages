@@ -80,7 +80,8 @@
                     <DxGridDataColumn FieldName="@column.FieldName"
                                       Caption="@column.Caption"
                                       DisplayFormat="@ResolveDisplayFormat(column)"
-                                      MinWidth="@column.MinWidth">
+                                      MinWidth="@column.MinWidth"
+                                      Visible="@column.VisibleByDefault">
                         <CellDisplayTemplate>
                             @{
                                 var row = (SurveyGridRow)context.DataItem;
@@ -104,7 +105,10 @@
 </div>
 
 @code {
-    private const string SurveyGridLayoutStorageKey = "sms.surveys.results.dxgrid.layout.v3";
+    private const string SampleNameColumn = "SampleName";
+    private const string ElmoSurveyIdColumn = "ElmoSurveyId";
+    private const string OmbNumberColumn = "OmbNumber";
+    private const string SurveyGridLayoutStorageKey = "sms.surveys.results.dxgrid.layout.v4";
 
     private IGrid? SurveyGrid { get; set; }
     private List<SurveyGridRow> Rows { get; set; } = new();
@@ -115,11 +119,15 @@
 
     private static readonly IReadOnlyList<GridColumnSpec> SurveyColumns =
     [
-        new(nameof(SurveyGridRow.SampleId), "Sample ID", 140),
+        new(nameof(SurveyGridRow.SurveyId), "Survey ID", 120, null, true),
+        new(nameof(SurveyGridRow.SurveyTitle), "Survey Title", 240, null, true),
+        new(nameof(SurveyGridRow.SurveyDate), "Survey Date", 140, "MM/dd/yyyy", true),
+        new(nameof(SurveyGridRow.SampleId), "Sample ID", 140, null, true),
+        new(SampleNameColumn, "Sample Name", 180, null, true),
+        new(ElmoSurveyIdColumn, "ELMO Survey ID", 170, null, true),
+        new(OmbNumberColumn, "OMB Number", 160, null, true),
         new(nameof(SurveyGridRow.Fips), "FIPS", 110),
-        new(nameof(SurveyGridRow.SurveyId), "Survey ID", 120),
         new(nameof(SurveyGridRow.StateId), "State ID", 110),
-        new(nameof(SurveyGridRow.SurveyDate), "Survey Date", 140, "MM/dd/yyyy"),
         new(nameof(SurveyGridRow.SKey), "S-Key", 110),
         new(nameof(SurveyGridRow.Poid), "POID", 130),
         new(nameof(SurveyGridRow.TargetPoid), "Target POID", 140),
@@ -249,7 +257,6 @@
         new(nameof(SurveyGridRow.OutOfBusinessId), "Out of Business ID", 170),
         new(nameof(SurveyGridRow.XStateLink), "XState Link", 150),
         new(nameof(SurveyGridRow.CoordinationId), "Coordination ID", 160),
-        new(nameof(SurveyGridRow.SurveyTitle), "Survey Title", 240),
         new(nameof(SurveyGridRow.SurveySubtitle), "Survey Subtitle", 240),
         new(nameof(SurveyGridRow.Version), "Version", 160),
         new(nameof(SurveyGridRow.StateName), "State Name", 170),
@@ -425,5 +432,5 @@
         return string.IsNullOrWhiteSpace(text) ? "N/A" : text;
     }
 
-    private sealed record GridColumnSpec(string FieldName, string Caption, int MinWidth, string? DisplayFormat = null);
+    private sealed record GridColumnSpec(string FieldName, string Caption, int MinWidth, string? DisplayFormat = null, bool VisibleByDefault = false);
 }

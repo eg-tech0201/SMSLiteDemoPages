@@ -60,12 +60,12 @@ else
                     </div>
                     <div class="count-stack-meta">
                         <span class="count-stack-received-text">Received: @Detail.TotalReceived (@ReceivedPercent.ToString("0.0")%)</span>
-                        <span class="count-stack-deleted-text">Not Received: @Detail.TotalDeleted (@DeletedPercent.ToString("0.0")%)</span>
+                        <span class="count-stack-deleted-text">Deleted: @Detail.TotalDeleted (@DeletedPercent.ToString("0.0")%)</span>
                     </div>
                 </div>
                 <div class="survey-overview-grid compact-overview">
                     <div class="survey-overview-item"><span class="overview-label">Sample ID</span><span class="overview-value">@Detail.SampleId</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">Sample</span><span class="overview-value">@Detail.SampleName</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">Sample Name</span><span class="overview-value">@Detail.SampleName</span></div>
                     <div class="survey-overview-item"><span class="overview-label">Survey Frequency</span><span class="overview-value">@Detail.SurveyFrequency</span></div>
                     <div class="survey-overview-item"><span class="overview-label">Project Code</span><span class="overview-value">@Detail.ProjectCode</span></div>
                     <div class="survey-overview-item"><span class="overview-label">OMB Docket</span><span class="overview-value">@Detail.OmbDocket</span></div>
@@ -341,12 +341,11 @@ else
     private static readonly string[] ChartPalette =
     {
         "#2f8f5b",
-        "#65af83",
-        "#8fc8a7",
-        "#0b2b4b",
-        "#5b83a8",
+        "#d35d5d",
         "#f0b35e",
-        "#d66a6a"
+        "#5b83c5",
+        "#8e6ccf",
+        "#5f6b73"
     };
     private const string DemoUserId = "demo-user";
     private List<sms_lite.Services.SurveyDesignerAssociation> VisibleSurveyDesignerAssociations =>
@@ -514,7 +513,7 @@ else
                     r.Fips,
                     r.State,
                     r.SKey,
-                    r.Status,
+                    ResolveGridStatus(association),
                     r.Poid,
                     r.TargetPoid,
                     r.SampleId,
@@ -818,8 +817,7 @@ else
             return new List<CountSlice>();
 
         return source
-            .Where(item => item.Count > 0)
-            .Select((item, index) => new CountSlice(item.Code, item.Definition, item.Count, ChartPalette[index % ChartPalette.Length]))
+            .Select((item, index) => new CountSlice(item.Definition, item.Definition, item.Count, ChartPalette[index % ChartPalette.Length]))
             .ToList();
     }
 

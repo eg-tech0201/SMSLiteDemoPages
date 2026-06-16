@@ -1530,7 +1530,12 @@ public sealed record SurveyGridRow(
     short? ManualSkill,
     short? CoordinationFlag,
     int? Ruid
-);
+)
+{
+    public string SampleName => "N/A";
+    public string ElmoSurveyId => "N/A";
+    public string OmbNumber => "N/A";
+}
 
 public sealed record FilterOptionsResponse(
     List<string> AvailableReferenceDates,

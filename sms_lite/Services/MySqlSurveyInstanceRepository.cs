@@ -343,42 +343,26 @@ public sealed class MySqlSurveyInstanceRepository(
             new("2", "Refusal", rows.Count(row => row.RespDate.HasValue && row.ResponseCode == 2)),
             new("3", "Inaccessible", rows.Count(row => row.RespDate.HasValue && row.ResponseCode == 3)),
             new("Other", "Other Complete", rows.Count(row => row.RespDate.HasValue && row.ResponseCode is not (1 or 2 or 3))),
-            new("900+", "Office Hold", rows.Count(row => !row.RespDate.HasValue && row.DcmsCodeId.GetValueOrDefault() >= 900)),
-            new("Active", "Active and Not Checked-In", rows.Count(row => !row.RespDate.HasValue && (!row.DcmsCodeId.HasValue || row.DcmsCodeId < 900)))
+            new("900+", "Office Hold", rows.Count(row => row.DcmsCodeId.GetValueOrDefault() >= 900)),
+            new("Active", "Active & Not Checked-In", rows.Count(row => !row.RespDate.HasValue && row.DcmsCodeId.HasValue && row.DcmsCodeId < 900))
         ];
     }
 
     private static List<CountItem> BuildReportsReceivedByModeCounts(IReadOnlyCollection<SurveyGridRow> rows)
     {
-        return rows
+        var receivedRows = rows
             .Where(row => row.RespDate.HasValue)
-            .GroupBy(row => ResolveCaptureMode(row.DataCaptureCode))
-            .Select(group => new CountItem(group.Key, group.Key, group.Count()))
-            .OrderBy(item => GetCaptureModeSort(item.Code))
             .ToList();
+
+        return
+        [
+            new("Mail", "Mail", receivedRows.Count(row => row.DataCaptureCode == 1)),
+            new("CAWI", "CAWI", receivedRows.Count(row => row.DataCaptureCode == 5)),
+            new("CAPI", "CAPI", receivedRows.Count(row => row.DataCaptureCode == 6)),
+            new("READI", "READI", receivedRows.Count(row => row.DataCaptureCode == 10)),
+            new("Other", "Other", receivedRows.Count(row => row.DataCaptureCode > 0 && row.DataCaptureCode is not (1 or 5 or 6 or 10)))
+        ];
     }
-
-    private static string ResolveCaptureMode(int? dataCaptureCode)
-        => dataCaptureCode switch
-        {
-            1 => "Mail",
-            5 => "CAWI",
-            6 => "CAPI",
-            10 => "READI",
-            > 0 => "Other",
-            _ => "N/A"
-        };
-
-    private static int GetCaptureModeSort(string mode)
-        => mode switch
-        {
-            "Mail" => 1,
-            "CAWI" => 2,
-            "CAPI" => 3,
-            "READI" => 4,
-            "Other" => 5,
-            _ => 6
-        };
 
     private static string ResolveRecordStatus(SurveyGridRow row)
     {
@@ -392,7 +376,7 @@ public sealed class MySqlSurveyInstanceRepository(
             return "Other Complete";
         if (row.DcmsCodeId.GetValueOrDefault() >= 900)
             return "Office Hold";
-        return "Active and Not Checked-In";
+        return "Active & Not Checked-In";
     }
 
     private static List<DetailField> BuildFullRecord(SurveyGridRow row)
