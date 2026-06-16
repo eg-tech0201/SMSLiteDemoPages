@@ -11,7 +11,7 @@
     </div>
     @if (IsLoading)
     {
-        <div class="empty-hint">Loading recent surveys...</div>
+        <LoadingSwirl Text="Loading recent surveys" />
     }
     else if (!string.IsNullOrWhiteSpace(Error))
     {
@@ -95,6 +95,6 @@
     private static string FormatValue(object? value)
     {
         var text = Convert.ToString(value);
-        return string.IsNullOrWhiteSpace(text) ? "N/A" : text;
+        return string.IsNullOrWhiteSpace(text) ? "--" : text;
     }
 }

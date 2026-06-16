@@ -2,6 +2,11 @@
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
     </Found>
+    <Navigating>
+        <LayoutView Layout="@typeof(Layout.MainLayout)">
+            <LoadingSwirl Text="Loading SMS Lite" FullPage="true" />
+        </LayoutView>
+    </Navigating>
 
     <NotFound>
         <LayoutView Layout="@typeof(Layout.MainLayout)">

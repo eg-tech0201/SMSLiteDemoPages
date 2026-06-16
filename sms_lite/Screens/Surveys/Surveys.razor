@@ -34,12 +34,7 @@
 <div class="table-wrap dx-grid-wrap">
     @if (IsLoading)
     {
-        <div class="grid-loading">
-            <div class="app-loading-spiral" aria-hidden="true">
-                <span></span>
-            </div>
-            <span>Loading survey results...</span>
-        </div>
+        <LoadingSwirl Text="Loading survey results" />
     }
     else if (!string.IsNullOrWhiteSpace(LoadError))
     {
@@ -429,7 +424,7 @@
             return date.ToString("MM/dd/yyyy");
 
         var text = Convert.ToString(value);
-        return string.IsNullOrWhiteSpace(text) ? "N/A" : text;
+        return string.IsNullOrWhiteSpace(text) ? "--" : text;
     }
 
     private sealed record GridColumnSpec(string FieldName, string Caption, int MinWidth, string? DisplayFormat = null, bool VisibleByDefault = false);

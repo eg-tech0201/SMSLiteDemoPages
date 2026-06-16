@@ -97,8 +97,8 @@ public sealed class SurveyInstanceService
             resolved.SurveyStopDate,
             resolved.HqSurveyAdmin,
             resolved.ProjectCode,
-            "N/A",
-            "N/A",
+            "--",
+            "--",
             resolved.Modes.Select(m => new ModeWindow(m.Mode, m.StartDate, m.StopDate)).ToList(),
             resolved.OpDomCounts.Select(c => new CountItem(c.Code, c.Definition, c.Count)).ToList(),
             resolved.DcmsCounts.Select(c => new CountItem(c.Code, c.Definition, c.Count)).ToList(),
@@ -850,7 +850,7 @@ public sealed class SurveyInstanceService
                 OmbNumber: $"0535-{rand.Next(1000, 9999)}",
                 OmbExpires: surveyDate.AddYears(rand.Next(2, 4)),
                 State: stateAlpha,
-                Region: "N/A",
+                Region: "--",
                 StateId: rand.Next(1, 57).ToString("D2"),
                 StateAlpha: stateAlpha,
                 DcmsCodeId: dcmsCode,
@@ -950,7 +950,7 @@ public sealed class SurveyInstanceService
     }
 
     private static string FormatModeDate(DateTime? value)
-        => value.HasValue ? value.Value.ToString("yyyy-MM-dd") : "N/A";
+        => value.HasValue ? value.Value.ToString("yyyy-MM-dd") : "--";
 
     private static List<DetailField> BuildFullRecord(SurveyInstance instance, int variation = 0)
     {
@@ -1532,9 +1532,9 @@ public sealed record SurveyGridRow(
     int? Ruid
 )
 {
-    public string SampleName => "N/A";
-    public string ElmoSurveyId => "N/A";
-    public string OmbNumber => "N/A";
+    public string SampleName => "--";
+    public string ElmoSurveyId => "--";
+    public string OmbNumber => "--";
 }
 
 public sealed record FilterOptionsResponse(

@@ -14,7 +14,7 @@ public sealed class MySqlSurveyInstanceRepository(
 {
     private readonly SmsLiteDatabaseOptions _options = options.Value;
     private const string GetSurveyInstancesProcedure = SmsLiteStoredProcedures.GetSurveyInstancesTest;
-    private const string MissingValue = "N/A";
+    private const string MissingValue = "--";
 
     public async Task<IReadOnlyList<SurveyGridRow>> GetSurveyInstancesAsync(CancellationToken cancellationToken)
     {

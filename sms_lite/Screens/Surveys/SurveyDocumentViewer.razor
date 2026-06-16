@@ -16,7 +16,7 @@
 
 @if (IsLoading)
 {
-    <div class="alert alert-info">Loading document...</div>
+    <LoadingSwirl Text="Loading document" />
 }
 else
 {
@@ -63,7 +63,7 @@ else
             </div>
             <div class="viewer-card">
                 <div class="viewer-label">SKey</div>
-                <div class="viewer-value">@(SKey ?? "N/A")</div>
+                <div class="viewer-value">@(SKey ?? "--")</div>
             </div>
         </div>
 
@@ -154,7 +154,7 @@ else
             $"Collection Mode: {Mode ?? "EDR"}",
             $"Version: {Version ?? "v1.0"}",
             $"Format: {Format ?? "PDF"}",
-            $"Document Id: {DocumentId ?? "N/A"}",
+            $"Document Id: {DocumentId ?? "--"}",
             string.Empty,
             "This preview simulates the Survey Review document viewer path described in the user stories.",
             "The final implementation should replace this body with the real Survey Review payload or browser-native/PDF viewer integration."

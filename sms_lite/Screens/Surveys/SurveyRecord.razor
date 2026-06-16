@@ -20,7 +20,7 @@
 
 @if (IsLoading)
 {
-    <div class="alert alert-info">Loading survey record...</div>
+    <LoadingSwirl Text="Loading survey record" />
 }
 else if (!string.IsNullOrWhiteSpace(ErrorMessage))
 {
@@ -35,7 +35,7 @@ else
     <section class="record-identity mb-3">
         <div class="record-identity-title">@Detail.Title</div>
         <div class="record-identity-skey">
-            <span class="skey-chip">SKey: @(string.IsNullOrWhiteSpace(SKey) ? "N/A" : SKey)</span>
+            <span class="skey-chip">SKey: @(string.IsNullOrWhiteSpace(SKey) ? "--" : SKey)</span>
         </div>
         <div class="record-identity-meta">
             <span><strong class="identity-key">Survey ID:</strong> <span class="identity-value">@Detail.SurveyId</span></span>
@@ -57,7 +57,7 @@ else
                     <span class="identity-value">@Detail.ReferenceDate.ToString("MM/dd/yyyy")</span>
                 }
             </span>
-            <span><strong class="identity-key">State:</strong> <span class="identity-value">@(string.IsNullOrWhiteSpace(State) ? "N/A" : State)</span></span>
+            <span><strong class="identity-key">State:</strong> <span class="identity-value">@(string.IsNullOrWhiteSpace(State) ? "--" : State)</span></span>
         </div>
     </section>
 

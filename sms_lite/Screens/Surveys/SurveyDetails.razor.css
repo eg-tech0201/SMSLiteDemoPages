@@ -205,9 +205,11 @@
 }
 
 .metric-label {
-    font-weight: 700;
+    font-size: 0.74rem;
+    font-weight: 800;
     color: var(--brand-muted);
-    font-size: 0.98rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .details-top-grid {
@@ -259,6 +261,15 @@
     grid-column: span 2;
 }
 
+.survey-overview-date-range {
+    grid-column: 1;
+}
+
+.budget-allocation-tile {
+    grid-column: 2;
+    align-self: start;
+}
+
 .overview-label {
     font-size: 0.74rem;
     font-weight: 800;
@@ -276,6 +287,36 @@
 .mode-window-list {
     display: grid;
     gap: 0.18rem;
+}
+
+.date-range-table-wrap {
+    overflow-x: auto;
+}
+
+.date-range-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+}
+
+.date-range-table th,
+.date-range-table td {
+    padding: 0.28rem 0.35rem;
+    border-bottom: 1px solid var(--brand-border);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.date-range-table th {
+    color: var(--brand-muted);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.date-range-table td {
+    color: var(--brand-navy);
+    font-weight: 600;
 }
 
 .date-range-gap {
