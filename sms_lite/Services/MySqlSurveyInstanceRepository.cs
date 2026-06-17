@@ -13,10 +13,69 @@ public sealed class MySqlSurveyInstanceRepository(
     ILogger<MySqlSurveyInstanceRepository> logger) : ISurveyInstanceRepository
 {
     private readonly SmsLiteDatabaseOptions _options = options.Value;
-    private const string GetSurveyInstancesProcedure = SmsLiteStoredProcedures.GetSurveyInstancesTest;
-    private const string MissingValue = "--";
+    private const string GetSurveyInstancesProcedure = SmsLiteStoredProcedures.GetSurveyInstances;
+    private const string GetSurveyInstanceCheckinValuesProcedure = SmsLiteStoredProcedures.GetSurveyInstanceCheckinValues;
+    private const string MissingValue = DisplayValue.Missing;
+    private const int DefaultSurveyInstanceFrameSize = 1000;
 
     public async Task<IReadOnlyList<SurveyGridRow>> GetSurveyInstancesAsync(CancellationToken cancellationToken)
+        => await GetSurveyInstancesFrameAsync(
+            SurveyId: null,
+            SampleId: null,
+            Search: null,
+            SurveyDate: null,
+            StartDate: null,
+            StopDate: null,
+            MailFlag: null,
+            CawiFlag: null,
+            CatiFlag: null,
+            CapiFlag: null,
+            HqReviewFlag: null,
+            Limit: DefaultSurveyInstanceFrameSize,
+            Offset: 0,
+            cancellationToken);
+
+    public async Task<SurveyInstancePageResponse> GetSurveyInstancesPageAsync(
+        SurveyInstancePageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var rowLimit = Math.Clamp(request.RowLimit, 1, 100);
+        var rowOffset = Math.Max(0, request.RowOffset);
+        var rows = await GetSurveyInstancesFrameAsync(
+            SurveyId: request.SurveyId,
+            SampleId: request.SampleId,
+            Search: request.SurveySearch,
+            SurveyDate: request.SurveyDate,
+            StartDate: request.StartDate,
+            StopDate: request.StopDate,
+            MailFlag: request.Mail ? (short)1 : null,
+            CawiFlag: request.Cawi ? (short)1 : null,
+            CatiFlag: request.Cati ? (short)1 : null,
+            CapiFlag: request.Capi ? (short)1 : null,
+            HqReviewFlag: request.HqReview ? (short)1 : null,
+            Limit: rowLimit,
+            Offset: rowOffset,
+            cancellationToken);
+
+        var totalRowCount = rows.FirstOrDefault()?.TotalRowCount ?? 0;
+        return new SurveyInstancePageResponse(rows, totalRowCount);
+    }
+
+    private async Task<IReadOnlyList<SurveyGridRow>> GetSurveyInstancesFrameAsync(
+        int? SurveyId,
+        int? SampleId,
+        string? Search,
+        DateTime? SurveyDate,
+        DateTime? StartDate,
+        DateTime? StopDate,
+        short? MailFlag,
+        short? CawiFlag,
+        short? CatiFlag,
+        short? CapiFlag,
+        short? HqReviewFlag,
+        int Limit,
+        int Offset,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_options.Username) || string.IsNullOrWhiteSpace(_options.Password))
         {
@@ -39,6 +98,19 @@ public sealed class MySqlSurveyInstanceRepository(
             command.CommandText = GetSurveyInstancesProcedure;
             command.CommandType = CommandType.StoredProcedure;
             command.CommandTimeout = 120;
+            command.Parameters.Add(new MySqlParameter("row_limit", MySqlDbType.Int32) { Value = Limit });
+            command.Parameters.Add(new MySqlParameter("row_offset", MySqlDbType.Int32) { Value = Offset });
+            command.Parameters.Add(new MySqlParameter("filter_survey_id", MySqlDbType.Int32) { Value = SurveyId.HasValue ? (object)SurveyId.Value : DBNull.Value });
+            command.Parameters.Add(new MySqlParameter("filter_sample_id", MySqlDbType.Int32) { Value = SampleId.HasValue ? (object)SampleId.Value : DBNull.Value });
+            command.Parameters.Add(new MySqlParameter("filter_survey_search", MySqlDbType.VarChar) { Value = string.IsNullOrWhiteSpace(Search) ? DBNull.Value : (object)Search.Trim() });
+            command.Parameters.Add(new MySqlParameter("filter_survey_date", MySqlDbType.DateTime) { Value = SurveyDate.HasValue ? (object)SurveyDate.Value.Date : DBNull.Value });
+            command.Parameters.Add(new MySqlParameter("filter_start_date", MySqlDbType.DateTime) { Value = StartDate.HasValue ? (object)StartDate.Value.Date : DBNull.Value });
+            command.Parameters.Add(new MySqlParameter("filter_stop_date", MySqlDbType.DateTime) { Value = StopDate.HasValue ? (object)StopDate.Value.Date : DBNull.Value });
+            command.Parameters.Add(new MySqlParameter("filter_mail_flag", MySqlDbType.Int16) { Value = MailFlag.HasValue ? (object)MailFlag.Value : DBNull.Value });
+            command.Parameters.Add(new MySqlParameter("filter_cawi_flag", MySqlDbType.Int16) { Value = CawiFlag.HasValue ? (object)CawiFlag.Value : DBNull.Value });
+            command.Parameters.Add(new MySqlParameter("filter_cati_flag", MySqlDbType.Int16) { Value = CatiFlag.HasValue ? (object)CatiFlag.Value : DBNull.Value });
+            command.Parameters.Add(new MySqlParameter("filter_capi_flag", MySqlDbType.Int16) { Value = CapiFlag.HasValue ? (object)CapiFlag.Value : DBNull.Value });
+            command.Parameters.Add(new MySqlParameter("filter_hq_review_flag", MySqlDbType.Int16) { Value = HqReviewFlag.HasValue ? (object)HqReviewFlag.Value : DBNull.Value });
 
             var rows = new List<SurveyGridRow>();
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -101,7 +173,7 @@ public sealed class MySqlSurveyInstanceRepository(
                     CapiStopDate: GetNullableDateTime(reader, "capi_stop_date"),
                     CatiStartDate: GetNullableDateTime(reader, "cati_start_date"),
                     CatiStopDate: GetNullableDateTime(reader, "cati_stop_date"),
-                    CatiApp: GetNullableInt16(reader, "cati_app"),
+                    CatiApp: GetNullableString(reader, "cati_app"),
                     ActiveStatusId: GetNullableInt32(reader, "active_status_id"),
                     OpDomStatusId: GetNullableInt32(reader, "op_dom_status_id"),
                     ManagerFlag: GetNullableInt32(reader, "mgr_flag"),
@@ -219,7 +291,25 @@ public sealed class MySqlSurveyInstanceRepository(
                     ComputedSkill: GetNullableInt16(reader, "computed_skill"),
                     ManualSkill: GetNullableInt16(reader, "manual_skill"),
                     CoordinationFlag: GetNullableInt16(reader, "coordination_flag"),
-                    Ruid: GetNullableInt32(reader, "ruid")));
+                    Ruid: GetNullableInt32(reader, "ruid"),
+                    ActiveFlag: GetNullableInt16(reader, "active_flag"),
+                    StartDate: GetNullableDateTime(reader, "start_date"),
+                    StopDate: GetNullableDateTime(reader, "stop_date"),
+                    SampleMonth: GetNullableInt32(reader, "sample_month"),
+                    HqReviewFlag: GetNullableInt16(reader, "hq_review_flag"),
+                    PopulatedRows: GetNullableInt32(reader, "populated_rows"),
+                    FrequencyCode: GetNullableInt32(reader, "frequency_code"),
+                    FrequencyDescription: GetNullableString(reader, "frequency_desc"),
+                    ProjectCodeValue: GetNullableString(reader, "project_code"),
+                    OmbNumberValue: GetNullableString(reader, "omb_number"),
+                    OmbExpires: GetNullableDateTime(reader, "omb_expires"),
+                    BaseMonth: GetNullableString(reader, "base_month"),
+                    MarkedVersion: GetNullableString(reader, "marked_version"),
+                    SampleNameValue: GetNullableString(reader, "sample_name"),
+                    ElmoSurveyIdValue: GetNullableString(reader, "elmo_survey_id"),
+                    ElmoPeriodId: GetNullableString(reader, "elmo_period_id"),
+                    ElmoMonth: GetNullableString(reader, "elmo_month"),
+                    TotalRowCount: GetNullableInt32(reader, "total_row_count")));
             }
 
             await fileLogger.LogAsync(
@@ -235,7 +325,7 @@ public sealed class MySqlSurveyInstanceRepository(
                 ex,
                 cancellationToken);
             logger.LogError(ex, "Failed to load survey instances from MySQL stored procedure {StoredProcedure}.", GetSurveyInstancesProcedure);
-            throw;
+            return [];
         }
     }
 
@@ -245,7 +335,22 @@ public sealed class MySqlSurveyInstanceRepository(
         string sampleId,
         CancellationToken cancellationToken)
     {
-        var rows = await GetSurveyInstancesAsync(cancellationToken);
+        var sampleIdFilter = int.TryParse(sampleId, out var parsedSampleId) ? parsedSampleId : (int?)null;
+        var rows = await GetSurveyInstancesFrameAsync(
+            SurveyId: surveyId,
+            SampleId: sampleIdFilter,
+            Search: null,
+            SurveyDate: referenceDate,
+            StartDate: null,
+            StopDate: null,
+            MailFlag: null,
+            CawiFlag: null,
+            CatiFlag: null,
+            CapiFlag: null,
+            HqReviewFlag: null,
+            Limit: 25,
+            Offset: 0,
+            cancellationToken);
         var instanceRows = rows
             .Where(row =>
                 row.SurveyId == surveyId &&
@@ -258,31 +363,32 @@ public sealed class MySqlSurveyInstanceRepository(
             return null;
 
         var first = instanceRows[0];
-        var totalSample = instanceRows.Count;
-        var totalReceived = instanceRows.Count(row => row.RespDate.HasValue);
+        var checkinRows = await GetSurveyInstanceCheckinRowsAsync(surveyId, referenceDate, cancellationToken);
+        var totalSample = first.PopulatedRows ?? instanceRows.Count;
+        var totalReceived = checkinRows.Count(row => row.RespDate.HasValue);
         var totalNotReceived = Math.Max(0, totalSample - totalReceived);
 
         return new SurveyInstanceDetailResponse(
             SampleId: FormatValue(first.SampleId),
-            SampleName: MissingValue,
+            SampleName: FormatValue(first.SampleName),
             SurveyId: surveyId,
             Title: FormatValue(first.SurveyTitle),
             SubTitle: FormatValue(first.SurveySubtitle),
-            SurveyFrequency: MissingValue,
-            Version: FormatValue(first.SurveyCode),
+            SurveyFrequency: FormatValue(first.FrequencyDescription),
+            Version: FormatValue(first.MarkedVersion),
             SurveyDate: first.SurveyDate?.Date ?? referenceDate.Date,
             ReferenceDate: referenceDate.Date,
-            SurveyStartDate: GetEarliestModeStart(first) ?? referenceDate.Date,
-            SurveyStopDate: GetLatestModeStop(first) ?? referenceDate.Date,
-            HqSurveyAdmin: MissingValue,
-            ProjectCode: FormatValue(first.SurveyCode),
-            OmbDocket: MissingValue,
-            OmbExpiration: MissingValue,
+            SurveyStartDate: first.StartDate ?? GetEarliestModeStart(first) ?? referenceDate.Date,
+            SurveyStopDate: first.StopDate ?? GetLatestModeStop(first) ?? referenceDate.Date,
+            HqSurveyAdmin: first.HqReviewFlag == 1 ? "In HQ Review" : MissingValue,
+            ProjectCode: FormatValue(first.ProjectCodeValue ?? first.SurveyCode),
+            OmbDocket: FormatValue(first.OmbNumber),
+            OmbExpiration: FormatDate(first.OmbExpires),
             Modes: BuildModeWindows(first),
             OpDomCounts: [],
             DcmsCounts: [],
-            DataCollectionStatusCounts: BuildDataCollectionStatusCounts(instanceRows),
-            ReportsReceivedByModeCounts: BuildReportsReceivedByModeCounts(instanceRows),
+            DataCollectionStatusCounts: BuildDataCollectionStatusCounts(checkinRows),
+            ReportsReceivedByModeCounts: BuildReportsReceivedByModeCounts(checkinRows),
             TotalSample: totalSample,
             TotalReceived: totalReceived,
             TotalDeleted: totalNotReceived,
@@ -294,20 +400,49 @@ public sealed class MySqlSurveyInstanceRepository(
             ResponseHistoryBreakdown: [],
             SurveyDesignerAssociations: [],
             CollectionMaterials: [],
-            RecordRows: instanceRows
-                .Select(row => new SurveyDetailRecordRow(
-                    Fips: FormatValue(row.Fips),
-                    State: FormatValue(row.StateAbbreviation ?? row.StateName ?? row.PersonStateAbbreviation ?? row.OperationStateAbbreviation),
-                    SKey: FormatValue(row.SKey),
-                    Status: ResolveRecordStatus(row),
-                    Poid: FormatValue(row.Poid),
-                    TargetPoid: FormatValue(row.TargetPoid),
-                    SampleId: FormatValue(row.SampleId),
-                    ReferenceDate: referenceDate.Date))
-                .OrderBy(row => row.Fips)
-                .ThenBy(row => row.SKey)
-                .ToList(),
+            RecordRows: [],
             FullRecord: BuildFullRecord(first));
+    }
+
+    private async Task<IReadOnlyList<CheckinValueRow>> GetSurveyInstanceCheckinRowsAsync(
+        int surveyId,
+        DateTime surveyDate,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var connection = new MySqlConnection(BuildConnectionString());
+            await connection.OpenAsync(cancellationToken);
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = GetSurveyInstanceCheckinValuesProcedure;
+            command.CommandType = CommandType.StoredProcedure;
+            command.CommandTimeout = 120;
+            command.Parameters.Add(new MySqlParameter("filter_survey_id", MySqlDbType.Int32) { Value = surveyId });
+            command.Parameters.Add(new MySqlParameter("filter_survey_date", MySqlDbType.DateTime) { Value = surveyDate.Date });
+
+            var rows = new List<CheckinValueRow>();
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                rows.Add(new CheckinValueRow(
+                    RespDate: GetNullableDateTime(reader, "respdate"),
+                    DataCaptureCode: GetNullableInt32(reader, "data_capture_code"),
+                    DcmsCodeId: GetNullableInt32(reader, "dcms_code_id"),
+                    ResponseCode: GetNullableInt32(reader, "response_code")));
+            }
+
+            return rows;
+        }
+        catch (Exception ex)
+        {
+            await fileLogger.LogAsync(
+                $"Stored procedure '{GetSurveyInstanceCheckinValuesProcedure}' failed for survey_id '{surveyId}' and survey_date '{surveyDate:yyyy-MM-dd}'.",
+                ex,
+                cancellationToken);
+            logger.LogError(ex, "Failed to load survey instance check-in values from MySQL stored procedure {StoredProcedure}.", GetSurveyInstanceCheckinValuesProcedure);
+            throw;
+        }
     }
 
     private static List<ModeWindow> BuildModeWindows(SurveyGridRow row)
@@ -335,7 +470,7 @@ public sealed class MySqlSurveyInstanceRepository(
             .Where(date => date.HasValue)
             .Max();
 
-    private static List<CountItem> BuildDataCollectionStatusCounts(IReadOnlyCollection<SurveyGridRow> rows)
+    private static List<CountItem> BuildDataCollectionStatusCounts(IReadOnlyCollection<CheckinValueRow> rows)
     {
         return
         [
@@ -348,7 +483,7 @@ public sealed class MySqlSurveyInstanceRepository(
         ];
     }
 
-    private static List<CountItem> BuildReportsReceivedByModeCounts(IReadOnlyCollection<SurveyGridRow> rows)
+    private static List<CountItem> BuildReportsReceivedByModeCounts(IReadOnlyCollection<CheckinValueRow> rows)
     {
         var receivedRows = rows
             .Where(row => row.RespDate.HasValue)
@@ -364,21 +499,6 @@ public sealed class MySqlSurveyInstanceRepository(
         ];
     }
 
-    private static string ResolveRecordStatus(SurveyGridRow row)
-    {
-        if (row.RespDate.HasValue && row.ResponseCode == 1)
-            return "Complete";
-        if (row.RespDate.HasValue && row.ResponseCode == 2)
-            return "Refusal";
-        if (row.RespDate.HasValue && row.ResponseCode == 3)
-            return "Inaccessible";
-        if (row.RespDate.HasValue)
-            return "Other Complete";
-        if (row.DcmsCodeId.GetValueOrDefault() >= 900)
-            return "Office Hold";
-        return "Active & Not Checked-In";
-    }
-
     private static List<DetailField> BuildFullRecord(SurveyGridRow row)
         =>
         [
@@ -387,6 +507,19 @@ public sealed class MySqlSurveyInstanceRepository(
             new("survey_date", FormatDate(row.SurveyDate)),
             new("survey_title", FormatValue(row.SurveyTitle)),
             new("survey_subtitle", FormatValue(row.SurveySubtitle)),
+            new("frequency_code", FormatValue(row.FrequencyCode)),
+            new("frequency_desc", FormatValue(row.FrequencyDescription)),
+            new("project_code", FormatValue(row.ProjectCodeValue ?? row.SurveyCode)),
+            new("omb_number", FormatValue(row.OmbNumber)),
+            new("omb_expires", FormatDate(row.OmbExpires)),
+            new("sample_name", FormatValue(row.SampleName)),
+            new("elmo_survey_id", FormatValue(row.ElmoSurveyId)),
+            new("elmo_period_id", FormatValue(row.ElmoPeriodId)),
+            new("elmo_month", FormatValue(row.ElmoMonth)),
+            new("marked_version", FormatValue(row.MarkedVersion)),
+            new("base_month", FormatValue(row.BaseMonth)),
+            new("hq_review_flag", FormatValue(row.HqReviewFlag)),
+            new("populated_rows", FormatValue(row.PopulatedRows)),
             new("survey_code", FormatValue(row.SurveyCode)),
             new("respdate", FormatDate(row.RespDate)),
             new("response_code", FormatValue(row.ResponseCode)),
@@ -395,13 +528,16 @@ public sealed class MySqlSurveyInstanceRepository(
         ];
 
     private static string FormatDate(DateTime? value)
-        => value.HasValue ? value.Value.ToString("MM/dd/yyyy") : MissingValue;
+        => DisplayValue.Date(value);
 
     private static string FormatValue(object? value)
-    {
-        var text = Convert.ToString(value);
-        return string.IsNullOrWhiteSpace(text) ? MissingValue : text;
-    }
+        => DisplayValue.Text(value);
+
+    private sealed record CheckinValueRow(
+        DateTime? RespDate,
+        int? DataCaptureCode,
+        int? DcmsCodeId,
+        int? ResponseCode);
 
     private string BuildConnectionString()
     {

@@ -15,45 +15,9 @@
                 <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                     <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
                 </NavLink>
-                <div class="nav-group">
-                    <NavLink class="nav-link" href="calendar">
-                        <span class="bi bi-calendar3" aria-hidden="true"></span> Calendar
-                    </NavLink>
-                    <div class="nav-dropdown" role="menu" aria-label="Calendar submenu">
-                        <div class="nav-subgroup">
-                            <a class="nav-subitem" href="calendar/views">
-                                <span>Views</span>
-                                <span class="nav-arrow" aria-hidden="true">›</span>
-                            </a>
-                            <div class="nav-submenu" role="menu">
-                                <a class="nav-subitem" href="calendar/views/month">Month</a>
-                                <a class="nav-subitem" href="calendar/views/week">Week</a>
-                                <a class="nav-subitem" href="calendar/views/timeline">Timeline</a>
-                            </div>
-                        </div>
-                        <div class="nav-subgroup">
-                            <a class="nav-subitem" href="calendar/tasks">
-                                <span>Tasks</span>
-                                <span class="nav-arrow" aria-hidden="true">›</span>
-                            </a>
-                            <div class="nav-submenu" role="menu">
-                                <a class="nav-subitem" href="calendar/tasks/pending">Pending</a>
-                                <a class="nav-subitem" href="calendar/tasks/overdue">Overdue</a>
-                                <a class="nav-subitem" href="calendar/tasks/completed">Completed</a>
-                            </div>
-                        </div>
-                        <div class="nav-subgroup">
-                            <a class="nav-subitem" href="calendar/settings">
-                                <span>Settings</span>
-                                <span class="nav-arrow" aria-hidden="true">›</span>
-                            </a>
-                            <div class="nav-submenu" role="menu">
-                                <a class="nav-subitem" href="calendar/settings/alerts">Alerts</a>
-                                <a class="nav-subitem" href="calendar/settings/integrations">Integrations</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <NavLink class="nav-link" href="assignments">
+                    <span class="bi bi-person-workspace" aria-hidden="true"></span> Assignments
+                </NavLink>
                 <div class="nav-group">
                     <NavLink class="nav-link" href="surveys">
                         <span class="bi bi-card-list" aria-hidden="true"></span> Surveys
@@ -125,8 +89,7 @@
         <ul>
             <li><strong>Survey 1004</strong> — 3 responses due this week</li>
             <li><strong>Survey 1001</strong> — Enumerator update required</li>
-            <li><strong>My Tasks</strong> — 2 items overdue</li>
-            <li><strong>Calendar</strong> — 1 schedule conflict detected</li>
+            <li><strong>Assignments</strong> — Bulk reassignment functions are not yet connected</li>
         </ul>
     </div>
 }

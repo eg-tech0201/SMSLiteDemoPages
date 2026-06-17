@@ -1,75 +1,16 @@
+@page "/assignments"
 @page "/calendar"
-@using sms_lite.Components.Shared
 
-<h1>Survey Timeline</h1>
+<PageTitle>Assignments</PageTitle>
 
-<div class="row g-4">
-    <div class="col-12 col-lg-7">
-        <div class="panel usda-border">
-            <div class="panel-title">Milestone Calendar</div>
-            <TaskCalendar Events="@CalendarEvents" />
-        </div>
-    </div>
+<h1 class="page-h1">Assignments</h1>
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb breadcrumb-mini mb-0">
+        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Assignments</li>
+    </ol>
+</nav>
 
-    <div class="col-12 col-lg-5">
-        <div class="card mb-3">
-            <div class="card-header">Milestone List</div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Milestone</th>
-                                <th>Start</th>
-                                <th>End</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var milestone in Milestones)
-                            {
-                                <tr>
-                                    <td>@milestone.Title</td>
-                                    <td>@milestone.Start.ToString("yyyy-MM-dd")</td>
-                                    <td>@milestone.End.ToString("yyyy-MM-dd")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">Audit / History (stub)</div>
-            <div class="card-body">
-                <ul>
-                    <li>Start date updated — 2026-01-12</li>
-                    <li>Milestone added — 2026-01-10</li>
-                    <li>Reminder sent — 2026-01-08</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-
-@code {
-    private record MilestoneRow(string Title, DateTime Start, DateTime End);
-
-    private readonly List<MilestoneRow> Milestones = new()
-    {
-        new("Launch window", new DateTime(2026, 1, 5), new DateTime(2026, 1, 20)),
-        new("Enumerator training", new DateTime(2026, 1, 10), new DateTime(2026, 1, 15)),
-        new("Non-response follow-up", new DateTime(2026, 1, 21), new DateTime(2026, 2, 5)),
-        new("Closeout", new DateTime(2026, 2, 8), new DateTime(2026, 2, 15))
-    };
-
-    private List<TaskCalendar.CalendarEvent> CalendarEvents =>
-        Milestones.Select((m, index) => new TaskCalendar.CalendarEvent
-        {
-            Id = index + 1,
-            Start = m.Start,
-            Title = $"{m.Title} ({m.Start:yyyy-MM-dd} → {m.End:yyyy-MM-dd})",
-            Status = "Milestone"
-        }).ToList();
-
-}
+<section class="assignments-placeholder">
+    Bulk work reassignment functions will be available here.
+</section>

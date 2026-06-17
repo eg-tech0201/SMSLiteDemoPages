@@ -70,6 +70,11 @@ else
                     <div class="survey-overview-item"><span class="overview-label">Project Code</span><span class="overview-value">@Detail.ProjectCode</span></div>
                     <div class="survey-overview-item"><span class="overview-label">OMB Docket</span><span class="overview-value">@Detail.OmbDocket</span></div>
                     <div class="survey-overview-item"><span class="overview-label">OMB Expiration</span><span class="overview-value">@Detail.OmbExpiration</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">ELMO Survey ID</span><span class="overview-value">@GetFullRecordValue("elmo_survey_id")</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">ELMO Period ID</span><span class="overview-value">@GetFullRecordValue("elmo_period_id")</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">ELMO Month</span><span class="overview-value">@GetFullRecordValue("elmo_month")</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">Marked Version</span><span class="overview-value">@GetFullRecordValue("marked_version")</span></div>
+                    <div class="survey-overview-item"><span class="overview-label">Base Month</span><span class="overview-value">@GetFullRecordValue("base_month")</span></div>
                     <div class="survey-overview-item survey-overview-date-range">
                         <span class="overview-label">Date Range</span>
                         <div class="date-range-table-wrap">
@@ -96,14 +101,14 @@ else
                                     else
                                     {
                                         <tr>
-                                            <td colspan="3">--</td>
+                                            <td colspan="3">@DisplayValue.Missing</td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    <div class="survey-overview-item budget-allocation-tile"><span class="overview-label">Budget Allocation</span><span class="overview-value">--</span></div>
+                    <div class="survey-overview-item budget-allocation-tile"><span class="overview-label">Budget Allocation</span><span class="overview-value">@DisplayValue.Missing</span></div>
                 </div>
             </div>
         </div>
@@ -364,7 +369,7 @@ else
         "#8e6ccf",
         "#5f6b73"
     };
-    private const string DemoUserId = "demo-user";
+    private const string SystemUserId = "sms-lite-user";
     private List<sms_lite.Services.SurveyDesignerAssociation> VisibleSurveyDesignerAssociations =>
         Detail is null ? new List<sms_lite.Services.SurveyDesignerAssociation>() : FilterAssociationsByRole(Detail.SurveyDesignerAssociations, "NASS");
     private List<CountSlice> DataCollectionStatusChartItems => BuildChartSlices(Detail?.DataCollectionStatusCounts.Select(c => (c.Code, c.Definition, c.Count)));
@@ -498,8 +503,15 @@ else
                 return;
             }
 
+            if (IsInHqReview(Detail))
+            {
+                ErrorMessage = "The selected survey instance is unavailable because it is in HQ review.";
+                Detail = null;
+                return;
+            }
+
             LoadSurveySummaries();
-            RecentSurveyService.Track(DemoUserId, parsedReferenceDate, surveyId.Value, SampleId!, "Reviewed");
+            RecentSurveyService.Track(SystemUserId, parsedReferenceDate, surveyId.Value, SampleId!, "Reviewed");
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
@@ -545,6 +557,25 @@ else
             .OrderBy(r => r.Fips)
             .ThenBy(r => r.Skey)
             .ToList();
+    }
+
+    private string GetFullRecordValue(string field)
+    {
+        var value = Detail?.FullRecord
+            .FirstOrDefault(item => item.Field.Equals(field, StringComparison.OrdinalIgnoreCase))
+            ?.Value;
+
+        return DisplayValue.Text(value);
+    }
+
+    private static bool IsInHqReview(sms_lite.Services.SurveyInstanceDetailResponse detail)
+    {
+        var hqReviewFlag = detail.FullRecord
+            .FirstOrDefault(item => item.Field.Equals("hq_review_flag", StringComparison.OrdinalIgnoreCase))
+            ?.Value;
+
+        return string.Equals(hqReviewFlag, "1", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(detail.HqSurveyAdmin, "In HQ Review", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolveGridStatus(List<sms_lite.Services.SurveyDesignerAssociation> associations)
@@ -783,7 +814,7 @@ else
         {
             builder.OpenElement(seq++, "span");
             builder.AddAttribute(seq++, "class", "text-muted");
-            builder.AddContent(seq++, "--");
+            builder.AddContent(seq++, DisplayValue.Missing);
             builder.CloseElement();
             return;
         }
@@ -799,15 +830,15 @@ else
     private static string BuildDownloadContent(string title, string type, string mode, string version, string fileName)
         => string.Join(Environment.NewLine, new[]
         {
-            "USDA Survey Management Demo Document",
+            "USDA Survey Management Document",
             $"Title: {title}",
             $"Type: {type}",
             $"Collection Mode: {mode}",
             $"Version: {version}",
             $"File Name: {fileName}",
             string.Empty,
-            "This is a demo artifact generated for the Blazor prototype.",
-            "External Survey Review integration is still pending API specifications."
+            "The source file content is not yet wired to SMS Lite.",
+            "Replace this generated placeholder once the document source endpoint is available."
         });
 
     private static List<sms_lite.Services.SurveyDesignerAssociation> FilterAssociationsByRole(
@@ -871,7 +902,7 @@ else
     }
 
     private static string FormatDate(DateTime? value)
-        => value.HasValue ? value.Value.ToString("MM/dd/yyyy") : "--";
+        => DisplayValue.Date(value);
 
     private static double GetPercent(int count, int total)
     {

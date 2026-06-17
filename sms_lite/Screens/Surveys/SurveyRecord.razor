@@ -35,7 +35,7 @@ else
     <section class="record-identity mb-3">
         <div class="record-identity-title">@Detail.Title</div>
         <div class="record-identity-skey">
-            <span class="skey-chip">SKey: @(string.IsNullOrWhiteSpace(SKey) ? "--" : SKey)</span>
+            <span class="skey-chip">SKey: @DisplayValue.Text(SKey)</span>
         </div>
         <div class="record-identity-meta">
             <span><strong class="identity-key">Survey ID:</strong> <span class="identity-value">@Detail.SurveyId</span></span>
@@ -57,7 +57,7 @@ else
                     <span class="identity-value">@Detail.ReferenceDate.ToString("MM/dd/yyyy")</span>
                 }
             </span>
-            <span><strong class="identity-key">State:</strong> <span class="identity-value">@(string.IsNullOrWhiteSpace(State) ? "--" : State)</span></span>
+            <span><strong class="identity-key">State:</strong> <span class="identity-value">@DisplayValue.Text(State)</span></span>
         </div>
     </section>
 
@@ -256,7 +256,7 @@ else
     private sms_lite.Services.SurveyInstanceDetailResponse? Detail { get; set; }
     private string? ErrorMessage { get; set; }
     private bool IsLoading { get; set; }
-    private const string DemoUserId = "demo-user";
+    private const string SystemUserId = "sms-lite-user";
 
     private List<RespondentRow> RespondentRows { get; set; } = [];
     private List<ColumnOption> Columns { get; set; } = [];
@@ -496,7 +496,7 @@ else
             AvailableReferenceDates = SurveyInstanceService.GetReferenceDatesForSurveySample(surveyId.Value, SampleId).ToList();
             SelectedReferenceDateString = parsedReferenceDate.ToString("yyyy-MM-dd");
 
-            RecentSurveyService.Track(DemoUserId, parsedReferenceDate, surveyId.Value, SampleId!, "Worked");
+            RecentSurveyService.Track(SystemUserId, parsedReferenceDate, surveyId.Value, SampleId!, "Worked");
             await LoadSavedViewsAsync();
         }
         catch
@@ -714,7 +714,7 @@ else
 
     private void SaveChanges()
     {
-        StatusMessage = "Changes saved for this demo session.";
+        StatusMessage = "Changes saved for this session.";
     }
 
     private void DismissStatusMessage() => StatusMessage = null;

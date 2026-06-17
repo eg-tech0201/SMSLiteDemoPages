@@ -86,30 +86,25 @@ window.smsPositionFilterPopover = (anchorEl, pop) => {
     }
 
     const pad = 8;
+    const gap = 8;
     const anchorRect = anchorEl.getBoundingClientRect();
+    const availableWidth = Math.max(0, window.innerWidth - (pad * 2));
+    const width = Math.min(anchorRect.width, availableWidth);
+    const anchorCenter = anchorRect.left + (anchorRect.width / 2);
+    let left = anchorCenter - (width / 2);
+    left = Math.min(Math.max(pad, left), window.innerWidth - pad - width);
+    const top = anchorRect.bottom + gap;
+    const availableHeight = Math.max(160, window.innerHeight - top - pad);
 
     pop.style.position = "fixed";
     pop.style.transform = "none";
-    pop.style.width = `${Math.round(anchorRect.width)}px`;
-
-    let left = anchorRect.left;
-    let top = anchorRect.bottom - 1;
-
-    pop.style.left = `${Math.round(left)}px`;
-    pop.style.top = `${Math.round(top)}px`;
-
-    const popRect = pop.getBoundingClientRect();
-
-    if (popRect.right > window.innerWidth - pad) {
-      left = Math.max(pad, window.innerWidth - pad - popRect.width);
-    }
-    if (left < pad) {
-      left = pad;
-    }
-    if (popRect.bottom > window.innerHeight - pad) {
-      top = Math.max(pad, anchorRect.top - popRect.height + 1);
-    }
-
+    pop.style.right = "auto";
+    pop.style.bottom = "auto";
+    pop.style.margin = "0";
+    pop.style.width = `${Math.round(width)}px`;
+    pop.style.maxWidth = `${Math.round(availableWidth)}px`;
+    pop.style.maxHeight = `${Math.round(availableHeight)}px`;
+    pop.style.overflowY = "auto";
     pop.style.left = `${Math.round(left)}px`;
     pop.style.top = `${Math.round(top)}px`;
   } catch (err) {

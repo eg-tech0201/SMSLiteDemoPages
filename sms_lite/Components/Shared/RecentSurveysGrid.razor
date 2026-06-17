@@ -6,7 +6,7 @@
         <div class="panel-title">@Title</div>
         @if (!string.IsNullOrWhiteSpace(ViewAllHref))
         {
-            <a class="button-lite" href="@ViewAllHref">View all</a>
+            <a class="button-lite recent-surveys-view-all" href="@ViewAllHref">View all</a>
         }
     </div>
     @if (IsLoading)
@@ -93,8 +93,5 @@
     }
 
     private static string FormatValue(object? value)
-    {
-        var text = Convert.ToString(value);
-        return string.IsNullOrWhiteSpace(text) ? "--" : text;
-    }
+        => DisplayValue.Text(value);
 }

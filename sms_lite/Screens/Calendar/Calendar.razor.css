@@ -1,15 +1,19 @@
-.page-h2 {
-    margin-bottom: 1rem;
-}
-
-.panel {
-    border-radius: 16px;
-    background: var(--brand-background);
-    padding: 0.9rem;
-}
-
-.panel-title {
-    font-weight: 900;
-    margin-bottom: 0.75rem;
+.page-h1 {
+    margin: 0 0 0.75rem;
     color: var(--brand-navy);
+    font-weight: 900;
+}
+
+.breadcrumb-mini {
+    font-size: 0.82rem;
+}
+
+.assignments-placeholder {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px dashed var(--brand-border);
+    border-radius: 8px;
+    background: var(--panel-background);
+    color: var(--brand-muted);
+    font-weight: 700;
 }

@@ -220,7 +220,7 @@ else
     private static readonly string[] ChartPalette = ["#5b8db7", "#f29d38", "#4ca978", "#8e6ccf", "#d95f5f"];
 
     private string DisplayReferenceDate =>
-        DateTime.TryParse(ReferenceDate, out var parsed) ? parsed.ToString("MM/dd/yyyy") : (ReferenceDate ?? string.Empty);
+        DateTime.TryParse(ReferenceDate, out var parsed) ? parsed.ToString("MM/dd/yyyy") : DisplayValue.Text(ReferenceDate);
 
     private List<InfoRow> RespondentInfoRows =>
         Respondent is null
@@ -228,7 +228,7 @@ else
             : BuildInfoRows(Respondent.Values);
 
     private string RespondentTitle => Respondent?.Values.GetValueOrDefault("whole_name", "Survey contact") ?? "Survey contact";
-    private string RespondentPoid => Respondent?.Values.GetValueOrDefault("poid", Poid ?? string.Empty) ?? (Poid ?? string.Empty);
+    private string RespondentPoid => DisplayValue.Text(Respondent?.Values.GetValueOrDefault("poid", Poid ?? string.Empty) ?? Poid);
     private BurdenMetric SelectedBurdenMetric =>
         BurdenMetrics.FirstOrDefault(m => m.RangeLabel.Equals(SelectedBurdenWindow, StringComparison.OrdinalIgnoreCase)) ??
         BurdenMetrics.FirstOrDefault() ??
@@ -273,7 +273,7 @@ else
     private string GetValue(params string[] keys)
     {
         if (Respondent is null)
-            return string.Empty;
+            return DisplayValue.Missing;
 
         foreach (var key in keys)
         {
@@ -282,7 +282,7 @@ else
                 return value;
         }
 
-        return string.Empty;
+        return DisplayValue.Missing;
     }
 
     private string FormatCityStateZip(string cityKey, string stateKey, string zip5Key, string zip4Key)
@@ -292,7 +292,7 @@ else
         var zip5 = GetValue(zip5Key);
         var zip4 = GetValue(zip4Key);
         var zip = string.IsNullOrWhiteSpace(zip4) ? zip5 : $"{zip5}-{zip4}";
-        return string.Join(" ", new[] { string.Join(", ", new[] { city, state }.Where(v => !string.IsNullOrWhiteSpace(v))), zip }.Where(v => !string.IsNullOrWhiteSpace(v)));
+        return DisplayValue.Text(string.Join(" ", new[] { string.Join(", ", new[] { city, state }.Where(v => !string.IsNullOrWhiteSpace(v))), zip }.Where(v => !string.IsNullOrWhiteSpace(v))));
     }
 
     private void SelectBurdenWindow(string rangeLabel)

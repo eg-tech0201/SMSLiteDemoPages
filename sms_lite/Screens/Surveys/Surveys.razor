@@ -11,25 +11,98 @@
     </ol>
 </nav>
 
-<div class="surveys-toolbar">
-    <div class="toolbar-left">
-        <div class="search-shell">
-            <div class="search-input-row">
-                <button class="search-icon-button" type="button" title="Search">
-                    <span class="bi bi-search" aria-hidden="true"></span>
-                </button>
-                <input class="survey-search search-input"
-                       placeholder="Search survey results"
-                       value="@GridSearchText"
-                       @oninput="OnGridSearchInputAsync" />
-                <button class="search-filter-button" type="button" @onclick="ClearGridFiltersAsync" title="Clear filters">
-                    <span class="bi bi-sliders" aria-hidden="true"></span>
-                    <span class="filter-label">Filters</span>
-                </button>
-            </div>
+@if (!IsLoading && string.IsNullOrWhiteSpace(LoadError))
+{
+    <div class="search-shell survey-search-shell">
+        <div class="search-input-row" @ref="FiltersAnchor">
+            <i class="bi bi-search search-icon" aria-hidden="true"></i>
+            <DxTextBox Text="@SurveySearch"
+                       TextChanged="@OnSurveySearchChanged"
+                       BindValueMode="BindValueMode.OnDelayedInput"
+                       InputDelay="450"
+                       NullText="Search by survey ID or title"
+                       ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto"
+                       CssClass="survey-search-input" />
+            <DxButton CssClass="search-filter-button survey-filter-icon-button"
+                      IconCssClass="bi bi-sliders"
+                      RenderStyle="ButtonRenderStyle.None"
+                      Click="@ToggleFiltersMenu" />
+            @if (ActiveFilterCount > 0)
+            {
+                <span class="survey-filter-count">Filters: @ActiveFilterCount</span>
+            }
         </div>
+        @if (IsFiltersMenuOpen)
+        {
+            <div class="filters-backdrop" @onclick="CloseFiltersMenu"></div>
+            <div class="filters-pop survey-filters-pop"
+                 role="dialog"
+                 aria-label="Survey filters"
+                 @ref="FiltersPopup">
+                <div class="filters-header">
+                    <div class="filters-title">Filters</div>
+                    <button class="columns-close" type="button" @onclick="CloseFiltersMenu" aria-label="Close filters">x</button>
+                </div>
+                <div class="filters-group survey-date-group">
+                    <div class="filters-subtitle">Survey Date</div>
+                    <div class="survey-filter-field">
+                        <DxDateEdit T="DateTime?"
+                                    Date="@SurveyDateFilter"
+                                    DateChanged="@OnSurveyDateFilterChanged"
+                                    DisplayFormat="MM/dd/yyyy"
+                                    Mask="MM/dd/yyyy"
+                                    NullText="--/--/----"
+                                    ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto" />
+                    </div>
+                </div>
+                <div class="filters-group">
+                    <div class="filters-subtitle">Start / Stop Dates</div>
+                    <div class="filters-row date-range-row">
+                        <div class="survey-filter-field">
+                            <label>Start Date</label>
+                            <DxDateEdit T="DateTime?"
+                                        Date="@StartDateFilter"
+                                        DateChanged="@OnStartDateFilterChanged"
+                                        DisplayFormat="MM/dd/yyyy"
+                                        Mask="MM/dd/yyyy"
+                                        NullText="--/--/----"
+                                        ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto" />
+                        </div>
+                        <div class="survey-filter-field">
+                            <label>Stop Date</label>
+                            <DxDateEdit T="DateTime?"
+                                        Date="@StopDateFilter"
+                                        DateChanged="@OnStopDateFilterChanged"
+                                        DisplayFormat="MM/dd/yyyy"
+                                        Mask="MM/dd/yyyy"
+                                        NullText="--/--/----"
+                                        ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto" />
+                        </div>
+                    </div>
+                </div>
+                <div class="filters-group">
+                    <div class="filters-subtitle">Modes</div>
+                    <div class="filters-checks survey-filter-checks">
+                        <DxCheckBox T="bool" Checked="@MailFilter" CheckedChanged="@OnMailFilterChanged">Mail</DxCheckBox>
+                        <DxCheckBox T="bool" Checked="@CawiFilter" CheckedChanged="@OnCawiFilterChanged">CAWI</DxCheckBox>
+                        <DxCheckBox T="bool" Checked="@CapiFilter" CheckedChanged="@OnCapiFilterChanged">CAPI</DxCheckBox>
+                        <DxCheckBox T="bool" Checked="@CatiFilter" CheckedChanged="@OnCatiFilterChanged">CATI</DxCheckBox>
+                    </div>
+                </div>
+                <div class="filters-group">
+                    <div class="filters-subtitle">Status</div>
+                    <div class="filters-checks survey-filter-checks">
+                        <DxCheckBox T="bool" Checked="@HqReviewFilter" CheckedChanged="@OnHqReviewFilterChanged">In HQ Review</DxCheckBox>
+                    </div>
+                </div>
+                <div class="filters-actions">
+                    <button class="button-lite grid-action-button" type="button" @onclick="ClearServerFiltersAsync">Clear Filters</button>
+                    <button class="button-primary" type="button" @onclick="CloseFiltersMenu">Done</button>
+                </div>
+            </div>
+        }
     </div>
-</div>
+}
 
 <div class="table-wrap dx-grid-wrap">
     @if (IsLoading)
@@ -43,12 +116,12 @@
     else
     {
         <div class="survey-grid-actions">
-            <div class="survey-grid-hint">Drag a column header left or right to reorder columns.</div>
             <button class="button-lite grid-action-button" type="button" @onclick="ShowColumnChooserAsync">Customize Columns</button>
             <button class="button-lite grid-action-button" type="button" @onclick="SaveGridViewAsync">Save View</button>
             <button class="button-lite grid-action-button" type="button" @onclick="ResetGridViewAsync">Reset View</button>
+            <div class="survey-grid-hint">@ResultsSummary</div>
         </div>
-        <div class="survey-grid-scroll" @onclick="ShowGridInteractionLoadingAsync">
+        <div class="survey-grid-scroll">
             @if (IsGridInteractionLoading)
             {
                 <div class="survey-grid-loading-overlay">
@@ -58,16 +131,15 @@
             <DxGrid @ref="SurveyGrid"
                     Data="@Rows"
                     CssClass="survey-dx-grid"
-                    PageSize="10"
-                    PagerVisible="true"
-                    PageSizeSelectorVisible="true"
+                    PageSize="@GridPageSize"
+                    PagerVisible="false"
+                    PageSizeSelectorVisible="false"
                     PageSizeSelectorItems="@PageSizeOptions"
-                    SearchText="@GridSearchText"
                     ShowSearchBox="false"
                     ShowFilterRow="false"
                     FilterMenuButtonDisplayMode="GridFilterMenuButtonDisplayMode.Always"
-                    ShowGroupPanel="false"
-                    AllowGroup="false"
+                    ShowGroupPanel="true"
+                    AllowGroup="true"
                     AllowSort="true"
                     AllowColumnReorder="true"
                     SelectionMode="GridSelectionMode.Multiple"
@@ -102,6 +174,20 @@
                 </Columns>
             </DxGrid>
         </div>
+        <div class="survey-server-pager" aria-label="Survey result pages">
+            <button class="button-lite grid-action-button" type="button" disabled="@IsFirstPage" @onclick="PreviousPageAsync">Previous</button>
+            <span>@PageSummary</span>
+            <button class="button-lite grid-action-button" type="button" disabled="@IsLastPage" @onclick="NextPageAsync">Next</button>
+            <label>
+                Rows
+                <select class="survey-page-size-select" value="@GridPageSize" @onchange="OnGridPageSizeChanged">
+                    @foreach (var pageSize in PageSizeOptions)
+                    {
+                        <option value="@pageSize">@pageSize</option>
+                    }
+                </select>
+            </label>
+        </div>
     }
 </div>
 
@@ -114,11 +200,41 @@
     private IGrid? SurveyGrid { get; set; }
     private List<SurveyGridRow> Rows { get; set; } = new();
     private int[] PageSizeOptions { get; } = [10, 20, 50, 100];
+    private int GridPageSize { get; set; } = 20;
+    private int PageIndex { get; set; }
+    private int TotalRowCount { get; set; }
+    private string? SurveySearch { get; set; }
+    private DateTime? SurveyDateFilter { get; set; }
+    private DateTime? StartDateFilter { get; set; }
+    private DateTime? StopDateFilter { get; set; }
+    private bool MailFilter { get; set; }
+    private bool CawiFilter { get; set; }
+    private bool CatiFilter { get; set; }
+    private bool CapiFilter { get; set; }
+    private bool HqReviewFilter { get; set; }
+    private bool IsFiltersMenuOpen { get; set; }
+    private ElementReference FiltersAnchor { get; set; }
+    private ElementReference FiltersPopup { get; set; }
     private bool IsLoading { get; set; } = true;
     private bool IsGridInteractionLoading { get; set; }
-    private int GridInteractionLoadingVersion { get; set; }
     private string? LoadError { get; set; }
-    private string GridSearchText { get; set; } = "";
+    private bool IsFirstPage => PageIndex <= 0;
+    private bool IsLastPage => TotalRowCount == 0 || ((PageIndex + 1) * GridPageSize) >= TotalRowCount;
+    private string ResultsSummary => TotalRowCount == 0
+        ? string.Empty
+        : $"Showing {(PageIndex * GridPageSize) + 1:N0}-{Math.Min((PageIndex + 1) * GridPageSize, TotalRowCount):N0} of {TotalRowCount:N0} survey results";
+    private string PageSummary => TotalRowCount == 0
+        ? "Page 0 of 0"
+        : $"Page {PageIndex + 1:N0} of {Math.Max(1, (int)Math.Ceiling(TotalRowCount / (double)GridPageSize)):N0}";
+    private int ActiveFilterCount =>
+        (SurveyDateFilter.HasValue ? 1 : 0) +
+        (StartDateFilter.HasValue ? 1 : 0) +
+        (StopDateFilter.HasValue ? 1 : 0) +
+        (MailFilter ? 1 : 0) +
+        (CawiFilter ? 1 : 0) +
+        (CapiFilter ? 1 : 0) +
+        (CatiFilter ? 1 : 0) +
+        (HqReviewFilter ? 1 : 0);
 
     private static readonly IReadOnlyList<GridColumnSpec> SurveyColumns =
     [
@@ -129,6 +245,9 @@
         new(SampleNameColumn, "Sample Name", 180, null, true),
         new(ElmoSurveyIdColumn, "ELMO Survey ID", 170, null, true),
         new(OmbNumberColumn, "OMB Number", 160, null, true),
+        new(nameof(SurveyGridRow.StartDate), "Start Date", 140, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.StopDate), "Stop Date", 140, "MM/dd/yyyy"),
+        new(nameof(SurveyGridRow.HqReviewFlag), "In HQ Review", 150),
         new(nameof(SurveyGridRow.Fips), "FIPS", 110),
         new(nameof(SurveyGridRow.StateId), "State ID", 110),
         new(nameof(SurveyGridRow.SKey), "S-Key", 110),
@@ -304,23 +423,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            var rows = await Http.GetFromJsonAsync<List<SurveyGridRow>>("api/survey-instances") ?? [];
-            Rows = BuildUniqueInstanceRows(rows);
-        }
-        catch (Exception ex)
-        {
-            LoadError = $"Survey results could not be loaded from the server endpoint. {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+        await LoadSurveyPageAsync(showOverlay: false);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (IsFiltersMenuOpen)
+        {
+            await Js.InvokeVoidAsync("smsPositionFilterPopover", FiltersAnchor, FiltersPopup);
+        }
+
         if (!firstRender || SurveyGrid is null)
             return;
 
@@ -346,34 +458,171 @@
         }
     }
 
-    private async Task ClearGridFiltersAsync()
+    private void ToggleFiltersMenu()
+        => IsFiltersMenuOpen = !IsFiltersMenuOpen;
+
+    private void CloseFiltersMenu()
+        => IsFiltersMenuOpen = false;
+
+    private async Task LoadSurveyPageAsync(bool showOverlay = true)
     {
-        await ShowGridInteractionLoadingAsync();
-        if (SurveyGrid is not null)
+        if (showOverlay)
         {
-            SurveyGrid.ClearFilter();
+            IsGridInteractionLoading = true;
+            StateHasChanged();
         }
-        GridSearchText = "";
-        await SaveGridViewAsync();
+
+        try
+        {
+            LoadError = null;
+            var page = await Http.GetFromJsonAsync<SurveyInstancePageResponse>(BuildSurveyPageEndpoint());
+            Rows = page?.Rows.ToList() ?? [];
+            TotalRowCount = page?.TotalRowCount ?? 0;
+        }
+        catch (Exception ex)
+        {
+            Rows = [];
+            TotalRowCount = 0;
+            LoadError = $"Survey results could not be loaded from the server endpoint. {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+            IsGridInteractionLoading = false;
+        }
     }
 
-    private async Task OnGridSearchInputAsync(ChangeEventArgs e)
+    private string BuildSurveyPageEndpoint()
     {
-        GridSearchText = e.Value?.ToString() ?? string.Empty;
-        await ShowGridInteractionLoadingAsync();
+        var query = new List<string>
+        {
+            $"rowLimit={GridPageSize}",
+            $"rowOffset={PageIndex * GridPageSize}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(SurveySearch))
+            query.Add($"surveySearch={Uri.EscapeDataString(SurveySearch.Trim())}");
+        if (SurveyDateFilter.HasValue)
+            query.Add($"surveyDate={SurveyDateFilter.Value:yyyy-MM-dd}");
+        if (StartDateFilter.HasValue)
+            query.Add($"startDate={StartDateFilter.Value:yyyy-MM-dd}");
+        if (StopDateFilter.HasValue)
+            query.Add($"stopDate={StopDateFilter.Value:yyyy-MM-dd}");
+        if (MailFilter)
+            query.Add("mail=true");
+        if (CawiFilter)
+            query.Add("cawi=true");
+        if (CatiFilter)
+            query.Add("cati=true");
+        if (CapiFilter)
+            query.Add("capi=true");
+        if (HqReviewFilter)
+            query.Add("hqReview=true");
+
+        return $"api/survey-instances/page?{string.Join("&", query)}";
     }
 
-    private async Task ShowGridInteractionLoadingAsync()
+    private async Task ReloadFromFirstPageAsync()
     {
-        var version = ++GridInteractionLoadingVersion;
-        IsGridInteractionLoading = true;
-        StateHasChanged();
+        PageIndex = 0;
+        await LoadSurveyPageAsync();
+    }
 
-        await Task.Delay(300);
-        if (version != GridInteractionLoadingVersion)
+    private async Task OnSurveySearchChanged(string value)
+    {
+        SurveySearch = value;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task OnSurveyDateFilterChanged(DateTime? value)
+    {
+        SurveyDateFilter = value;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task OnStartDateFilterChanged(DateTime? value)
+    {
+        StartDateFilter = value;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task OnStopDateFilterChanged(DateTime? value)
+    {
+        StopDateFilter = value;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task OnMailFilterChanged(bool value)
+    {
+        MailFilter = value;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task OnCawiFilterChanged(bool value)
+    {
+        CawiFilter = value;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task OnCatiFilterChanged(bool value)
+    {
+        CatiFilter = value;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task OnCapiFilterChanged(bool value)
+    {
+        CapiFilter = value;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task OnHqReviewFilterChanged(bool value)
+    {
+        HqReviewFilter = value;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task ClearServerFiltersAsync()
+    {
+        SurveySearch = null;
+        SurveyDateFilter = null;
+        StartDateFilter = null;
+        StopDateFilter = null;
+        MailFilter = false;
+        CawiFilter = false;
+        CatiFilter = false;
+        CapiFilter = false;
+        HqReviewFilter = false;
+        await ReloadFromFirstPageAsync();
+    }
+
+    private async Task PreviousPageAsync()
+    {
+        if (IsFirstPage)
             return;
 
-        IsGridInteractionLoading = false;
+        PageIndex--;
+        await LoadSurveyPageAsync();
+    }
+
+    private async Task NextPageAsync()
+    {
+        if (IsLastPage)
+            return;
+
+        PageIndex++;
+        await LoadSurveyPageAsync();
+    }
+
+    private async Task OnGridPageSizeChanged(ChangeEventArgs args)
+    {
+        if (int.TryParse(Convert.ToString(args.Value), out var selectedPageSize) &&
+            PageSizeOptions.Contains(selectedPageSize))
+        {
+            GridPageSize = selectedPageSize;
+        }
+
+        await ReloadFromFirstPageAsync();
     }
 
     private async Task SaveGridViewAsync()
@@ -392,7 +641,6 @@
         {
             SurveyGrid.LoadLayout(new GridPersistentLayout());
         }
-        GridSearchText = "";
     }
 
     private static string? ResolveDisplayFormat(GridColumnSpec column)
@@ -425,18 +673,6 @@
         return null;
     }
 
-    private static List<SurveyGridRow> BuildUniqueInstanceRows(IEnumerable<SurveyGridRow> rows)
-        => rows
-            .Where(row => row.SurveyId.HasValue && row.SurveyDate.HasValue && row.SampleId.HasValue)
-            .GroupBy(row => new { row.SurveyId, SurveyDate = row.SurveyDate!.Value.Date, row.SampleId })
-            .Select(group => group
-                .OrderBy(row => row.SKey ?? int.MaxValue)
-                .First())
-            .OrderByDescending(row => row.SurveyDate)
-            .ThenBy(row => row.SurveyId)
-            .ThenBy(row => row.SampleId)
-            .ToList();
-
     private static string BuildDetailHref(SurveyGridRow row)
     {
         if (!row.SurveyId.HasValue || !row.SurveyDate.HasValue || !row.SampleId.HasValue)
@@ -451,8 +687,7 @@
         if (value is DateTime date)
             return date.ToString("MM/dd/yyyy");
 
-        var text = Convert.ToString(value);
-        return string.IsNullOrWhiteSpace(text) ? "--" : text;
+        return DisplayValue.Text(value);
     }
 
     private sealed record GridColumnSpec(string FieldName, string Caption, int MinWidth, string? DisplayFormat = null, bool VisibleByDefault = false);

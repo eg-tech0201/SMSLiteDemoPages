@@ -6,7 +6,7 @@
 
 <h1 class="page-h1">SMS Lite</h1>
 
-<div class="dashboard-grid" @onclick="ClearSelection">
+<div class="dashboard-grid">
     <section class="panel surveys-search-panel dashboard-full">
         <div class="panel-title-row">
             <a class="panel-title-link" href="surveys">Survey Search</a>
@@ -188,61 +188,12 @@
     <div class="dashboard-row-split">
         <section class="panel calendar-panel">
             <div class="calendar-panel-header">
-                <a class="panel-title-link" href="calendar">My Tasks</a>
-                <div class="calendar-view-toggle">
-                    <button type="button" class="button-lite @(ShowTaskList ? "active" : "")" @onclick="() => ShowTaskList = true">List View</button>
-                    <button type="button" class="button-lite @(!ShowTaskList ? "active" : "")" @onclick="() => ShowTaskList = false">Calendar View</button>
-                </div>
+                <div class="panel-title">Survey Collection Progress</div>
             </div>
-
-            @if (ShowTaskList)
-            {
-                <div class="tasks-list">
-                    @if (Tasks.Count == 0)
-                    {
-                        <div class="tasks-empty">No tasks yet.</div>
-                    }
-                    else
-                    {
-                        <table class="table-lite">
-                            <thead>
-                                <tr>
-                                    <th style="width: 30%">Task</th>
-                                    <th style="width: 24%">Survey</th>
-                                    <th style="width: 30%">Due Date</th>
-                                    <th style="width: 16%">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var t in Tasks)
-                                {
-                                    <tr class="task-row @(SelectedEventId == t.Id ? "selected" : "")"
-                                        @onclick="() => SelectTask(t)" @onclick:stopPropagation="true">
-                                        <td>
-                                            <a class="task-link" href="@GetSurveyLink(t.SurveyId)" @onclick:stopPropagation="true">
-                                                @t.Task
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <a class="task-link" href="@GetSurveyLink(t.SurveyId)" @onclick:stopPropagation="true">
-                                                @t.SurveyId @t.SurveyTitle
-                                            </a>
-                                        </td>
-                                        <td>@t.DueAt.ToString("MMM d, h:mm tt")</td>
-                                        <td><span class="pill @GetPill(t.Status)">@t.Status</span></td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-                </div>
-            }
-            else
-            {
-                <TaskCalendar Events="CalendarEvents"
-                              @bind-View="CalendarView"
-                              @bind-SelectedEventId="SelectedEventId" />
-            }
+            <div class="tasks-empty">
+                A table modeled after surveydash.nass.usda.gov will appear here with Survey Name and Date,
+                Sample Size, Check In, Checked In %, and Days Remaining.
+            </div>
         </section>
 
         <RecentSurveysGrid SectionCssClass="panel recent-surveys-panel" />
@@ -250,52 +201,6 @@
 </div>
 
 @code {
-    private TaskCalendar.CalendarViewMode CalendarView = TaskCalendar.CalendarViewMode.Month;
-    private int? SelectedEventId { get; set; }
-    private bool ShowTaskList { get; set; } = true;
-
-
-    // DueAt includes the time
-    private record TaskRow(int Id, string Task, int SurveyId, string SurveyTitle, DateTime DueAt, string Status);
-
-    private List<TaskRow> Tasks = new()
-    {
-        new(1, "Finalize survey iteration dates", 1001, "Crop Yield Survey",
-            new DateTime(2026, 1, 26, 17, 0, 0), 
-            "In progress"), // 5:00PM
-        new(2, "Validate status master (pre-publish)", 1002, "Ag Census Pilot",
-            new DateTime(2026, 1, 18, 10, 0, 0), 
-            "Blocked"), //10:00 AM
-        new(3, "Review questionnaire link (instrument)", 1001, "Crop Yield Survey",
-            new DateTime(2026, 1, 22, 14, 30, 0), 
-            "Not started"), // 2:30 PM
-        new(4, "Resolve schedule conflict (overlap)", 1004, "Dairy Inventory",
-            new DateTime(2026, 1, 17, 9, 0, 0), 
-            "Overdue"), //9:00 AM
-        new(5, "Confirm CAWI mode dates", 1003, "Farm Labor Study",
-            new DateTime(2026, 1, 11, 16, 0, 0), 
-            "In progress"), // 4:00 PM
-    };
-
-    private List<TaskCalendar.CalendarEvent> CalendarEvents =>
-    Tasks.Select(t => new TaskCalendar.CalendarEvent
-    {
-        Id = t.Id,
-        Start = t.DueAt, // <-- IMPORTANT (CalendarEvent should have Start)
-        Title = $"{t.SurveyId} {t.SurveyTitle} — {t.Task}",
-        Status = t.Status
-    }).ToList();
-
-    private void SelectTask(TaskRow task)
-    {
-        SelectedEventId = SelectedEventId == task.Id ? null : task.Id;
-    }
-
-    private void ClearSelection()
-    {
-        SelectedEventId = null;
-    }
-
     private string SearchText { get; set; } = "";
     private DateTime? SelectedReferenceDate { get; set; }
     private int? ReferenceMonth { get; set; }
@@ -490,14 +395,4 @@
         return queryParts.Count == 0 ? "" : $"?{string.Join("&", queryParts)}";
     }
 
-    private static string GetSurveyLink(int surveyId) => $"surveys/details/{surveyId}";
-
-    private string GetPill(string status) => status switch
-    {
-        "In progress" => "pill-progress",
-        "Blocked" => "pill-blocked",
-        "Not started" => "pill-notstarted",
-        "Overdue" => "pill-overdue",
-        _ => ""
-    };
 }

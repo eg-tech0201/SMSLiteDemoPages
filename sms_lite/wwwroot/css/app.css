@@ -26,15 +26,16 @@
 /* Hide Blazor's error UI banner by default; it will still be logged to console. */
 #blazor-error-ui { display: none !important; }
 
-/* Filters popover styling: center relative to anchor and match anchor width */
+/* Filter popovers are centered under their search container. */
 .filters-pop {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  max-width: 640px; /* will be adjusted by JS positioning to anchor width */
-  width: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  margin: 0;
+  max-width: min(640px, calc(100vw - 1rem));
+  width: 100%;
   background: var(--panel-background);
   border: 1px solid var(--brand-border);
   border-radius: 12px;
@@ -77,10 +78,6 @@
 
 /* ensure user-menu and notif dropdowns close on outside click (backdrop handled by Blazor) */
 .user-menu { position: absolute; right: 1rem; top: 100%; z-index: 60; }
-
-/* Filters popover tweak: place top edge at bottom of search bar border and match anchor width via JS (smsPositionFilterPopover already sets width) */
-.filters-pop { top: auto; }
-
 
 html,
 body {
@@ -181,8 +178,8 @@ html, body { height: 100%; }
 }
 
 .recent-surveys-grid :is(.dxbl-grid-header-row, .dxbl-grid-header, .dxbl-grid-header-content) {
-    background: color-mix(in srgb, var(--brand-green) 88%, var(--brand-navy));
-    color: #ffffff;
+    background: #3f9d55 !important;
+    color: #ffffff !important;
     font-weight: 800;
 }
 
@@ -192,6 +189,23 @@ html, body { height: 100%; }
 
 .recent-surveys-grid :is(.dxbl-grid-focused-row, .dxbl-grid-selected-row) {
     background: color-mix(in srgb, var(--brand-green) 14%, #ffffff);
+}
+
+.survey-dx-grid :is(.dxbl-grid-header-row, .dxbl-grid-header, .dxbl-grid-header-content) {
+    background: #3f9d55 !important;
+    color: #ffffff !important;
+    font-weight: 800;
+}
+
+.survey-dx-grid > .dxbl-grid-top-panel > .dxbl-grid-group-panel-container > .dxbl-text {
+    font-size: 0;
+}
+
+.survey-dx-grid > .dxbl-grid-top-panel > .dxbl-grid-group-panel-container > .dxbl-text::before {
+    content: "Drag a column header here to group by that column, or drag it left or right to reorder.";
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--brand-muted);
 }
 
 @keyframes sms-loading-spin {
