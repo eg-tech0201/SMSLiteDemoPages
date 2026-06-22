@@ -158,47 +158,10 @@
         </form>
     </div>
 
-    <div class="sms-topbar-right">
-        <button type="button" class="icon-button" title="Notifications" @onclick="ToggleNotifs">
-            <span class="bi bi-bell" aria-hidden="true"></span>
-            @if (NotifCount > 0)
-            {
-                <span class="badge">@NotifCount</span>
-            }
-        </button>
-
-        <span class="email">user@usda.gov</span>
-        <span class="avatar" title="User">
-            <span class="bi bi-person-circle" aria-hidden="true"></span>
-        </span>
-    </div>
 </header>
-
-@if (ShowNotifs)
-{
-    <div class="notif-backdrop" @onclick="CloseNotifs"></div>
-    <div class="notif-dropdown" @onclick:stopPropagation="true">
-        <div class="notif-header">
-            <span>Notifications</span>
-            <button type="button" class="notif-close" aria-label="Close notifications" @onclick="CloseNotifs">×</button>
-        </div>
-        <ul>
-            <li><strong>OMB-2026-014</strong> — Docket approval pending</li>
-            <li><strong>OMB-2026-001</strong> — Docket approved</li>
-            <li><strong>101</strong> — 6 overdue tasks</li>
-            <li><strong>102</strong> — 1 schedule conflict</li>
-        </ul>
-    </div>
-}
 
 @code {
     [Parameter] public string Title { get; set; } = "Dashboard";
-
-    private bool ShowNotifs;
-    private int NotifCount => 4;
-
-    private void ToggleNotifs() => ShowNotifs = !ShowNotifs;
-    private void CloseNotifs() => ShowNotifs = false;
 
     private string SearchText { get; set; } = "";
     private bool ShowFilters { get; set; }

@@ -1,439 +1,187 @@
+using sms_lite.Dtos;
+using sms_lite.Models;
+using sms_lite.Server.Services;
+
 namespace sms_lite.Services;
 
-public sealed class SurveyInstanceService
+public sealed class SurveyInstanceService(SurveyInstanceDao dao)
 {
-    public IReadOnlyList<SurveyInstance> Instances => [];
+    private const int DefaultPageSize = 1000;
 
-    public SurveyInstance? FindInstance(DateTime referenceDate, int surveyId, string sampleId) => null;
+    public async Task<IReadOnlyList<SurveyGridRow>> GetSurveyInstancesAsync(
+        CancellationToken cancellationToken)
+    {
+        var instances = await dao.GetAsync(
+            new SurveyInstanceQuery(DefaultPageSize, 0),
+            cancellationToken);
 
-    public FilterOptionsResponse GetFilterOptions(DateTime? referenceDate, int? surveyId, string? sampleId)
-        => new([], [], []);
+        return instances.Select(ToGridRow).ToList();
+    }
 
-    public SurveyInstanceDetailResponse? GetDetail(DateTime referenceDate, int surveyId, string sampleId) => null;
+    public async Task<SurveyInstancePageResponse> GetSurveyInstancesPageAsync(
+        SurveyInstancePageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var query = new SurveyInstanceQuery(
+            RowLimit: Math.Clamp(request.RowLimit, 1, 100),
+            RowOffset: Math.Max(0, request.RowOffset),
+            SurveyId: request.SurveyId,
+            SampleId: request.SampleId,
+            SurveySearch: request.SurveySearch,
+            SurveyDate: request.SurveyDate,
+            StartDate: request.StartDate,
+            StopDate: request.StopDate,
+            Mail: request.Mail,
+            Cawi: request.Cawi,
+            Cati: request.Cati,
+            Capi: request.Capi,
+            HqReview: request.HqReview);
+        var instances = await dao.GetAsync(query, cancellationToken);
 
-    public List<SurveyInstance> FilterInstances(DateTime? referenceDate, int? surveyId, string? sampleId) => [];
+        return new SurveyInstancePageResponse(
+            instances.Select(ToGridRow).ToList(),
+            instances.FirstOrDefault()?.TotalRowCount ?? 0);
+    }
 
-    public IReadOnlyList<SurveyInstance> GetSurveyInstances(int surveyId) => [];
-
-    public IReadOnlyList<SurveyRecordIndexItem> GetSurveyRecordIndex(int surveyId) => [];
-
-    public IReadOnlyList<SurveyRespondentRecord> GetRespondentsForInstance(
+    public async Task<SurveyInstanceDetailResponse?> GetSurveyInstanceDetailAsync(
         DateTime referenceDate,
         int surveyId,
         string sampleId,
-        string? skey,
-        int count = 24) => [];
+        CancellationToken cancellationToken)
+    {
+        if (!int.TryParse(sampleId, out var parsedSampleId))
+            return null;
 
-    public IReadOnlyList<DateTime> GetReferenceDatesForSurveySample(int surveyId, string sampleId) => [];
+        var survey = (await dao.GetAsync(
+            new SurveyInstanceQuery(
+                RowLimit: 1,
+                RowOffset: 0,
+                SurveyId: surveyId,
+                SampleId: parsedSampleId,
+                SurveyDate: referenceDate.Date),
+            cancellationToken)).FirstOrDefault();
+        if (survey is null)
+            return null;
 
-    public IReadOnlyList<SurveyRespondentRecord> GetSurveyRespondentRecords(int surveyId) => [];
+        var checkins = await dao.GetCheckinsAsync(
+            surveyId,
+            referenceDate.Date,
+            parsedSampleId,
+            cancellationToken);
 
-    public SurveyRecordLookupResult? FindSurveyRecordByPoid(int surveyId, string poid) => null;
+        return ToDetailResponse(survey, checkins, referenceDate.Date);
+    }
 
-    public SurveyRespondentRecord? GetRespondentByPoid(DateTime referenceDate, int surveyId, string sampleId, string poid) => null;
+    private static SurveyGridRow ToGridRow(SurveyInstance survey)
+        => new(
+            survey.SurveyId,
+            survey.SurveyDate,
+            survey.SampleId,
+            survey.PeriodId,
+            survey.ActiveFlag,
+            survey.StartDate,
+            survey.StopDate,
+            survey.SampleMonth,
+            survey.HqReviewFlag,
+            survey.PopulatedRows,
+            survey.MailFlag,
+            survey.CawiFlag,
+            survey.CatiFlag,
+            survey.CapiFlag,
+            survey.MailStartDate,
+            survey.MailStopDate,
+            survey.CawiStartDate,
+            survey.CawiStopDate,
+            survey.CapiStartDate,
+            survey.CapiStopDate,
+            survey.CatiStartDate,
+            survey.CatiStopDate,
+            survey.CatiApp,
+            survey.SurveyTitle,
+            survey.SurveySubtitle,
+            survey.FrequencyCode,
+            survey.FrequencyDescription,
+            survey.ProjectCode,
+            survey.OmbNumber,
+            survey.OmbExpires,
+            survey.BaseMonth,
+            survey.MarkedVersion,
+            survey.SampleName,
+            survey.ElmoSurveyId,
+            survey.ElmoPeriodId,
+            survey.ElmoMonth,
+            survey.TotalRowCount);
 
-    public IReadOnlyList<RespondentTimelineEvent> GetRespondentTimeline(string poid, int surveyId, string sampleId) => [];
+    private static SurveyInstanceDetailResponse ToDetailResponse(
+        SurveyInstance survey,
+        IReadOnlyCollection<SurveyInstanceCheckin> checkins,
+        DateTime referenceDate)
+    {
+        var receivedCount = checkins.Count(row => row.ResponseDate.HasValue);
+
+        return new SurveyInstanceDetailResponse(
+            SampleId: survey.SampleId,
+            SampleName: survey.SampleName,
+            SurveyId: survey.SurveyId,
+            Title: survey.SurveyTitle,
+            SubTitle: survey.SurveySubtitle,
+            SurveyFrequency: survey.FrequencyDescription,
+            Version: survey.MarkedVersion,
+            SurveyDate: survey.SurveyDate?.Date,
+            ReferenceDate: referenceDate,
+            SurveyStartDate: survey.StartDate ?? FirstDate(
+                survey.MailStartDate,
+                survey.CawiStartDate,
+                survey.CapiStartDate,
+                survey.CatiStartDate),
+            SurveyStopDate: survey.StopDate ?? LastDate(
+                survey.MailStopDate,
+                survey.CawiStopDate,
+                survey.CapiStopDate,
+                survey.CatiStopDate),
+            HqReview: survey.HqReviewFlag == 1,
+            ProjectCode: survey.ProjectCode,
+            OmbNumber: survey.OmbNumber,
+            OmbExpiration: survey.OmbExpires,
+            ElmoSurveyId: survey.ElmoSurveyId,
+            ElmoPeriodId: survey.ElmoPeriodId,
+            ElmoMonth: survey.ElmoMonth,
+            MarkedVersion: survey.MarkedVersion,
+            BaseMonth: survey.BaseMonth,
+            MailStartDate: survey.MailStartDate,
+            MailStopDate: survey.MailStopDate,
+            CawiStartDate: survey.CawiStartDate,
+            CawiStopDate: survey.CawiStopDate,
+            CapiStartDate: survey.CapiStartDate,
+            CapiStopDate: survey.CapiStopDate,
+            CatiStartDate: survey.CatiStartDate,
+            CatiStopDate: survey.CatiStopDate,
+            TotalSample: checkins.Count,
+            TotalReceived: receivedCount,
+            TotalDeleted: checkins.Count - receivedCount,
+            CompleteCount: checkins.Count(row => row.ResponseDate.HasValue && row.ResponseCode == 1),
+            RefusalCount: checkins.Count(row => row.ResponseDate.HasValue && row.ResponseCode == 2),
+            InaccessibleCount: checkins.Count(row => row.ResponseDate.HasValue && row.ResponseCode == 3),
+            OtherCompleteCount: checkins.Count(row =>
+                row.ResponseDate.HasValue &&
+                row.ResponseCode is not (1 or 2 or 3)),
+            OfficeHoldCount: checkins.Count(row => row.DcmsCodeId.GetValueOrDefault() >= 900),
+            ActiveNotCheckedInCount: checkins.Count(row =>
+                !row.ResponseDate.HasValue &&
+                row.DcmsCodeId is < 900),
+            MailReceivedCount: checkins.Count(row => row.ResponseDate.HasValue && row.DataCaptureCode == 1),
+            CawiReceivedCount: checkins.Count(row => row.ResponseDate.HasValue && row.DataCaptureCode == 5),
+            CapiReceivedCount: checkins.Count(row => row.ResponseDate.HasValue && row.DataCaptureCode == 6),
+            ReadiReceivedCount: checkins.Count(row => row.ResponseDate.HasValue && row.DataCaptureCode == 10),
+            OtherModeReceivedCount: checkins.Count(row =>
+                row.ResponseDate.HasValue &&
+                row.DataCaptureCode > 0 &&
+                row.DataCaptureCode is not (1 or 5 or 6 or 10)));
+    }
+
+    private static DateTime? FirstDate(params DateTime?[] values)
+        => values.Where(value => value.HasValue).Min();
+
+    private static DateTime? LastDate(params DateTime?[] values)
+        => values.Where(value => value.HasValue).Max();
 }
-
-public sealed record SurveyInstance(
-    int SurveyId,
-    string SampleId,
-    string SampleName,
-    DateTime ReferenceDate,
-    string Title,
-    string SubTitle,
-    string SurveyFrequency,
-    string Version,
-    DateTime SurveyDate,
-    DateTime SurveyStartDate,
-    DateTime SurveyStopDate,
-    string HqSurveyAdmin,
-    string ProjectCode,
-    string Status,
-    string OmbNumber,
-    DateTime OmbExpires,
-    string State,
-    string Region,
-    string StateId,
-    string StateAlpha,
-    string DcmsCodeId,
-    string OpDomStatusId,
-    string EnumeratorId,
-    string EnumeratorName,
-    string ManagerId,
-    string ManagerName,
-    string CoachId,
-    string CoachName,
-    string EnumeratorNotes,
-    string ResponseCode,
-    string Mode,
-    List<ModeWindow> Modes,
-    List<CountItem> OpDomCounts,
-    List<CountItem> DcmsCounts,
-    int TotalReceived,
-    int TotalDeleted,
-    decimal BudgetAllocation,
-    int RespondentInstancesLast1Year,
-    int RespondentInstancesLast3Years,
-    int RespondentInstancesLast5Years,
-    decimal ResponseHistoryRate,
-    List<ResponseHistoryItem> ResponseHistoryBreakdown
-);
-
-public sealed record SurveyGridRow(
-    int? SampleId,
-    int? Fips,
-    int? SurveyId,
-    int? StateId,
-    DateTime? SurveyDate,
-    int? SKey,
-    int? Poid,
-    decimal? TargetPoid,
-    int? Tract,
-    int? Subtract,
-    int? FrameId,
-    int? OperationId,
-    int? PersonId,
-    int? ObjectiveYieldId,
-    int? CommentFlag,
-    string? Comments,
-    string? OfficeNotes,
-    int? PeriodId,
-    int? Stratum,
-    int? PartnerNo,
-    int? Rep,
-    int? KZero,
-    int? X1,
-    int? X2,
-    int? X3,
-    int? X4,
-    int? X5,
-    int? Flag1,
-    int? Flag2,
-    int? Flag3,
-    int? Flag4,
-    int? Flag5,
-    short? HoldFlag,
-    int? SZeroFlag,
-    string? Label1,
-    string? Label2,
-    string? Label3,
-    string? Label4,
-    string? Label5,
-    string? OtherField,
-    short? CatiFlag,
-    string? CatiGroup,
-    short? CapiFlag,
-    short? PhoneOnlyFlag,
-    short? CawiFlag,
-    short? MailFlag,
-    short? PmcMailFlag,
-    short? RfoMailFlag,
-    DateTime? MailStartDate,
-    DateTime? MailStopDate,
-    DateTime? CawiStartDate,
-    DateTime? CawiStopDate,
-    DateTime? CapiStartDate,
-    DateTime? CapiStopDate,
-    DateTime? CatiStartDate,
-    DateTime? CatiStopDate,
-    string? CatiApp,
-    int? ActiveStatusId,
-    int? OpDomStatusId,
-    int? ManagerFlag,
-    string? ManagerFlagChar,
-    decimal? StatePoid,
-    string? OperationName,
-    string? OperationAddress,
-    string? OperationOtherAddress,
-    string? OperationPlaceName,
-    string? OperationStateAbbreviation,
-    string? OperationZip5,
-    string? OperationZip4,
-    string? OperationPhone,
-    string? OperationPhoneChar,
-    int? OperationCellPhoneFlag,
-    string? OperationCellPhoneFlagChar,
-    string? OperationFax,
-    string? OperationFaxChar,
-    int? OperationFarmFlag,
-    int? AgriculturalBusinessFlag,
-    int? TaggedId,
-    int? OperationCountyId,
-    int? OperationDistrictId,
-    string? OperationEmail,
-    int? PersonStatusId,
-    string? LastName,
-    string? FirstName,
-    string? MiddleName,
-    string? SuffixId,
-    string? WholeName,
-    string? Address,
-    string? OtherAddress,
-    string? PersonPlaceName,
-    string? PersonStateAbbreviation,
-    string? PersonZip5,
-    string? PersonZip4,
-    string? PersonPhone,
-    string? PersonPhoneChar,
-    int? PersonCellPhoneFlag,
-    string? PersonCellPhoneFlagChar,
-    string? PersonOtherPhone,
-    string? PersonOtherPhoneChar,
-    int? PersonOtherCellPhoneFlag,
-    string? PersonOtherCellPhoneFlagChar,
-    string? PersonFaxPhone,
-    string? PersonFaxPhoneChar,
-    int? CountyId,
-    int? DistrictId,
-    string? PersonEmail,
-    int? LanguageId,
-    decimal? Latitude,
-    decimal? Longitude,
-    int? DataCollectionModeCodeId,
-    int? DcmsCodeId,
-    int? PermSupervisorId,
-    int? PermEnumeratorId,
-    string? SurveyCode,
-    string? Barcode,
-    int? RfoReviewFlag,
-    int? MarkedFlag,
-    int? Mseqnum,
-    string? CountyName,
-    string? OperationCountyName,
-    DateTime? RespDate,
-    DateTime? DataPull,
-    int? ResponseCode,
-    int? RespondentCode,
-    int? ReportingModeCode,
-    int? DataCaptureCode,
-    int? DataCollectionEnumeratorId,
-    DateTime? DataCollectionDate,
-    short? ReviewFlag,
-    int? StartedFlag,
-    int? SavedFlag,
-    int? OutOfBusinessId,
-    string? XStateLink,
-    long? CoordinationId,
-    string? SurveyTitle,
-    string? SurveySubtitle,
-    string? Version,
-    string? StateName,
-    string? StateAbbreviation,
-    string? OperationComments,
-    string? PersonComments,
-    int? BackupDcmsCode,
-    string? BackupEnumeratorId,
-    string? SupervisorId,
-    string? EnumeratorId,
-    string? EnumeratorName,
-    string? SupervisorName,
-    string? BackupSupervisorId,
-    int? SmsCheckIn,
-    short? HistoricResponsePercentage1Year,
-    short? HistoricResponseSurveys1Year,
-    string? HistoricResponseMode1Year,
-    short? HistoricResponsePercentage3Years,
-    short? HistoricResponseSurveys3Years,
-    string? HistoricResponseMode3Years,
-    short? HistoricResponsePercentage5Years,
-    short? HistoricResponseSurveys5Years,
-    string? HistoricResponseMode5Years,
-    int? StartDcDcmsCode,
-    int? StartDcEnumerator,
-    int? StartDcSupervisor,
-    short? PartnershipFlag,
-    int? AddedRecordFlag,
-    string? EnumeratorNotes,
-    int? CapiAppointmentFlag,
-    int? CapiAttemptedContacts,
-    int? Tier,
-    int? ReactivatedFlag,
-    DateTime? ReactivatedFlagDate,
-    string? ManagerId,
-    string? ManagerName,
-    short? ComputedSkill,
-    short? ManualSkill,
-    short? CoordinationFlag,
-    int? Ruid,
-    short? ActiveFlag = null,
-    DateTime? StartDate = null,
-    DateTime? StopDate = null,
-    int? SampleMonth = null,
-    short? HqReviewFlag = null,
-    int? PopulatedRows = null,
-    int? FrequencyCode = null,
-    string? FrequencyDescription = null,
-    string? ProjectCodeValue = null,
-    string? OmbNumberValue = null,
-    DateTime? OmbExpires = null,
-    string? BaseMonth = null,
-    string? MarkedVersion = null,
-    string? SampleNameValue = null,
-    string? ElmoSurveyIdValue = null,
-    string? ElmoPeriodId = null,
-    string? ElmoMonth = null,
-    int? TotalRowCount = null
-)
-{
-    public string SampleName => DisplayValue.Text(SampleNameValue);
-    public string ElmoSurveyId => DisplayValue.Text(ElmoSurveyIdValue);
-    public string OmbNumber => DisplayValue.Text(OmbNumberValue);
-}
-
-public sealed record FilterOptionsResponse(
-    List<string> AvailableReferenceDates,
-    List<int> AvailableSurveyIds,
-    List<string> AvailableSampleIds
-);
-
-public sealed record SurveyInstancePageRequest(
-    int RowLimit = 20,
-    int RowOffset = 0,
-    int? SurveyId = null,
-    int? SampleId = null,
-    string? SurveySearch = null,
-    DateTime? SurveyDate = null,
-    DateTime? StartDate = null,
-    DateTime? StopDate = null,
-    bool Mail = false,
-    bool Cawi = false,
-    bool Cati = false,
-    bool Capi = false,
-    bool HqReview = false
-);
-
-public sealed record SurveyInstancePageResponse(
-    IReadOnlyList<SurveyGridRow> Rows,
-    int TotalRowCount
-);
-
-public sealed record SurveyInstanceDetailResponse(
-    string SampleId,
-    string SampleName,
-    int SurveyId,
-    string Title,
-    string SubTitle,
-    string SurveyFrequency,
-    string Version,
-    DateTime SurveyDate,
-    DateTime ReferenceDate,
-    DateTime SurveyStartDate,
-    DateTime SurveyStopDate,
-    string HqSurveyAdmin,
-    string ProjectCode,
-    string OmbDocket,
-    string OmbExpiration,
-    List<ModeWindow> Modes,
-    List<CountItem> OpDomCounts,
-    List<CountItem> DcmsCounts,
-    List<CountItem> DataCollectionStatusCounts,
-    List<CountItem> ReportsReceivedByModeCounts,
-    int TotalSample,
-    int TotalReceived,
-    int TotalDeleted,
-    decimal BudgetAllocation,
-    int RespondentInstancesLast1Year,
-    int RespondentInstancesLast3Years,
-    int RespondentInstancesLast5Years,
-    decimal ResponseHistoryRate,
-    List<ResponseHistoryItem> ResponseHistoryBreakdown,
-    List<SurveyDesignerAssociation> SurveyDesignerAssociations,
-    List<CollectionMaterial> CollectionMaterials,
-    List<SurveyDetailRecordRow> RecordRows,
-    List<DetailField> FullRecord
-);
-
-public sealed record ModeWindow(string Mode, DateTime? StartDate, DateTime? StopDate);
-
-public sealed record CountItem(string Code, string Definition, int Count);
-
-public sealed record ResponseHistoryItem(string Label, int Count);
-
-public sealed record DetailField(string Field, string Value);
-
-public sealed record SurveyDetailRecordRow(
-    string Fips,
-    string State,
-    string SKey,
-    string Status,
-    string Poid,
-    string TargetPoid,
-    string SampleId,
-    DateTime ReferenceDate
-);
-
-public sealed record SurveyDesignerAssociation(
-    string SKey,
-    string QuestionnaireId,
-    string CollectionMode,
-    string QuestionnaireVersion,
-    string QuestionnaireFormat,
-    string QuestionnaireStatus,
-    string QuestionnaireLink,
-    string SpecificationsLink,
-    string MetadataLink,
-    List<QuestionnaireSpecItem> SpecificationItems
-);
-
-public sealed record QuestionnaireSpecItem(
-    string ItemCode,
-    string Description
-);
-
-public sealed record CollectionMaterial(
-    string MaterialName,
-    string MaterialType,
-    string CollectionMode,
-    string Version,
-    DateTime UploadDate,
-    long FileSizeBytes,
-    string FileName
-);
-
-public sealed record SurveyRecordIndexItem(
-    int SurveyId,
-    string SampleId,
-    DateTime ReferenceDate,
-    string Poid,
-    string TargetPoid,
-    string Mode,
-    string StateAlpha,
-    string StateId,
-    string SKey
-);
-
-public sealed record SurveyRecordLookupResult(
-    DateTime ReferenceDate,
-    int SurveyId,
-    string SampleId,
-    string Poid,
-    string TargetPoid
-);
-
-public sealed record SurveyRespondentRecord(
-    int RespondentId,
-    int SurveyId,
-    string SampleId,
-    DateTime ReferenceDate,
-    string StateId,
-    string StateAlpha,
-    string SKey,
-    List<DetailField> Fields
-);
-
-public sealed record ResponseHistory(
-    int Last1Year,
-    int Last3Years,
-    int Last5Years,
-    decimal ResponseRate,
-    List<ResponseHistoryItem> Breakdown
-);
-
-public sealed record RespondentTimelineEvent(
-    DateTime EventDate,
-    string EventType,
-    string Actor,
-    string Summary,
-    string Link
-);

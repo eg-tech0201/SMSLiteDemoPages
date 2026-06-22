@@ -1,4 +1,3 @@
-using sms_lite.Workflows;
 using sms_lite.Models.Integrations;
 
 namespace sms_lite.Services.Contracts.Integration;
@@ -19,17 +18,5 @@ public interface ISurveyReviewGateway
         string sKey,
         int publishedState,
         int outputType,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<QuestionnaireArtifactDto>> GetQuestionnairesAsync(
-        SurveyInstanceKey key,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<CollectionMaterialDto>> GetCollectionMaterialsAsync(
-        SurveyInstanceKey key,
-        CancellationToken cancellationToken = default);
-
-    Task<DocumentPayloadDto?> GetDocumentAsync(
-        DocumentRequestDto request,
         CancellationToken cancellationToken = default);
 }

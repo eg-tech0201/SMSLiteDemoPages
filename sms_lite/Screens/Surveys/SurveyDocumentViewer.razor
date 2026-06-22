@@ -1,18 +1,8 @@
 @page "/surveys/document-viewer"
 @inject IJSRuntime Js
-@inject sms_lite.Services.DemoAuditTrailService AuditTrailService
-@inject sms_lite.Services.DemoUserContextService UserContext
+@inject ILogger<SurveyDocumentViewer> Logger
 
 <PageTitle>@(string.IsNullOrWhiteSpace(Title) ? "Document Viewer" : Title)</PageTitle>
-
-<nav aria-label="breadcrumb" class="mb-2">
-    <ol class="breadcrumb breadcrumb-mini mb-0">
-        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="surveys">Surveys</a></li>
-        <li class="breadcrumb-item"><a href="surveys/results">Results</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Document Viewer</li>
-    </ol>
-</nav>
 
 @if (IsLoading)
 {
@@ -164,13 +154,11 @@ else
     private async Task DownloadAsync()
     {
         await Js.InvokeVoidAsync("smsDownloadText", DisplayFileName, DocumentPreview, "text/plain;charset=utf-8");
-        AuditTrailService.Log(
-            "Download",
+        Logger.LogInformation(
+            "Downloaded {MaterialType} document {DocumentId} as {FileName}.",
             MaterialType ?? "Questionnaire",
             DocumentId ?? DisplayTitle,
-            DisplayFileName,
-            UserContext.CurrentRole,
-            "Downloaded from document viewer.");
+            DisplayFileName);
     }
 
     private static string GetOutputName(int outputType)

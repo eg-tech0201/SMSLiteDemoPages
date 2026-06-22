@@ -1,5 +1,4 @@
 using SMS.Integration.SurveyReview.Configuration;
-using sms_lite.Workflows;
 using Microsoft.Extensions.Options;
 using sms_lite.Models.Integrations;
 using sms_lite.Services.Contracts.Integration;
@@ -57,53 +56,6 @@ public sealed class ResilientSurveyReviewGateway : ISurveyReviewGateway
         CancellationToken cancellationToken = default)
         => ExecuteAsync(ct => _downstreamClient.GetInstanceOutputAsync(sKey, publishedState, outputType, ct), cancellationToken);
 
-    public async Task<IReadOnlyList<QuestionnaireArtifactDto>> GetQuestionnairesAsync(
-        SurveyInstanceKey key,
-        CancellationToken cancellationToken = default)
-    {
-        var versions = await GetQuestionnaireVersionsAsync(key.SurveyId, key.ReferenceDate, cancellationToken);
-        return versions
-            .SelectMany(version => version.Outputs.Select(output => new QuestionnaireArtifactDto(
-                $"{version.SurveyId}-{version.SKey}-{output.OutputType}",
-                version.SKey,
-                "CAPI",
-                version.SurveyDate.ToString("yyyy-MM-dd"),
-                output.Format,
-                version.Status,
-                output.Url,
-                $"/api/survey-review/skey-instances/{version.SurveyId}/{version.SurveyDate:yyyy-MM-dd}",
-                string.Empty)))
-            .ToList();
-    }
-
-    public Task<IReadOnlyList<CollectionMaterialDto>> GetCollectionMaterialsAsync(
-        SurveyInstanceKey key,
-        CancellationToken cancellationToken = default)
-        => Task.FromResult<IReadOnlyList<CollectionMaterialDto>>(Array.Empty<CollectionMaterialDto>());
-
-    public async Task<DocumentPayloadDto?> GetDocumentAsync(
-        DocumentRequestDto request,
-        CancellationToken cancellationToken = default)
-    {
-        if (!TryParseDocumentId(request.DocumentId, out var sKey, out var publishedState, out var outputType))
-            return null;
-
-        var output = await GetInstanceOutputAsync(sKey, publishedState, outputType, cancellationToken);
-        if (output is null)
-            return null;
-
-        return new DocumentPayloadDto(
-            request.DocumentId,
-            output.OutputName,
-            request.DocumentType,
-            output.OutputName,
-            output.FileName,
-            output.ContentType,
-            output.Content,
-            output.ExternalUrl,
-            output.PreviewText);
-    }
-
     private async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
     {
         if (_circuitBreaker.IsOpen())
@@ -149,17 +101,4 @@ public sealed class ResilientSurveyReviewGateway : ISurveyReviewGateway
     private static string ResolveStatus(int publishedState)
         => publishedState == 400 ? "Published" : $"State {publishedState}";
 
-    private static bool TryParseDocumentId(string documentId, out string sKey, out int publishedState, out int outputType)
-    {
-        sKey = string.Empty;
-        publishedState = 0;
-        outputType = 0;
-
-        var parts = documentId.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (parts.Length != 4 || !string.Equals(parts[0], "survey-review", StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        sKey = parts[1];
-        return int.TryParse(parts[2], out publishedState) && int.TryParse(parts[3], out outputType);
-    }
 }

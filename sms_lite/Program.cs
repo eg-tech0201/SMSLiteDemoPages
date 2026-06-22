@@ -10,7 +10,6 @@ using sms_lite;
 using sms_lite.Server.Authentication;
 using sms_lite.Server.Configuration;
 using sms_lite.Server.Endpoints;
-using sms_lite.Server.Logging;
 using sms_lite.Server.Services;
 using sms_lite.Services;
 using sms_lite.Services.Contracts.Integration;
@@ -60,16 +59,13 @@ builder.Services.AddHttpClient<ISurveyReviewDownstreamClient, HttpSurveyReviewDo
 builder.Services.AddHttpClient<IElmaDownstreamClient, StubElmaDownstreamClient>();
 
 // Circuit breakers, gateways
-builder.Services.AddScoped<UserRecentSurveyService>();
-builder.Services.AddScoped<SurveyInstanceService>();
-builder.Services.AddScoped<DemoUserContextService>();
-builder.Services.AddScoped<DemoAuditTrailService>();
 builder.Services.AddSingleton<ISurveyReviewCircuitBreaker, InMemorySurveyReviewCircuitBreaker>();
 builder.Services.AddSingleton<IElmaCircuitBreaker, InMemoryElmaCircuitBreaker>();
 builder.Services.AddSingleton<ISurveyReviewGateway, ResilientSurveyReviewGateway>();
 builder.Services.AddSingleton<IElmaGateway, ResilientElmaGateway>();
-builder.Services.AddSingleton<IUserFileLogger, UserFileLogger>();
-builder.Services.AddScoped<ISurveyInstanceRepository, MySqlSurveyInstanceRepository>();
+builder.Services.AddScoped<SurveyInstanceDao>();
+builder.Services.AddScoped<SurveyInstanceService>();
+builder.Services.AddScoped<BreadcrumbService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

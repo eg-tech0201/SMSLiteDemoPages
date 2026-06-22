@@ -1,19 +1,12 @@
 @page "/search"
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
-@inject sms_lite.Services.SurveyInstanceService SurveyInstanceService
 @using System.Text.Json
 @using System.Diagnostics
 
 <PageTitle>Global Search</PageTitle>
 
 <h1 class="page-h1">Global Search</h1>
-<nav aria-label="breadcrumb" class="mb-2">
-    <ol class="breadcrumb breadcrumb-mini mb-0">
-        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Global Search</li>
-    </ol>
-</nav>
 
 <div class="search-page-shell">
     <div class="card search-toolbar-card">
@@ -260,9 +253,9 @@
 
     private List<FilterChipModel> ActiveFilterChips => BuildActiveFilterChips();
 
-    private IEnumerable<string> StatusOptions => SurveyInstanceService.Instances.Select(i => i.Status).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s);
-    private IEnumerable<string> SurveyTypeOptions => SurveyInstanceService.Instances.Select(i => i.SurveyFrequency).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s);
-    private IEnumerable<string> GeographicAreaOptions => SurveyInstanceService.Instances.Select(i => i.StateAlpha).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s);
+    private static IEnumerable<string> StatusOptions => [];
+    private static IEnumerable<string> SurveyTypeOptions => [];
+    private static IEnumerable<string> GeographicAreaOptions => [];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -401,53 +394,6 @@
     {
         var results = new List<SearchResultRow>();
         var term = SearchText.Trim();
-
-        foreach (var survey in SurveyInstanceService.Instances)
-        {
-            var trackingNumber = $"{survey.SurveyId}-{survey.SampleId}";
-            var relevance = ComputeRelevance(term, survey.SurveyId.ToString(), trackingNumber, survey.Title, survey.StateId, survey.StateAlpha);
-            results.Add(new SearchResultRow(
-                "SMS Survey",
-                survey.Title,
-                $"{survey.SampleName} • {survey.Status} • {survey.SurveyFrequency}",
-                trackingNumber,
-                survey.ReferenceDate,
-                survey.Status,
-                survey.SurveyFrequency,
-                survey.StateAlpha,
-                $"surveys/details?referenceDate={survey.ReferenceDate:yyyy-MM-dd}&surveyId={survey.SurveyId}&sampleId={Uri.EscapeDataString(survey.SampleId)}",
-                relevance,
-                string.Empty,
-                string.Empty,
-                survey.SurveyId.ToString(),
-                survey.SampleId));
-        }
-
-        foreach (var surveyId in SurveyInstanceService.Instances.Select(i => i.SurveyId).Distinct())
-        {
-            foreach (var respondent in SurveyInstanceService.GetSurveyRespondentRecords(surveyId))
-            {
-                var values = respondent.Fields.ToDictionary(f => NormalizeFieldKey(f.Field), f => f.Value, StringComparer.OrdinalIgnoreCase);
-                var poid = values.GetValueOrDefault("poid", string.Empty);
-                var trackingNumber = respondent.SKey;
-                var relevance = ComputeRelevance(term, poid, respondent.RespondentId.ToString(), trackingNumber, respondent.StateId, respondent.StateAlpha, values.GetValueOrDefault("whole_name", string.Empty));
-                results.Add(new SearchResultRow(
-                    "SMS Respondent",
-                    $"POID {poid}",
-                    $"{values.GetValueOrDefault("whole_name", "Respondent")} • {values.GetValueOrDefault("response_code", "Unknown")}",
-                    trackingNumber,
-                respondent.ReferenceDate,
-                values.GetValueOrDefault("response_code", string.Empty),
-                "Respondent",
-                respondent.StateAlpha,
-                $"respondents/details?stateId={Uri.EscapeDataString(respondent.StateId)}&poid={Uri.EscapeDataString(poid)}&surveyId={respondent.SurveyId}&sampleId={Uri.EscapeDataString(respondent.SampleId)}&referenceDate={respondent.ReferenceDate:yyyy-MM-dd}",
-                    relevance,
-                    poid,
-                    respondent.RespondentId.ToString(),
-                    respondent.SurveyId.ToString(),
-                    respondent.SampleId));
-            }
-        }
 
         return results;
     }

@@ -2,7 +2,6 @@
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
-@inject sms_lite.Services.SurveyInstanceService SurveyInstanceService
 
 <h1 class="page-h1">SMS Lite</h1>
 
@@ -266,10 +265,7 @@
     }
 
     private IEnumerable<int> ReferenceYearOptions =>
-        SurveyInstanceService.Instances
-            .Select(s => s.ReferenceDate.Year)
-            .Distinct()
-            .OrderByDescending(y => y);
+        Enumerable.Range(DateTime.Today.Year - 20, 21).Reverse();
 
     private Task OnReferenceDatePartChanged()
     {

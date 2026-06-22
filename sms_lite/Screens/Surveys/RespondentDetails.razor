@@ -1,206 +1,80 @@
 @page "/respondents/details"
-@inject NavigationManager Navigation
-@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
-@inject sms_lite.Services.SurveyInstanceService SurveyInstanceService
-@using System.Diagnostics
 
 <PageTitle>Respondent Details</PageTitle>
 
-<nav aria-label="breadcrumb" class="mb-2">
-    <ol class="breadcrumb breadcrumb-mini mb-0">
-        <li class="breadcrumb-item"><a href="">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="surveys">Surveys</a></li>
-        <li class="breadcrumb-item"><a href="surveys/results">Results</a></li>
-        <li class="breadcrumb-item"><a href="@BuildBackUrl()">Survey Record</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Respondent Details</li>
-    </ol>
-</nav>
+<section class="respondent-hero">
+    <div class="respondent-hero-main">
+        <div>
+            <h1 class="respondent-title">Respondent Details</h1>
+            <div class="respondent-subtitle">POID: @DisplayText(Poid)</div>
+        </div>
+        <div class="page-actions-row">
+            <DxButton Text="Record Details"
+                      IconCssClass="bi bi-grid-3x3-gap"
+                      RenderStyle="ButtonRenderStyle.Secondary"
+                      NavigateUrl="@BackToRecordUrl" />
+            <DxButton Text="Survey Details"
+                      IconCssClass="bi bi-card-list"
+                      RenderStyle="ButtonRenderStyle.Secondary"
+                      NavigateUrl="@SurveyDetailsUrl" />
+        </div>
+    </div>
+    <div class="respondent-meta">
+        <span><strong>State:</strong> @DisplayText(StateId)</span>
+        <span><strong>Survey ID:</strong> @DisplayText(SurveyId)</span>
+        <span><strong>Sample ID:</strong> @DisplayText(SampleId)</span>
+        <span><strong>Survey Date:</strong> @DisplayText(ReferenceDate)</span>
+    </div>
+</section>
 
-@if (!string.IsNullOrWhiteSpace(ErrorMessage))
-{
-    <div class="alert alert-warning">@ErrorMessage</div>
-}
-else if (Respondent is null)
-{
-    <div class="alert alert-warning">Respondent details were not found for the selected POID.</div>
-}
-else
-{
-    <section class="respondent-hero">
-        <div class="respondent-hero-main">
-            <div>
-                <h1 class="respondent-title">@RespondentTitle</h1>
-                <div class="respondent-subtitle">Respondent POID: @RespondentPoid</div>
+<div class="respondent-layout">
+    <section class="card respondent-card">
+        <div class="card-body">
+            <h2 class="card-title">Contact and Assignment</h2>
+            <div class="respondent-summary-grid">
+                <div class="respondent-info-section">
+                    <div class="info-section-title">Contact</div>
+                    <div class="empty-field">Name</div>
+                    <div class="empty-field">Phone</div>
+                    <div class="empty-field">Email</div>
+                </div>
+                <div class="respondent-info-section">
+                    <div class="info-section-title">Mailing Address</div>
+                    <div class="empty-field">Address</div>
+                    <div class="empty-field">City, State ZIP</div>
+                </div>
+                <div class="respondent-info-section">
+                    <div class="info-section-title">Operation</div>
+                    <div class="empty-field">Operation name</div>
+                    <div class="empty-field">Operation address</div>
+                </div>
+                <div class="respondent-info-section">
+                    <div class="info-section-title">Assignment</div>
+                    <div class="empty-field">Enumerator</div>
+                    <div class="empty-field">Response status</div>
+                </div>
             </div>
-            <div class="page-actions-row" aria-label="Page actions">
-                <a class="tool-key" href="@BuildBackUrl()">
-                    <span class="bi bi-grid-3x3-gap" aria-hidden="true"></span>
-                    <span>Record Details</span>
-                </a>
-                <a class="tool-key" href="@BuildSurveyDetailUrl()">
-                    <span class="bi bi-card-list" aria-hidden="true"></span>
-                    <span>Survey Details</span>
-                </a>
-            </div>
-        </div>
-        <div class="respondent-meta">
-            <span><strong>State:</strong> @StateId</span>
-            <span><strong>Survey ID:</strong> @SurveyId</span>
-            <span><strong>Sample ID:</strong> @SampleId</span>
-            <span><strong>Reference Date:</strong> @DisplayReferenceDate</span>
-        </div>
-        <div class="elma-row">
-            <span class="elma-label">ELMA:</span>
-            <a class="tool-key" href="@BuildElmaUrl(DefaultElmaUrl)" target="_blank" rel="noopener noreferrer">
-                <span class="bi bi-box-arrow-up-right" aria-hidden="true"></span>
-                <span>FO Update</span>
-            </a>
-            <a class="tool-key" href="@BuildElmaUrl(ElmaCommentsUrl)" target="_blank" rel="noopener noreferrer">
-                <span class="bi bi-chat-left-text" aria-hidden="true"></span>
-                <span>Comments</span>
-            </a>
         </div>
     </section>
 
-    <div class="respondent-layout">
-        <div class="card respondent-card">
-            <div class="card-body">
-                <div class="respondent-info-header">
-                    <div class="card-title">Respondent Details</div>
-                </div>
-
-                <div class="respondent-summary-grid">
-                    <section class="respondent-info-section">
-                        <div class="info-section-title">Contact</div>
-                        <div class="info-line strong">@RespondentTitle</div>
-                        <div class="info-line">@RespondentPoid</div>
-                        <div class="info-line">@GetValue("phone_char", "phone")</div>
-                        <div class="info-line">@GetValue("e_mail")</div>
-                    </section>
-
-                    <section class="respondent-info-section">
-                        <div class="info-section-title">Mailing Address</div>
-                        <div class="info-line strong">@GetValue("addr_delivery", "mail_addr_1")</div>
-                        <div class="info-line">@GetValue("addr_other")</div>
-                        <div class="info-line">@FormatCityStateZip("place_name", "state_alpha", "zip5", "zip4")</div>
-                    </section>
-
-                    <section class="respondent-info-section">
-                        <div class="info-section-title">Operation</div>
-                        <div class="info-line strong">@GetValue("oper_name", "op_name", "operation_name")</div>
-                        <div class="info-line">@GetValue("op_addr_delivery")</div>
-                        <div class="info-line">@GetValue("op_address_other")</div>
-                        <div class="info-line">@FormatCityStateZip("op_placename", "op_state_alpha", "op_zip5", "op_zip4")</div>
-                    </section>
-
-                    <section class="respondent-info-section">
-                        <div class="info-section-title">Assignment</div>
-                        <div class="info-kv"><span>State FIPS</span><strong>@GetValue("state_id")</strong></div>
-                        <div class="info-kv"><span>Frame ID</span><strong>@GetValue("frame_id")</strong></div>
-                        <div class="info-kv"><span>Enumerator</span><strong>@GetValue("enumerator_name", "enumerator_id")</strong></div>
-                        <div class="info-kv"><span>Response</span><strong>@GetValue("response_code")</strong></div>
-                    </section>
-                </div>
-
-                <details class="respondent-raw-details">
-                    <summary>All respondent fields</summary>
-                    <table class="details-table">
-                        <tbody>
-                            @foreach (var row in RespondentInfoRows)
-                            {
-                                <tr>
-                                    <th>@row.Label</th>
-                                    <td>@row.Value</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </details>
-
-                <div class="burden-chart-card">
-                    <div class="count-chart-title">Historic Response Burden</div>
-                    <div class="burden-chart-subtitle">Estimated respondent burden by selected historic response window.</div>
-                    <div class="burden-toggle-group" aria-label="Burden history range">
-                        @foreach (var metric in BurdenMetrics)
-                        {
-                            <button type="button" class="@GetBurdenToggleClass(metric.RangeLabel)" @onclick="() => SelectBurdenWindow(metric.RangeLabel)">
-                                @metric.RangeShortLabel
-                            </button>
-                        }
-                    </div>
-                    <div class="count-chart-visual burden-visual">
-                        <div class="response-pie response-pie-sm" style="background:@BuildCountPie(SelectedBurdenSlices);">
-                            <div class="response-pie-center response-pie-center-sm">
-                                <div class="response-pie-label">@SelectedBurdenMetric.RangeShortLabel</div>
-                                <div class="response-pie-value">@SelectedBurdenSummary.TotalMinutes</div>
-                                <div class="response-pie-unit">min</div>
-                                <div class="response-pie-hours">@SelectedBurdenSummary.HoursDisplay</div>
-                            </div>
-                        </div>
-                        <div class="response-legend response-legend-wide">
-                            @foreach (var item in SelectedBurdenSlices)
-                            {
-                                <div class="legend-item">
-                                    <span class="legend-swatch" style="background:@item.Color"></span>
-                                    <span class="legend-label">@item.Label</span>
-                                    <span class="legend-value">@($"{item.Count} min ({GetChartPercent(item.Count, SelectedBurdenSlices)})")</span>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-
-                <table class="hr-table">
-                    <thead>
-                        <tr>
-                            <th>Window</th>
-                            <th>`hr_surveys_*`</th>
-                            <th>`hr_pct_*`</th>
-                            <th>`hr_mode_*`</th>
-                            <th>Minutes</th>
-                            <th>Hours</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var metric in BurdenMetrics)
-                        {
-                            <tr>
-                                <td>@metric.RangeLabel</td>
-                                <td>@metric.Surveys</td>
-                                <td>@metric.Percent%</td>
-                                <td>@metric.Mode</td>
-                                <td>@metric.EstimatedMinutes</td>
-                                <td>@metric.HoursDisplay</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+    <section class="card respondent-card">
+        <div class="card-body">
+            <h2 class="card-title">Interaction Timeline</h2>
+            <DxGrid Data="@TimelineRows"
+                    PageSize="10"
+                    ShowFilterRow="false"
+                    AllowSort="true"
+                    ColumnResizeMode="GridColumnResizeMode.ColumnsContainer">
+                <Columns>
+                    <DxGridDataColumn FieldName="@nameof(TimelineGridRow.EventDate)" Caption="Date" DisplayFormat="MM/dd/yyyy" MinWidth="120" />
+                    <DxGridDataColumn FieldName="@nameof(TimelineGridRow.EventType)" Caption="Event" MinWidth="160" />
+                    <DxGridDataColumn FieldName="@nameof(TimelineGridRow.Actor)" Caption="Actor" MinWidth="150" />
+                    <DxGridDataColumn FieldName="@nameof(TimelineGridRow.Summary)" Caption="Summary" MinWidth="220" />
+                </Columns>
+            </DxGrid>
         </div>
-
-        <div class="card respondent-card">
-            <div class="card-body">
-                <div class="timeline-card-header">
-                    <div class="card-title">Interaction Timeline</div>
-                    <div class="timeline-card-subtitle">Recent respondent touches tied to this survey record.</div>
-                </div>
-                <div class="timeline-list timeline-list-compact">
-                    @foreach (var item in Timeline)
-                    {
-                        <div class="timeline-item">
-                            <div class="timeline-date">@item.EventDate.ToString("MM/dd/yyyy")</div>
-                            <div class="timeline-content">
-                                <div class="timeline-title">@item.EventType</div>
-                                <div class="timeline-actor">@item.Actor</div>
-                                <div class="timeline-summary">@item.Summary</div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-}
+    </section>
+</div>
 
 @code {
     [SupplyParameterFromQuery(Name = "stateId")] public string? StateId { get; set; }
@@ -208,365 +82,35 @@ else
     [SupplyParameterFromQuery(Name = "surveyId")] public string? SurveyId { get; set; }
     [SupplyParameterFromQuery(Name = "sampleId")] public string? SampleId { get; set; }
     [SupplyParameterFromQuery(Name = "referenceDate")] public string? ReferenceDate { get; set; }
+    [SupplyParameterFromQuery(Name = "skey")] public string? SKey { get; set; }
+    [SupplyParameterFromQuery(Name = "surveyTitle")] public string? SurveyTitle { get; set; }
+    [SupplyParameterFromQuery(Name = "resultsUrl")] public string? ResultsUrl { get; set; }
 
-    private string? ErrorMessage { get; set; }
-    private RespondentViewModel? Respondent { get; set; }
-    private List<BurdenMetric> BurdenMetrics { get; set; } = [];
-    private List<sms_lite.Services.RespondentTimelineEvent> Timeline { get; set; } = [];
-    private string SelectedBurdenWindow { get; set; } = "Last 12 Months";
-    private double BurdenComputationMs { get; set; }
-    private const string DefaultElmaUrl = "https://elma.nass.usda.gov/FO/FOUpdateRequest.aspx";
-    private const string ElmaCommentsUrl = "https://elma.nass.usda.gov/DC/DcRFOUpdateRequest.aspx";
-    private static readonly string[] ChartPalette = ["#5b8db7", "#f29d38", "#4ca978", "#8e6ccf", "#d95f5f"];
+    private static IReadOnlyList<TimelineGridRow> TimelineRows { get; } = Array.Empty<TimelineGridRow>();
 
-    private string DisplayReferenceDate =>
-        DateTime.TryParse(ReferenceDate, out var parsed) ? parsed.ToString("MM/dd/yyyy") : DisplayValue.Text(ReferenceDate);
+    private string BackToRecordUrl =>
+        $"surveys/record?referenceDate={Escape(ReferenceDate)}" +
+        $"&surveyId={Escape(SurveyId)}" +
+        $"&sampleId={Escape(SampleId)}" +
+        $"&skey={Escape(SKey)}" +
+        $"&surveyTitle={Escape(SurveyTitle)}" +
+        $"&resultsUrl={Escape(ResultsUrl ?? "/surveys/results")}";
 
-    private List<InfoRow> RespondentInfoRows =>
-        Respondent is null
-            ? []
-            : BuildInfoRows(Respondent.Values);
+    private string SurveyDetailsUrl =>
+        $"surveys/details?referenceDate={Escape(ReferenceDate)}" +
+        $"&surveyId={Escape(SurveyId)}" +
+        $"&sampleId={Escape(SampleId)}" +
+        $"&surveyTitle={Escape(SurveyTitle)}" +
+        $"&resultsUrl={Escape(ResultsUrl ?? "/surveys/results")}";
 
-    private string RespondentTitle => Respondent?.Values.GetValueOrDefault("whole_name", "Survey contact") ?? "Survey contact";
-    private string RespondentPoid => DisplayValue.Text(Respondent?.Values.GetValueOrDefault("poid", Poid ?? string.Empty) ?? Poid);
-    private BurdenMetric SelectedBurdenMetric =>
-        BurdenMetrics.FirstOrDefault(m => m.RangeLabel.Equals(SelectedBurdenWindow, StringComparison.OrdinalIgnoreCase)) ??
-        BurdenMetrics.FirstOrDefault() ??
-        new BurdenMetric("Last 12 Months", 0, 0, "EDR", 0);
-    private BurdenSummary SelectedBurdenSummary => BuildBurdenSummary(SelectedBurdenMetric, Timeline);
-    private List<CountSlice> SelectedBurdenSlices => BuildModeSlices(SelectedBurdenMetric);
+    private static string Escape(string? value) => Uri.EscapeDataString(value ?? string.Empty);
 
-    protected override void OnParametersSet()
-    {
-        ErrorMessage = null;
-        Respondent = null;
-        BurdenMetrics = [];
-        Timeline = [];
-        SelectedBurdenWindow = "Last 12 Months";
+    private static string DisplayText(string? value)
+        => string.IsNullOrWhiteSpace(value) ? "—" : value;
 
-        if (string.IsNullOrWhiteSpace(SurveyId) || string.IsNullOrWhiteSpace(SampleId) || string.IsNullOrWhiteSpace(ReferenceDate) || string.IsNullOrWhiteSpace(Poid))
-        {
-            ErrorMessage = "Missing respondent keys. Open this page from the survey record grid.";
-            return;
-        }
-
-        if (!int.TryParse(SurveyId, out var surveyIdValue) || !DateTime.TryParse(ReferenceDate, out var referenceDateValue))
-        {
-            ErrorMessage = "Invalid survey or reference date.";
-            return;
-        }
-
-        var record = SurveyInstanceService.GetRespondentByPoid(referenceDateValue, surveyIdValue, SampleId!, Poid!);
-        if (record is null)
-            return;
-
-        var values = record.Fields.ToDictionary(f => NormalizeKey(f.Field), f => f.Value, StringComparer.OrdinalIgnoreCase);
-        AddDerivedNameFields(values);
-        Respondent = new RespondentViewModel(values);
-        Timeline = SurveyInstanceService.GetRespondentTimeline(Poid!, surveyIdValue, SampleId!).ToList();
-        var stopwatch = Stopwatch.StartNew();
-        BurdenMetrics = BuildBurdenMetrics(Respondent.Values);
-        stopwatch.Stop();
-        BurdenComputationMs = stopwatch.Elapsed.TotalMilliseconds;
-    }
-
-    private string GetValue(params string[] keys)
-    {
-        if (Respondent is null)
-            return DisplayValue.Missing;
-
-        foreach (var key in keys)
-        {
-            var value = Respondent.Values.GetValueOrDefault(key, "");
-            if (!string.IsNullOrWhiteSpace(value))
-                return value;
-        }
-
-        return DisplayValue.Missing;
-    }
-
-    private string FormatCityStateZip(string cityKey, string stateKey, string zip5Key, string zip4Key)
-    {
-        var city = GetValue(cityKey);
-        var state = GetValue(stateKey);
-        var zip5 = GetValue(zip5Key);
-        var zip4 = GetValue(zip4Key);
-        var zip = string.IsNullOrWhiteSpace(zip4) ? zip5 : $"{zip5}-{zip4}";
-        return DisplayValue.Text(string.Join(" ", new[] { string.Join(", ", new[] { city, state }.Where(v => !string.IsNullOrWhiteSpace(v))), zip }.Where(v => !string.IsNullOrWhiteSpace(v))));
-    }
-
-    private void SelectBurdenWindow(string rangeLabel)
-    {
-        SelectedBurdenWindow = rangeLabel;
-    }
-
-    private string GetBurdenToggleClass(string rangeLabel)
-        => SelectedBurdenWindow.Equals(rangeLabel, StringComparison.OrdinalIgnoreCase)
-            ? "burden-toggle is-active"
-            : "burden-toggle";
-
-    private static string NormalizeKey(string key)
-        => key.Trim().ToLowerInvariant().Replace(" ", "_").Replace("-", "_").Replace("(", "").Replace(")", "");
-
-    private static void AddDerivedNameFields(Dictionary<string, string> values)
-    {
-        var wholeName = values.GetValueOrDefault("whole_name", "");
-        if (string.IsNullOrWhiteSpace(wholeName))
-            return;
-
-        var parts = wholeName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        values.TryAdd("first_name", parts.ElementAtOrDefault(0) ?? "");
-        values.TryAdd("middle_name", parts.Length > 2 ? string.Join(" ", parts.Skip(1).Take(parts.Length - 2)) : "");
-        values.TryAdd("last_name", parts.Length > 1 ? parts[^1] : "");
-    }
-
-    private static List<InfoRow> BuildInfoRows(Dictionary<string, string> values)
-    {
-        var preferredOrder = new[]
-        {
-            "poid",
-            "whole_name",
-            "first_name",
-            "middle_name",
-            "last_name",
-            "state_id",
-            "survey_date",
-            "enumerator_name",
-            "enum_notes"
-        };
-
-        var rows = new List<InfoRow>();
-        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var key in preferredOrder)
-        {
-            if (values.TryGetValue(key, out var value))
-            {
-                rows.Add(new InfoRow(ToDisplayLabel(key), value));
-                used.Add(key);
-            }
-        }
-
-        rows.AddRange(values
-            .Where(item => !used.Contains(item.Key))
-            .OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(item => new InfoRow(ToDisplayLabel(item.Key), item.Value)));
-
-        return rows;
-    }
-
-    private static string ToDisplayLabel(string key)
-        => key switch
-        {
-            "poid" => "POID",
-            "whole_name" => "Whole Name",
-            "first_name" => "First",
-            "middle_name" => "Middle",
-            "last_name" => "Last",
-            "state_id" => "State FIPS",
-            "survey_date" => "Date",
-            "enumerator_name" => "Enum",
-            "enum_notes" => "Notes",
-            _ => string.Join(" ", key.Split('_', StringSplitOptions.RemoveEmptyEntries).Select(ToTitleCase))
-        };
-
-    private static string ToTitleCase(string value)
-        => string.IsNullOrWhiteSpace(value) ? value : char.ToUpperInvariant(value[0]) + value[1..];
-
-    private static List<BurdenMetric> BuildBurdenMetrics(Dictionary<string, string> values)
-    {
-        var metrics = new List<BurdenMetric>();
-        foreach (var range in new[] { "1yr", "3yr", "5yr" })
-        {
-            var surveys = ParseInt(values.GetValueOrDefault($"hr_surveys_{range}"));
-            var mode = values.GetValueOrDefault($"hr_mode_{range}", "EDR");
-            var estimatedMinutes = surveys * GetModeMinutes(mode);
-            metrics.Add(new BurdenMetric(
-                range switch
-                {
-                    "1yr" => "Last 12 Months",
-                    "3yr" => "Last 3 Years",
-                    _ => "Last 5 Years"
-                },
-                surveys,
-                ParseInt(values.GetValueOrDefault($"hr_pct_{range}")),
-                mode,
-                estimatedMinutes));
-        }
-
-        return metrics;
-    }
-
-    private static BurdenSummary BuildBurdenSummary(
-        BurdenMetric metric,
-        IReadOnlyList<sms_lite.Services.RespondentTimelineEvent> timeline)
-    {
-        var completionMinutes = metric.EstimatedMinutes;
-        var followUpCallMinutes = timeline.Count(item => item.EventType.Equals("Call Attempt", StringComparison.OrdinalIgnoreCase)) * 8;
-        var mailResponseMinutes = timeline.Count(item => item.EventType.Equals("Mail Sent", StringComparison.OrdinalIgnoreCase)) * 12;
-        var totalMinutes = completionMinutes + followUpCallMinutes + mailResponseMinutes;
-
-        return new BurdenSummary(
-            completionMinutes,
-            followUpCallMinutes,
-            mailResponseMinutes,
-            totalMinutes);
-    }
-
-    private static int GetModeMinutes(string mode)
-        => mode.ToUpperInvariant() switch
-        {
-            "EDR" => 18,
-            "CAPI" => 27,
-            "CATI" => 16,
-            "MAIL" => 12,
-            _ => 15
-        };
-
-    private static int ParseInt(string? value)
-        => int.TryParse(value, out var parsed) ? parsed : 0;
-
-    private static List<CountSlice> BuildModeSlices(BurdenMetric metric)
-    {
-        return metric.EstimatedMinutes <= 0
-            ? [new CountSlice("No Burden", "No Burden", 1, "#d7dde3")]
-            : [new CountSlice(metric.Mode.ToUpperInvariant(), metric.Mode.ToUpperInvariant(), metric.EstimatedMinutes, ChartPalette[0])];
-    }
-
-    private static int GetChartTotal(IReadOnlyCollection<CountSlice> slices)
-        => slices.Sum(s => s.Count);
-
-    private static string BuildCountPie(IReadOnlyCollection<CountSlice> slices)
-    {
-        var total = GetChartTotal(slices);
-        if (total <= 0)
-            return "conic-gradient(#d7dde3 0deg 360deg)";
-
-        var stops = new List<string>();
-        var current = 0d;
-        foreach (var slice in slices)
-        {
-            var span = 360d * slice.Count / total;
-            var next = current + span;
-            stops.Add($"{slice.Color} {current:0.##}deg {next:0.##}deg");
-            current = next;
-        }
-
-        return $"conic-gradient({string.Join(", ", stops)})";
-    }
-
-    private static string GetChartPercent(int count, IReadOnlyCollection<CountSlice> slices)
-    {
-        var total = GetChartTotal(slices);
-        if (total == 0)
-            return "0%";
-
-        var percent = (decimal)count / total * 100m;
-        return $"{Math.Round(percent, 1)}%";
-    }
-
-    private string BuildBackUrl()
-    {
-        if (string.IsNullOrWhiteSpace(SurveyId) || string.IsNullOrWhiteSpace(SampleId) || string.IsNullOrWhiteSpace(ReferenceDate))
-            return "surveys/results";
-
-        return $"surveys/record?surveyId={Uri.EscapeDataString(SurveyId)}&sampleId={Uri.EscapeDataString(SampleId)}&referenceDate={Uri.EscapeDataString(ReferenceDate)}";
-    }
-
-    private string BuildSurveyDetailUrl()
-    {
-        if (string.IsNullOrWhiteSpace(SurveyId) || string.IsNullOrWhiteSpace(SampleId) || string.IsNullOrWhiteSpace(ReferenceDate))
-            return "surveys/results";
-
-        return $"surveys/details?surveyId={Uri.EscapeDataString(SurveyId)}&sampleId={Uri.EscapeDataString(SampleId)}&referenceDate={Uri.EscapeDataString(ReferenceDate)}";
-    }
-
-    private string BuildElmaUrl(string baseUrl)
-    {
-        // If this is the FO Update link, preserve the original simple redirect behavior
-        // (use configured FO URL if present and only include the canonical keys). The
-        // comments link is handled separately below and keeps the broader compatibility
-        // additions.
-        if (baseUrl == DefaultElmaUrl)
-        {
-            var configuredUrl = Configuration["Elma:FoUpdateRequestUrl"] ?? DefaultElmaUrl;
-            var uriBuilder = new UriBuilder(configuredUrl);
-            var queryParts = new List<string>();
-
-            AddElmaQuery(queryParts, "poid", Poid ?? Respondent?.Values.GetValueOrDefault("poid"));
-            AddElmaQuery(queryParts, "stateId", StateId ?? Respondent?.Values.GetValueOrDefault("state_id"));
-            AddElmaQuery(queryParts, "frameId", Respondent?.Values.GetValueOrDefault("frame_id"));
-
-            uriBuilder.Query = string.Join("&", queryParts);
-            return uriBuilder.Uri.ToString();
-        }
-
-        // Non-FO links (comments) - respect a comments override when present and include
-        // multiple parameter name variants to maximize compatibility with that endpoint.
-        var commentsUrl = baseUrl == ElmaCommentsUrl ? Configuration["Elma:CommentsRequestUrl"] ?? ElmaCommentsUrl : baseUrl;
-        var builder = new UriBuilder(commentsUrl);
-        var parts = new List<string>();
-
-        var poidVal = Poid ?? Respondent?.Values.GetValueOrDefault("poid");
-        var stateVal = StateId ?? Respondent?.Values.GetValueOrDefault("state_id");
-        var frameVal = Respondent?.Values.GetValueOrDefault("frame_id");
-
-        AddElmaQuery(parts, "poid", poidVal);
-        AddElmaQuery(parts, "stateId", stateVal);
-        AddElmaQuery(parts, "frameId", frameVal);
-        AddElmaQuery(parts, "state_id", stateVal);
-        AddElmaQuery(parts, "frame_id", frameVal);
-        AddElmaQuery(parts, "POID", poidVal);
-        AddElmaQuery(parts, "STATEID", stateVal);
-        AddElmaQuery(parts, "FRAMEID", frameVal);
-        AddElmaQuery(parts, "sourceSystem", "SMS Lite");
-        AddElmaQuery(parts, "state", stateVal);
-        AddElmaQuery(parts, "frame", frameVal);
-
-        builder.Query = string.Join("&", parts);
-        return builder.Uri.ToString();
-    }
-
-    private static void AddElmaQuery(List<string> queryParts, string key, string? value)
-    {
-        if (!string.IsNullOrWhiteSpace(value))
-            queryParts.Add($"{Uri.EscapeDataString(key)}={Uri.EscapeDataString(value.Trim())}");
-    }
-
-    private sealed record RespondentViewModel(Dictionary<string, string> Values);
-    private sealed record BurdenMetric(string RangeLabel, int Surveys, int Percent, string Mode, int EstimatedMinutes)
-    {
-        public string HoursDisplay => FormatHours(EstimatedMinutes);
-        public string RangeShortLabel => RangeLabel switch
-        {
-            "Last 12 Months" => "1 Year",
-            "Last 3 Years" => "3 Year",
-            "Last 5 Years" => "5 Year",
-            _ => RangeLabel
-        };
-        public string Color => Mode.ToUpperInvariant() switch
-        {
-            "EDR" => "#5b8db7",
-            "CAPI" => "#4ca978",
-            "CATI" => "#f29d38",
-            "MAIL" => "#8e6ccf",
-            _ => "#5a9772"
-        };
-    }
-
-    private sealed record BurdenSummary(int CompletionMinutes, int FollowUpCallMinutes, int MailResponseMinutes, int TotalMinutes)
-    {
-        public static BurdenSummary Empty => new(0, 0, 0, 0);
-        public string HoursDisplay => FormatHours(TotalMinutes);
-        public string CompletionHoursDisplay => FormatHours(CompletionMinutes);
-        public string FollowUpHoursDisplay => FormatHours(FollowUpCallMinutes);
-        public string MailHoursDisplay => FormatHours(MailResponseMinutes);
-    }
-
-    private static string FormatHours(int minutes)
-        => minutes == 0
-            ? "0.0 hours"
-            : $"{minutes / 60d:0.0} hours";
-
-    private sealed record CountSlice(string Code, string Label, int Count, string Color);
-    private sealed record InfoRow(string Label, string Value);
+    private sealed record TimelineGridRow(
+        DateTime? EventDate,
+        string EventType,
+        string Actor,
+        string Summary);
 }

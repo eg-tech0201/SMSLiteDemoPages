@@ -76,9 +76,7 @@
         => rows
             .Where(row => row.SurveyId.HasValue && row.SurveyDate.HasValue && row.SampleId.HasValue)
             .GroupBy(row => new { row.SurveyId, SurveyDate = row.SurveyDate!.Value.Date, row.SampleId })
-            .Select(group => group
-                .OrderBy(row => row.SKey ?? int.MaxValue)
-                .First())
+            .Select(group => group.First())
             .OrderByDescending(row => row.SurveyDate)
             .ThenBy(row => row.SurveyId)
             .ThenBy(row => row.SampleId)
@@ -89,7 +87,11 @@
         if (!row.SurveyId.HasValue || !row.SurveyDate.HasValue || !row.SampleId.HasValue)
             return "surveys/results";
 
-        return $"surveys/details?referenceDate={row.SurveyDate.Value:yyyy-MM-dd}&surveyId={row.SurveyId.Value}&sampleId={Uri.EscapeDataString(row.SampleId.Value.ToString())}";
+        return $"surveys/details?referenceDate={row.SurveyDate.Value:yyyy-MM-dd}" +
+               $"&surveyId={row.SurveyId.Value}" +
+               $"&sampleId={Uri.EscapeDataString(row.SampleId.Value.ToString())}" +
+               $"&surveyTitle={Uri.EscapeDataString(row.SurveyTitle ?? string.Empty)}" +
+               $"&resultsUrl={Uri.EscapeDataString("/surveys/results")}";
     }
 
     private static string FormatValue(object? value)

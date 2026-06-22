@@ -9,5 +9,4 @@ public sealed class SmsLiteDatabaseOptions
     public string Database { get; set; } = "sms";
     public string Username { get; set; } = "";
     public string Password { get; set; } = "";
-    public string LogDirectory { get; set; } = "";
 }

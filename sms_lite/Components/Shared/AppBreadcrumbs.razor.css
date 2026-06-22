@@ -1,0 +1,42 @@
+.app-breadcrumbs {
+    margin: 0 0 0.75rem;
+    font-size: 0.82rem;
+}
+
+.app-breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.app-breadcrumbs li {
+    display: inline-flex;
+    align-items: center;
+    color: var(--brand-muted);
+}
+
+.app-breadcrumbs li + li::before {
+    padding: 0 0.5rem;
+    color: var(--brand-muted);
+    content: "/";
+}
+
+.app-breadcrumbs a {
+    color: var(--brand-navy);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.app-breadcrumbs a:hover,
+.app-breadcrumbs a:focus-visible {
+    text-decoration: underline;
+}
+
+.app-breadcrumbs [aria-current="page"] {
+    color: var(--brand-muted);
+    font-weight: 600;
+}

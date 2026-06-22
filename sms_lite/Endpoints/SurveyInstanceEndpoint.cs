@@ -1,20 +1,20 @@
-﻿using sms_lite.Services;
-using sms_lite.Server.Services;
+﻿using sms_lite.Dtos;
+using sms_lite.Services;
 
 public static class SurveyInstanceEndpoints
 {
     public static void MapSurveyInstanceEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/survey-instances", async (
-            ISurveyInstanceRepository repository,
+            SurveyInstanceService service,
             CancellationToken cancellationToken) =>
         {
-            var rows = await repository.GetSurveyInstancesAsync(cancellationToken);
+            var rows = await service.GetSurveyInstancesAsync(cancellationToken);
             return Results.Ok(rows);
         });
 
         app.MapGet("/api/survey-instances/page", async (
-            ISurveyInstanceRepository repository,
+            SurveyInstanceService service,
             int? rowLimit,
             int? rowOffset,
             int? surveyId,
@@ -30,7 +30,7 @@ public static class SurveyInstanceEndpoints
             bool? hqReview,
             CancellationToken cancellationToken) =>
         {
-            var page = await repository.GetSurveyInstancesPageAsync(
+            var page = await service.GetSurveyInstancesPageAsync(
                 new SurveyInstancePageRequest(
                     RowLimit: rowLimit ?? 20,
                     RowOffset: rowOffset ?? 0,
@@ -51,13 +51,13 @@ public static class SurveyInstanceEndpoints
         });
 
         app.MapGet("/api/survey-instances/detail", async (
-            ISurveyInstanceRepository repository,
+            SurveyInstanceService service,
             DateTime referenceDate,
             int surveyId,
             string sampleId,
             CancellationToken cancellationToken) =>
         {
-            var detail = await repository.GetSurveyInstanceDetailAsync(referenceDate, surveyId, sampleId, cancellationToken);
+            var detail = await service.GetSurveyInstanceDetailAsync(referenceDate, surveyId, sampleId, cancellationToken);
             return detail is null
                 ? Results.NotFound()
                 : Results.Ok(detail);

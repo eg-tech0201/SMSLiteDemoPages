@@ -1,17 +1,3 @@
-.breadcrumb-mini {
-    font-size: 0.82rem;
-}
-
-.breadcrumb-mini a {
-    color: var(--brand-navy);
-    text-decoration: none;
-    font-weight: 700;
-}
-
-.breadcrumb-mini a:hover {
-    text-decoration: underline;
-}
-
 .details-top-layout {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr;
