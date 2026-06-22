@@ -484,18 +484,18 @@
 .devexpress-pie-chart {
     display: grid;
     width: 100%;
-    min-height: 260px;
+    min-height: 390px;
     align-items: center;
     justify-items: center;
 }
 
 .devexpress-pie-chart ::deep .dx-chart {
     width: 100%;
-    height: 220px;
+    height: 350px;
 }
 
 .devexpress-pie-total {
-    margin-top: -0.25rem;
+    margin-top: -0.5rem;
     color: var(--brand-navy);
     font-weight: 900;
 }

@@ -91,31 +91,29 @@ else
                     <div class="devexpress-pie-chart">
                         <DxPieChart Data="@DataCollectionStatusPieItems"
                                     InnerDiameter="0.5"
-                                    Diameter="0.72"
-                                    MinDiameter="0.5"
+                                    Diameter="0.62"
+                                    MinDiameter="0.42"
                                     LabelOverlap="PieChartLabelOverlap.Shift">
-                            <DxPieChartSeries ArgumentField="@((CountSlice item) => item.Label)"
-                                              ValueField="@((CountSlice item) => item.Count)">
+                            <DxChartLegend Position="RelativePosition.Outside"
+                                           VerticalAlignment="VerticalEdge.Bottom"
+                                           HorizontalAlignment="HorizontalAlignment.Center"
+                                           Orientation="Orientation.Horizontal" />
+                            <DxPieChartSeries ArgumentField="@((PieSlice item) => item.DisplayText)"
+                                              ValueField="@((PieSlice item) => item.Count)">
                                 <DxChartSeriesLabel Visible="true"
                                                     Position="RelativePosition.Outside"
-                                                    RadialOffset="8"
-                                                    FormatPattern="{argument}: {value}">
+                                                    RadialOffset="12"
+                                                    BackgroundColor="#ffffff"
+                                                    FormatPattern="{argument}">
+                                    <DxChartSeriesLabelBorder Visible="true"
+                                                              Color="#d6dde4"
+                                                              Width="1" />
                                     <DxChartSeriesLabelConnector Visible="true" Width="1" />
                                 </DxChartSeriesLabel>
                             </DxPieChartSeries>
                             <DxChartTooltip Enabled="true" />
                         </DxPieChart>
                         <div class="devexpress-pie-total">Total: @Detail.TotalSample</div>
-                        <div class="response-legend response-legend-wide">
-                            @foreach (var item in DataCollectionStatusChartItems)
-                            {
-                                <div class="legend-item">
-                                    <span class="legend-swatch" style="background:@item.Color"></span>
-                                    <span class="legend-label">@item.Label</span>
-                                    <span class="legend-value">@($"{item.Count} ({GetChartPercent(item.Count, DataCollectionStatusChartItems)})")</span>
-                                </div>
-                            }
-                        </div>
                     </div>
                 </div>
             </div>
@@ -181,8 +179,13 @@ else
             new("Active", "Active & Not Checked-In", Detail.ActiveNotCheckedInCount, ChartPalette[5])
         ];
 
-    private List<CountSlice> DataCollectionStatusPieItems =>
-        DataCollectionStatusChartItems.Where(item => item.Count > 0).ToList();
+    private List<PieSlice> DataCollectionStatusPieItems => Detail is null
+        ? []
+        : DataCollectionStatusChartItems
+            .Select(item => new PieSlice(
+                $"{item.Label}: {item.Count} ({GetPercent(item.Count, Detail.TotalSample):0.0}%)",
+                item.Count))
+            .ToList();
 
     private List<CountSlice> ReportsReceivedByModeChartItems => Detail is null
         ? []
@@ -262,4 +265,5 @@ else
     }
 
     private sealed record CountSlice(string Code, string Label, int Count, string Color);
+    private sealed record PieSlice(string DisplayText, int Count);
 }
