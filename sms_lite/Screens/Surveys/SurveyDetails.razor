@@ -88,13 +88,24 @@ else
             <div class="card-body top-card-body">
                 <div class="count-chart-card">
                     <div class="count-chart-title">Data Collection Status</div>
-                    <div class="count-chart-visual">
-                        <div class="response-pie response-pie-sm" style="background:@BuildCountPie(DataCollectionStatusChartItems);">
-                            <div class="response-pie-center response-pie-center-sm">
-                                <div class="response-pie-label">Total</div>
-                                <div class="response-pie-value">@Detail.TotalSample</div>
-                            </div>
-                        </div>
+                    <div class="devexpress-pie-chart">
+                        <DxPieChart Data="@DataCollectionStatusPieItems"
+                                    InnerDiameter="0.5"
+                                    Diameter="0.72"
+                                    MinDiameter="0.5"
+                                    LabelOverlap="PieChartLabelOverlap.Shift">
+                            <DxPieChartSeries ArgumentField="@((CountSlice item) => item.Label)"
+                                              ValueField="@((CountSlice item) => item.Count)">
+                                <DxChartSeriesLabel Visible="true"
+                                                    Position="RelativePosition.Outside"
+                                                    RadialOffset="8"
+                                                    FormatPattern="{argument}: {value}">
+                                    <DxChartSeriesLabelConnector Visible="true" Width="1" />
+                                </DxChartSeriesLabel>
+                            </DxPieChartSeries>
+                            <DxChartTooltip Enabled="true" />
+                        </DxPieChart>
+                        <div class="devexpress-pie-total">Total: @Detail.TotalSample</div>
                         <div class="response-legend response-legend-wide">
                             @foreach (var item in DataCollectionStatusChartItems)
                             {
@@ -169,6 +180,9 @@ else
             new("900+", "Office Hold", Detail.OfficeHoldCount, ChartPalette[4]),
             new("Active", "Active & Not Checked-In", Detail.ActiveNotCheckedInCount, ChartPalette[5])
         ];
+
+    private List<CountSlice> DataCollectionStatusPieItems =>
+        DataCollectionStatusChartItems.Where(item => item.Count > 0).ToList();
 
     private List<CountSlice> ReportsReceivedByModeChartItems => Detail is null
         ? []

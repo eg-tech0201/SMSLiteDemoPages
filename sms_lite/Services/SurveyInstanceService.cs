@@ -66,7 +66,6 @@ public sealed class SurveyInstanceService(SurveyInstanceDao dao)
         var checkins = await dao.GetCheckinsAsync(
             surveyId,
             referenceDate.Date,
-            parsedSampleId,
             cancellationToken);
 
         return ToDetailResponse(survey, checkins, referenceDate.Date);
@@ -165,17 +164,18 @@ public sealed class SurveyInstanceService(SurveyInstanceDao dao)
             OtherCompleteCount: checkins.Count(row =>
                 row.ResponseDate.HasValue &&
                 row.ResponseCode is not (1 or 2 or 3)),
-            OfficeHoldCount: checkins.Count(row => row.DcmsCodeId.GetValueOrDefault() >= 900),
+            OfficeHoldCount: checkins.Count(row =>
+                !row.ResponseDate.HasValue &&
+                row.DcmsCodeId >= 900),
             ActiveNotCheckedInCount: checkins.Count(row =>
                 !row.ResponseDate.HasValue &&
-                row.DcmsCodeId is < 900),
+                row.DcmsCodeId < 900),
             MailReceivedCount: checkins.Count(row => row.ResponseDate.HasValue && row.DataCaptureCode == 1),
             CawiReceivedCount: checkins.Count(row => row.ResponseDate.HasValue && row.DataCaptureCode == 5),
             CapiReceivedCount: checkins.Count(row => row.ResponseDate.HasValue && row.DataCaptureCode == 6),
             ReadiReceivedCount: checkins.Count(row => row.ResponseDate.HasValue && row.DataCaptureCode == 10),
             OtherModeReceivedCount: checkins.Count(row =>
                 row.ResponseDate.HasValue &&
-                row.DataCaptureCode > 0 &&
                 row.DataCaptureCode is not (1 or 5 or 6 or 10)));
     }
 

@@ -55,7 +55,6 @@ public sealed class SurveyInstanceDao(
     public async Task<IReadOnlyList<SurveyInstanceCheckin>> GetCheckinsAsync(
         int surveyId,
         DateTime surveyDate,
-        int sampleId,
         CancellationToken cancellationToken)
     {
         await using var connection = new MySqlConnection(BuildConnectionString());
@@ -65,7 +64,6 @@ public sealed class SurveyInstanceDao(
             SmsLiteStoredProcedures.GetSurveyInstanceCheckinValues);
         command.Parameters.Add("filter_survey_id", MySqlDbType.Int32).Value = surveyId;
         command.Parameters.Add("filter_survey_date", MySqlDbType.Date).Value = surveyDate.Date;
-        command.Parameters.Add("filter_sample_id", MySqlDbType.Int32).Value = sampleId;
 
         var rows = new List<SurveyInstanceCheckin>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
