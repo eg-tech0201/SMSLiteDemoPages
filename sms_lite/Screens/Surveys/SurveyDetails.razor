@@ -121,8 +121,8 @@ else
                         <div class="devexpress-pie-chart">
                             <DxPieChart Data="@DataCollectionStatusPieItems"
                                         InnerDiameter="0.5"
-                                        Diameter="0.52"
-                                        MinDiameter="0.34"
+                                        Diameter="0.62"
+                                        MinDiameter="0.42"
                                         LabelOverlap="PieChartLabelOverlap.Shift">
                                 <DxChartLegend Position="RelativePosition.Outside"
                                                VerticalAlignment="VerticalEdge.Bottom"
@@ -132,7 +132,9 @@ else
                                                   ValueField="@((PieSlice item) => item.Count)">
                                     <DxChartSeriesLabel Visible="true"
                                                         Position="RelativePosition.Outside"
-                                                        RadialOffset="8"
+                                                        RadialOffset="12"
+                                                        TextOverflow="ChartTextOverflow.None"
+                                                        WordWrap="ChartWordWrap.Normal"
                                                         FormatPattern="{argument}">
                                         <DxChartSeriesLabelBorder Visible="true" Width="1" />
                                         <DxChartSeriesLabelConnector Visible="true" Width="1" />
@@ -153,8 +155,8 @@ else
                         <div class="devexpress-pie-chart">
                             <DxPieChart Data="@ReportsReceivedByModePieItems"
                                         InnerDiameter="0.5"
-                                        Diameter="0.52"
-                                        MinDiameter="0.34"
+                                        Diameter="0.62"
+                                        MinDiameter="0.42"
                                         LabelOverlap="PieChartLabelOverlap.Shift">
                                 <DxChartLegend Position="RelativePosition.Outside"
                                                VerticalAlignment="VerticalEdge.Bottom"
@@ -164,7 +166,9 @@ else
                                                   ValueField="@((PieSlice item) => item.Count)">
                                     <DxChartSeriesLabel Visible="true"
                                                         Position="RelativePosition.Outside"
-                                                        RadialOffset="8"
+                                                        RadialOffset="12"
+                                                        TextOverflow="ChartTextOverflow.None"
+                                                        WordWrap="ChartWordWrap.Normal"
                                                         FormatPattern="{argument}">
                                         <DxChartSeriesLabelBorder Visible="true" Width="1" />
                                         <DxChartSeriesLabelConnector Visible="true" Width="1" />

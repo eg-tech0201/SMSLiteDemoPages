@@ -1,6 +1,6 @@
 .details-top-layout {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 2fr 1fr 1fr;
     gap: 1.2rem;
     align-items: stretch;
     margin-top: 0.7rem;
@@ -241,6 +241,7 @@
 }
 
 .count-chart-card {
+    height: 100%;
     border: 1px solid var(--brand-border);
     border-radius: 12px;
     background: #ffffff;
@@ -257,14 +258,14 @@
 .devexpress-pie-chart {
     display: grid;
     width: 100%;
-    min-height: 440px;
+    min-height: 500px;
     align-items: center;
     justify-items: center;
 }
 
 .devexpress-pie-chart ::deep .dx-chart {
     width: 100%;
-    height: 410px;
+    height: 460px;
 }
 
 .devexpress-pie-total {
