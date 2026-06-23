@@ -51,94 +51,150 @@ else
                     </div>
                 </div>
 
-                <div class="survey-overview-grid compact-overview">
-                    <div class="survey-overview-item"><span class="overview-label">Sample ID</span><span class="overview-value">@FormatValue(Detail.SampleId)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">Sample Name</span><span class="overview-value">@FormatValue(Detail.SampleName)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">Survey Frequency</span><span class="overview-value">@FormatValue(Detail.SurveyFrequency)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">Project Code</span><span class="overview-value">@FormatValue(Detail.ProjectCode)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">OMB Docket</span><span class="overview-value">@FormatValue(Detail.OmbNumber)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">OMB Expiration</span><span class="overview-value">@FormatDate(Detail.OmbExpiration)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">ELMO Survey ID</span><span class="overview-value">@FormatValue(Detail.ElmoSurveyId)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">ELMO Period ID</span><span class="overview-value">@FormatValue(Detail.ElmoPeriodId)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">ELMO Month</span><span class="overview-value">@FormatValue(Detail.ElmoMonth)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">Marked Version</span><span class="overview-value">@FormatValue(Detail.MarkedVersion)</span></div>
-                    <div class="survey-overview-item"><span class="overview-label">Base Month</span><span class="overview-value">@FormatValue(Detail.BaseMonth)</span></div>
+                <DxFormLayout CssClass="survey-metadata-layout"
+                              CaptionPosition="CaptionPosition.Vertical"
+                              SizeMode="SizeMode.Small">
+                    <DxFormLayoutGroup Caption="Sample"
+                                       Decoration="FormLayoutGroupDecoration.Card"
+                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
+                        <DxFormLayoutItem Caption="ID" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.SampleId)</span>
+                        </DxFormLayoutItem>
+                        <DxFormLayoutItem Caption="Name" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.SampleName)</span>
+                        </DxFormLayoutItem>
+                    </DxFormLayoutGroup>
 
-                    <div class="survey-overview-item survey-overview-date-range">
-                        <span class="overview-label">Date Range</span>
-                        <div class="date-range-table-wrap">
-                            <table class="date-range-table">
-                                <thead>
-                                    <tr><th>Mode</th><th>Start Date</th><th>Stop Date</th></tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td>Mail</td><td>@FormatDate(Detail.MailStartDate)</td><td>@FormatDate(Detail.MailStopDate)</td></tr>
-                                    <tr><td>CAWI</td><td>@FormatDate(Detail.CawiStartDate)</td><td>@FormatDate(Detail.CawiStopDate)</td></tr>
-                                    <tr><td>CAPI</td><td>@FormatDate(Detail.CapiStartDate)</td><td>@FormatDate(Detail.CapiStopDate)</td></tr>
-                                    <tr><td>CATI</td><td>@FormatDate(Detail.CatiStartDate)</td><td>@FormatDate(Detail.CatiStopDate)</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <DxFormLayoutGroup Caption="Schedule"
+                                       Decoration="FormLayoutGroupDecoration.Card"
+                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
+                        <DxFormLayoutItem Caption="Survey Frequency" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.SurveyFrequency)</span>
+                        </DxFormLayoutItem>
+                        <DxFormLayoutItem Caption="Base Month" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.BaseMonth)</span>
+                        </DxFormLayoutItem>
+                    </DxFormLayoutGroup>
 
-        <div class="card chart-panel-card">
-            <div class="card-body top-card-body">
-                <div class="count-chart-card">
-                    <div class="count-chart-title">Data Collection Status</div>
-                    <div class="devexpress-pie-chart">
-                        <DxPieChart Data="@DataCollectionStatusPieItems"
-                                    InnerDiameter="0.5"
-                                    Diameter="0.62"
-                                    MinDiameter="0.42"
-                                    LabelOverlap="PieChartLabelOverlap.Shift">
-                            <DxChartLegend Position="RelativePosition.Outside"
-                                           VerticalAlignment="VerticalEdge.Bottom"
-                                           HorizontalAlignment="HorizontalAlignment.Center"
-                                           Orientation="Orientation.Horizontal" />
-                            <DxPieChartSeries ArgumentField="@((PieSlice item) => item.DisplayText)"
-                                              ValueField="@((PieSlice item) => item.Count)">
-                                <DxChartSeriesLabel Visible="true"
-                                                    Position="RelativePosition.Outside"
-                                                    RadialOffset="12"
-                                                    BackgroundColor="#ffffff"
-                                                    FormatPattern="{argument}">
-                                    <DxChartSeriesLabelBorder Visible="true"
-                                                              Color="#d6dde4"
-                                                              Width="1" />
-                                    <DxChartSeriesLabelConnector Visible="true" Width="1" />
-                                </DxChartSeriesLabel>
-                            </DxPieChartSeries>
-                            <DxChartTooltip Enabled="true" />
-                        </DxPieChart>
-                        <div class="devexpress-pie-total">Total: @Detail.TotalSample</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <DxFormLayoutGroup Caption="OMB"
+                                       Decoration="FormLayoutGroupDecoration.Card"
+                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
+                        <DxFormLayoutItem Caption="Docket" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.OmbNumber)</span>
+                        </DxFormLayoutItem>
+                        <DxFormLayoutItem Caption="Expiration" ColSpanXs="12">
+                            <span class="overview-value">@FormatDate(Detail.OmbExpiration)</span>
+                        </DxFormLayoutItem>
+                    </DxFormLayoutGroup>
 
-        <div class="card chart-panel-card">
-            <div class="card-body top-card-body">
-                <div class="count-chart-card">
-                    <div class="count-chart-title">Reports Received by Mode</div>
-                    <div class="count-chart-visual">
-                        <div class="response-pie response-pie-sm" style="background:@BuildCountPie(ReportsReceivedByModeChartItems);">
-                            <div class="response-pie-center response-pie-center-sm">
-                                <div class="response-pie-label">Total</div>
-                                <div class="response-pie-value">@Detail.TotalReceived</div>
+                    <DxFormLayoutGroup Caption="ELMO"
+                                       Decoration="FormLayoutGroupDecoration.Card"
+                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
+                        <DxFormLayoutItem Caption="Survey ID" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.ElmoSurveyId)</span>
+                        </DxFormLayoutItem>
+                        <DxFormLayoutItem Caption="Period ID" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.ElmoPeriodId)</span>
+                        </DxFormLayoutItem>
+                        <DxFormLayoutItem Caption="Month" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.ElmoMonth)</span>
+                        </DxFormLayoutItem>
+                    </DxFormLayoutGroup>
+
+                    <DxFormLayoutGroup Caption="Survey"
+                                       Decoration="FormLayoutGroupDecoration.Card"
+                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
+                        <DxFormLayoutItem Caption="Project Code" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.ProjectCode)</span>
+                        </DxFormLayoutItem>
+                        <DxFormLayoutItem Caption="Marked Version" ColSpanXs="12">
+                            <span class="overview-value">@FormatValue(Detail.MarkedVersion)</span>
+                        </DxFormLayoutItem>
+                    </DxFormLayoutGroup>
+
+                    <DxFormLayoutGroup Caption="Date Range"
+                                       Decoration="FormLayoutGroupDecoration.Card"
+                                       ColSpanXs="12" ColSpanMd="12" ColSpanXl="9">
+                        <DxFormLayoutItem ColSpanXs="12">
+                            <div class="date-range-table-wrap">
+                                <table class="date-range-table">
+                                    <thead>
+                                        <tr><th>Mode</th><th>Start Date</th><th>Stop Date</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Mail</td><td>@FormatDate(Detail.MailStartDate)</td><td>@FormatDate(Detail.MailStopDate)</td></tr>
+                                        <tr><td>CAWI</td><td>@FormatDate(Detail.CawiStartDate)</td><td>@FormatDate(Detail.CawiStopDate)</td></tr>
+                                        <tr><td>CAPI</td><td>@FormatDate(Detail.CapiStartDate)</td><td>@FormatDate(Detail.CapiStopDate)</td></tr>
+                                        <tr><td>CATI</td><td>@FormatDate(Detail.CatiStartDate)</td><td>@FormatDate(Detail.CatiStopDate)</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
+                        </DxFormLayoutItem>
+                    </DxFormLayoutGroup>
+                </DxFormLayout>
+            </div>
+        </div>
+
+        <div class="survey-chart-layout">
+            <div class="card chart-panel-card">
+                <div class="card-body top-card-body">
+                    <div class="count-chart-card">
+                        <div class="count-chart-title">Data Collection Status</div>
+                        <div class="devexpress-pie-chart">
+                            <DxPieChart Data="@DataCollectionStatusPieItems"
+                                        InnerDiameter="0.5"
+                                        Diameter="0.62"
+                                        MinDiameter="0.42"
+                                        LabelOverlap="PieChartLabelOverlap.Shift">
+                                <DxChartLegend Position="RelativePosition.Outside"
+                                               VerticalAlignment="VerticalEdge.Bottom"
+                                               HorizontalAlignment="HorizontalAlignment.Center"
+                                               Orientation="Orientation.Vertical" />
+                                <DxPieChartSeries ArgumentField="@((PieSlice item) => item.DisplayText)"
+                                                  ValueField="@((PieSlice item) => item.Count)">
+                                    <DxChartSeriesLabel Visible="true"
+                                                        Position="RelativePosition.Outside"
+                                                        RadialOffset="12"
+                                                        FormatPattern="{argument}">
+                                        <DxChartSeriesLabelBorder Visible="true" Width="1" />
+                                        <DxChartSeriesLabelConnector Visible="true" Width="1" />
+                                    </DxChartSeriesLabel>
+                                </DxPieChartSeries>
+                                <DxChartTooltip Enabled="true" />
+                            </DxPieChart>
+                            <div class="devexpress-pie-total">Total: @Detail.TotalSample</div>
                         </div>
-                        <div class="response-legend response-legend-wide">
-                            @foreach (var item in ReportsReceivedByModeChartItems)
-                            {
-                                <div class="legend-item">
-                                    <span class="legend-swatch" style="background:@item.Color"></span>
-                                    <span class="legend-label">@item.Label</span>
-                                    <span class="legend-value">@($"{item.Count} ({GetChartPercent(item.Count, ReportsReceivedByModeChartItems)})")</span>
-                                </div>
-                            }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card chart-panel-card">
+                <div class="card-body top-card-body">
+                    <div class="count-chart-card">
+                        <div class="count-chart-title">Reports Received by Mode</div>
+                        <div class="devexpress-pie-chart">
+                            <DxPieChart Data="@ReportsReceivedByModePieItems"
+                                        InnerDiameter="0.5"
+                                        Diameter="0.62"
+                                        MinDiameter="0.42"
+                                        LabelOverlap="PieChartLabelOverlap.Shift">
+                                <DxChartLegend Position="RelativePosition.Outside"
+                                               VerticalAlignment="VerticalEdge.Bottom"
+                                               HorizontalAlignment="HorizontalAlignment.Center"
+                                               Orientation="Orientation.Vertical" />
+                                <DxPieChartSeries ArgumentField="@((PieSlice item) => item.DisplayText)"
+                                                  ValueField="@((PieSlice item) => item.Count)">
+                                    <DxChartSeriesLabel Visible="true"
+                                                        Position="RelativePosition.Outside"
+                                                        RadialOffset="12"
+                                                        FormatPattern="{argument}">
+                                        <DxChartSeriesLabelBorder Visible="true" Width="1" />
+                                        <DxChartSeriesLabelConnector Visible="true" Width="1" />
+                                    </DxChartSeriesLabel>
+                                </DxPieChartSeries>
+                                <DxChartTooltip Enabled="true" />
+                            </DxPieChart>
+                            <div class="devexpress-pie-total">Total: @Detail.TotalReceived</div>
                         </div>
                     </div>
                 </div>
@@ -157,26 +213,16 @@ else
     private string? ErrorMessage { get; set; }
     private bool IsLoading { get; set; }
 
-    private static readonly string[] ChartPalette =
-    [
-        "#2f8f5b",
-        "#d35d5d",
-        "#f0b35e",
-        "#5b83c5",
-        "#8e6ccf",
-        "#5f6b73"
-    ];
-
     private List<CountSlice> DataCollectionStatusChartItems => Detail is null
         ? []
         :
         [
-            new("1", "Complete", Detail.CompleteCount, ChartPalette[0]),
-            new("2", "Refusal", Detail.RefusalCount, ChartPalette[1]),
-            new("3", "Inaccessible", Detail.InaccessibleCount, ChartPalette[2]),
-            new("Other", "Other Complete", Detail.OtherCompleteCount, ChartPalette[3]),
-            new("900+", "Office Hold", Detail.OfficeHoldCount, ChartPalette[4]),
-            new("Active", "Active & Not Checked-In", Detail.ActiveNotCheckedInCount, ChartPalette[5])
+            new("Complete", Detail.CompleteCount),
+            new("Refusal", Detail.RefusalCount),
+            new("Inaccessible", Detail.InaccessibleCount),
+            new("Other Complete", Detail.OtherCompleteCount),
+            new("Office Hold", Detail.OfficeHoldCount),
+            new("Active & Not Checked-In", Detail.ActiveNotCheckedInCount)
         ];
 
     private List<PieSlice> DataCollectionStatusPieItems => Detail is null
@@ -191,12 +237,20 @@ else
         ? []
         :
         [
-            new("Mail", "Mail", Detail.MailReceivedCount, ChartPalette[0]),
-            new("CAWI", "CAWI", Detail.CawiReceivedCount, ChartPalette[1]),
-            new("CAPI", "CAPI", Detail.CapiReceivedCount, ChartPalette[2]),
-            new("READI", "READI", Detail.ReadiReceivedCount, ChartPalette[3]),
-            new("Other", "Other", Detail.OtherModeReceivedCount, ChartPalette[4])
+            new("Mail", Detail.MailReceivedCount),
+            new("CAWI", Detail.CawiReceivedCount),
+            new("CAPI", Detail.CapiReceivedCount),
+            new("READI", Detail.ReadiReceivedCount),
+            new("Other", Detail.OtherModeReceivedCount)
         ];
+
+    private List<PieSlice> ReportsReceivedByModePieItems => Detail is null
+        ? []
+        : ReportsReceivedByModeChartItems
+            .Select(item => new PieSlice(
+                $"{item.Label}: {item.Count} ({GetPercent(item.Count, Detail.TotalReceived):0.0}%)",
+                item.Count))
+            .ToList();
 
     private double ReceivedPercent => GetPercent(Detail?.TotalReceived ?? 0, Detail?.TotalSample ?? 0);
     private double NotReceivedPercent => GetPercent(Detail?.TotalDeleted ?? 0, Detail?.TotalSample ?? 0);
@@ -243,27 +297,6 @@ else
     private static double GetPercent(int count, int total)
         => total <= 0 ? 0 : count * 100d / total;
 
-    private static string GetChartPercent(int count, IReadOnlyCollection<CountSlice> items)
-        => $"{GetPercent(count, items.Sum(item => item.Count)):0.0}%";
-
-    private static string BuildCountPie(IReadOnlyList<CountSlice> items)
-    {
-        var total = items.Sum(item => Math.Max(0, item.Count));
-        if (total <= 0)
-            return "conic-gradient(#e5e7eb 0 100%)";
-
-        var current = 0d;
-        var segments = new List<string>();
-        foreach (var item in items.Where(item => item.Count > 0))
-        {
-            var next = current + item.Count * 100d / total;
-            segments.Add($"{item.Color} {current:0.###}% {next:0.###}%");
-            current = next;
-        }
-
-        return $"conic-gradient({string.Join(", ", segments)})";
-    }
-
-    private sealed record CountSlice(string Code, string Label, int Count, string Color);
+    private sealed record CountSlice(string Label, int Count);
     private sealed record PieSlice(string DisplayText, int Count);
 }

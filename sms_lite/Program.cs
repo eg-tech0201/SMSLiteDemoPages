@@ -41,6 +41,7 @@ builder.Services.Configure<SmsLiteDatabaseOptions>(builder.Configuration.GetSect
 // Blazor Server UI
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+CompatibilitySettings.UseDropDownInGridColumnChooser = true;
 builder.Services.AddDevExpressBlazor();
 builder.Services.AddScoped(sp =>
 {

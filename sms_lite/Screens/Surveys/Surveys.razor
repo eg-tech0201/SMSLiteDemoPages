@@ -111,10 +111,31 @@
     else
     {
         <div class="survey-grid-actions">
-            <button class="button-lite grid-action-button" type="button" @onclick="ShowColumnChooserAsync">Customize Columns</button>
-            <button class="button-lite grid-action-button" type="button" @onclick="SaveGridViewAsync">Save View</button>
-            <button class="button-lite grid-action-button" type="button" @onclick="ResetGridViewAsync">Reset View</button>
+            <div class="survey-server-pager" aria-label="Survey result pages">
+                <button class="button-lite grid-action-button" type="button" disabled="@IsFirstPage" @onclick="PreviousPageAsync">Previous</button>
+                <span>@PageSummary</span>
+                <button class="button-lite grid-action-button" type="button" disabled="@IsLastPage" @onclick="NextPageAsync">Next</button>
+                <label>
+                    Rows
+                    <select class="survey-page-size-select" value="@GridPageSize" @onchange="OnGridPageSizeChanged">
+                        @foreach (var pageSize in PageSizeOptions)
+                        {
+                            <option value="@pageSize">@pageSize</option>
+                        }
+                    </select>
+                </label>
+            </div>
             <div class="survey-grid-hint">@ResultsSummary</div>
+            <div class="survey-column-actions">
+                <button id="survey-column-chooser-button"
+                        class="button-lite grid-action-button"
+                        type="button"
+                        @onclick="ShowColumnChooser">
+                    Customize Columns
+                </button>
+                <button class="button-lite grid-action-button" type="button" @onclick="SaveGridViewAsync">Save View</button>
+                <button class="button-lite grid-action-button" type="button" @onclick="ResetGridViewAsync">Reset View</button>
+            </div>
         </div>
         <div class="survey-grid-scroll">
             @if (IsGridInteractionLoading)
@@ -168,20 +189,6 @@
                     }
                 </Columns>
             </DxGrid>
-        </div>
-        <div class="survey-server-pager" aria-label="Survey result pages">
-            <button class="button-lite grid-action-button" type="button" disabled="@IsFirstPage" @onclick="PreviousPageAsync">Previous</button>
-            <span>@PageSummary</span>
-            <button class="button-lite grid-action-button" type="button" disabled="@IsLastPage" @onclick="NextPageAsync">Next</button>
-            <label>
-                Rows
-                <select class="survey-page-size-select" value="@GridPageSize" @onchange="OnGridPageSizeChanged">
-                    @foreach (var pageSize in PageSizeOptions)
-                    {
-                        <option value="@pageSize">@pageSize</option>
-                    }
-                </select>
-            </label>
         </div>
     }
 </div>
@@ -316,11 +323,11 @@
         }
     }
 
-    private void ShowColumnChooserAsync()
+    private void ShowColumnChooser()
     {
         if (SurveyGrid is not null)
         {
-            SurveyGrid.ShowColumnChooser();
+            SurveyGrid.ShowColumnChooser("#survey-column-chooser-button");
         }
     }
 

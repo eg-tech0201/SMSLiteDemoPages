@@ -10,18 +10,6 @@
     z-index: 100;
 }
 
-.page-title {
-    font-weight: 800;
-    color: var(--brand-navy);
-}
-
-.sms-topbar-right {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 0.75rem;
-}
-
 .sms-topbar-search {
     min-width: 0;
     justify-self: start;
@@ -304,10 +292,6 @@
     background: #d6dbe2;
 }
 
-.search-chips-persistent {
-    margin-top: 0.35rem;
-}
-
 .select-lite {
     border: 1px solid var(--brand-border);
     background: var(--brand-background);
@@ -336,88 +320,4 @@
     font-weight: 900;
     color: var(--brand-green);
     cursor: pointer;
-}
-
-.icon-button {
-    position: relative;
-    border: 1px solid var(--brand-border);
-    background: var(--brand-background);
-    border-radius: 10px;
-    padding: 0.35rem 0.6rem;
-    cursor: pointer;
-    color: var(--brand-navy);
-}
-
-.badge {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: var(--status-overdue);
-    color: white;
-    font-size: 0.75rem;
-    padding: 0 6px;
-    border-radius: 999px;
-}
-
-.email {
-    font-size: 0.9rem;
-    color: var(--brand-muted);
-}
-
-.avatar {
-    font-size: 1.1rem;
-    color: var(--brand-navy);
-}
-
-.notif-dropdown {
-    position: absolute;
-    top: 64px;
-    right: 20px;
-    width: 320px;
-    background: var(--brand-background);
-    border: 1px solid var(--brand-border);
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-    z-index: 9999;
-    padding: 0.75rem;
-}
-
-.notif-dropdown ul {
-    margin: 0;
-    padding-left: 1rem;
-}
-
-.notif-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-    color: var(--brand-navy);
-}
-
-.notif-close {
-    border: none;
-    background: transparent;
-    color: var(--brand-muted);
-    font-size: 1.1rem;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.notif-backdrop {
-    position: fixed;
-    inset: 0;
-    background: transparent;
-    z-index: 9998;
-}
-
-.notif-dropdown li {
-    padding: 0.5rem 0;
-    border-top: 1px solid var(--brand-border);
-    color: var(--brand-navy);
-}
-
-.notif-dropdown li:first-child {
-    border-top: none;
 }
