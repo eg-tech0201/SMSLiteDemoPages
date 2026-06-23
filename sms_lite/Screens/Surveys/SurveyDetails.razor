@@ -51,87 +51,65 @@ else
                     </div>
                 </div>
 
-                <DxFormLayout CssClass="survey-metadata-layout"
-                              CaptionPosition="CaptionPosition.Vertical"
-                              SizeMode="SizeMode.Small">
-                    <DxFormLayoutGroup Caption="Sample"
-                                       Decoration="FormLayoutGroupDecoration.Card"
-                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
-                        <DxFormLayoutItem Caption="ID" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.SampleId)</span>
-                        </DxFormLayoutItem>
-                        <DxFormLayoutItem Caption="Name" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.SampleName)</span>
-                        </DxFormLayoutItem>
-                    </DxFormLayoutGroup>
+                <div class="survey-metadata-grid">
+                    <section class="metadata-tile">
+                        <h2 class="metadata-tile-title">Sample</h2>
+                        <div class="metadata-fields">
+                            <div><span class="overview-label">ID</span><span class="overview-value">@FormatValue(Detail.SampleId)</span></div>
+                            <div><span class="overview-label">Name</span><span class="overview-value">@FormatValue(Detail.SampleName)</span></div>
+                        </div>
+                    </section>
 
-                    <DxFormLayoutGroup Caption="Schedule"
-                                       Decoration="FormLayoutGroupDecoration.Card"
-                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
-                        <DxFormLayoutItem Caption="Survey Frequency" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.SurveyFrequency)</span>
-                        </DxFormLayoutItem>
-                        <DxFormLayoutItem Caption="Base Month" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.BaseMonth)</span>
-                        </DxFormLayoutItem>
-                    </DxFormLayoutGroup>
+                    <section class="metadata-tile">
+                        <h2 class="metadata-tile-title">Schedule</h2>
+                        <div class="metadata-fields">
+                            <div><span class="overview-label">Survey Frequency</span><span class="overview-value">@FormatValue(Detail.SurveyFrequency)</span></div>
+                            <div><span class="overview-label">Base Month</span><span class="overview-value">@FormatValue(Detail.BaseMonth)</span></div>
+                        </div>
+                    </section>
 
-                    <DxFormLayoutGroup Caption="OMB"
-                                       Decoration="FormLayoutGroupDecoration.Card"
-                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
-                        <DxFormLayoutItem Caption="Docket" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.OmbNumber)</span>
-                        </DxFormLayoutItem>
-                        <DxFormLayoutItem Caption="Expiration" ColSpanXs="12">
-                            <span class="overview-value">@FormatDate(Detail.OmbExpiration)</span>
-                        </DxFormLayoutItem>
-                    </DxFormLayoutGroup>
+                    <section class="metadata-tile">
+                        <h2 class="metadata-tile-title">OMB</h2>
+                        <div class="metadata-fields">
+                            <div><span class="overview-label">Docket</span><span class="overview-value">@FormatValue(Detail.OmbNumber)</span></div>
+                            <div><span class="overview-label">Expiration</span><span class="overview-value">@FormatDate(Detail.OmbExpiration)</span></div>
+                        </div>
+                    </section>
 
-                    <DxFormLayoutGroup Caption="ELMO"
-                                       Decoration="FormLayoutGroupDecoration.Card"
-                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
-                        <DxFormLayoutItem Caption="Survey ID" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.ElmoSurveyId)</span>
-                        </DxFormLayoutItem>
-                        <DxFormLayoutItem Caption="Period ID" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.ElmoPeriodId)</span>
-                        </DxFormLayoutItem>
-                        <DxFormLayoutItem Caption="Month" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.ElmoMonth)</span>
-                        </DxFormLayoutItem>
-                    </DxFormLayoutGroup>
+                    <section class="metadata-tile">
+                        <h2 class="metadata-tile-title">ELMO</h2>
+                        <div class="metadata-fields metadata-fields-three">
+                            <div><span class="overview-label">Survey ID</span><span class="overview-value">@FormatValue(Detail.ElmoSurveyId)</span></div>
+                            <div><span class="overview-label">Period ID</span><span class="overview-value">@FormatValue(Detail.ElmoPeriodId)</span></div>
+                            <div><span class="overview-label">Month</span><span class="overview-value">@FormatValue(Detail.ElmoMonth)</span></div>
+                        </div>
+                    </section>
 
-                    <DxFormLayoutGroup Caption="Survey"
-                                       Decoration="FormLayoutGroupDecoration.Card"
-                                       ColSpanXs="12" ColSpanMd="6" ColSpanXl="3">
-                        <DxFormLayoutItem Caption="Project Code" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.ProjectCode)</span>
-                        </DxFormLayoutItem>
-                        <DxFormLayoutItem Caption="Marked Version" ColSpanXs="12">
-                            <span class="overview-value">@FormatValue(Detail.MarkedVersion)</span>
-                        </DxFormLayoutItem>
-                    </DxFormLayoutGroup>
+                    <section class="metadata-tile">
+                        <h2 class="metadata-tile-title">Survey</h2>
+                        <div class="metadata-fields">
+                            <div><span class="overview-label">Project Code</span><span class="overview-value">@FormatValue(Detail.ProjectCode)</span></div>
+                            <div><span class="overview-label">Marked Version</span><span class="overview-value">@FormatValue(Detail.MarkedVersion)</span></div>
+                        </div>
+                    </section>
 
-                    <DxFormLayoutGroup Caption="Date Range"
-                                       Decoration="FormLayoutGroupDecoration.Card"
-                                       ColSpanXs="12" ColSpanMd="12" ColSpanXl="9">
-                        <DxFormLayoutItem ColSpanXs="12">
-                            <div class="date-range-table-wrap">
-                                <table class="date-range-table">
-                                    <thead>
-                                        <tr><th>Mode</th><th>Start Date</th><th>Stop Date</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr><td>Mail</td><td>@FormatDate(Detail.MailStartDate)</td><td>@FormatDate(Detail.MailStopDate)</td></tr>
-                                        <tr><td>CAWI</td><td>@FormatDate(Detail.CawiStartDate)</td><td>@FormatDate(Detail.CawiStopDate)</td></tr>
-                                        <tr><td>CAPI</td><td>@FormatDate(Detail.CapiStartDate)</td><td>@FormatDate(Detail.CapiStopDate)</td></tr>
-                                        <tr><td>CATI</td><td>@FormatDate(Detail.CatiStartDate)</td><td>@FormatDate(Detail.CatiStopDate)</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </DxFormLayoutItem>
-                    </DxFormLayoutGroup>
-                </DxFormLayout>
+                    <section class="metadata-tile metadata-date-range">
+                        <h2 class="metadata-tile-title">Date Range</h2>
+                        <div class="date-range-table-wrap">
+                            <table class="date-range-table">
+                                <thead>
+                                    <tr><th>Mode</th><th>Start Date</th><th>Stop Date</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Mail</td><td>@FormatDate(Detail.MailStartDate)</td><td>@FormatDate(Detail.MailStopDate)</td></tr>
+                                    <tr><td>CAWI</td><td>@FormatDate(Detail.CawiStartDate)</td><td>@FormatDate(Detail.CawiStopDate)</td></tr>
+                                    <tr><td>CAPI</td><td>@FormatDate(Detail.CapiStartDate)</td><td>@FormatDate(Detail.CapiStopDate)</td></tr>
+                                    <tr><td>CATI</td><td>@FormatDate(Detail.CatiStartDate)</td><td>@FormatDate(Detail.CatiStopDate)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
             </div>
         </div>
 
@@ -143,8 +121,8 @@ else
                         <div class="devexpress-pie-chart">
                             <DxPieChart Data="@DataCollectionStatusPieItems"
                                         InnerDiameter="0.5"
-                                        Diameter="0.62"
-                                        MinDiameter="0.42"
+                                        Diameter="0.52"
+                                        MinDiameter="0.34"
                                         LabelOverlap="PieChartLabelOverlap.Shift">
                                 <DxChartLegend Position="RelativePosition.Outside"
                                                VerticalAlignment="VerticalEdge.Bottom"
@@ -154,7 +132,7 @@ else
                                                   ValueField="@((PieSlice item) => item.Count)">
                                     <DxChartSeriesLabel Visible="true"
                                                         Position="RelativePosition.Outside"
-                                                        RadialOffset="12"
+                                                        RadialOffset="8"
                                                         FormatPattern="{argument}">
                                         <DxChartSeriesLabelBorder Visible="true" Width="1" />
                                         <DxChartSeriesLabelConnector Visible="true" Width="1" />
@@ -175,8 +153,8 @@ else
                         <div class="devexpress-pie-chart">
                             <DxPieChart Data="@ReportsReceivedByModePieItems"
                                         InnerDiameter="0.5"
-                                        Diameter="0.62"
-                                        MinDiameter="0.42"
+                                        Diameter="0.52"
+                                        MinDiameter="0.34"
                                         LabelOverlap="PieChartLabelOverlap.Shift">
                                 <DxChartLegend Position="RelativePosition.Outside"
                                                VerticalAlignment="VerticalEdge.Bottom"
@@ -186,7 +164,7 @@ else
                                                   ValueField="@((PieSlice item) => item.Count)">
                                     <DxChartSeriesLabel Visible="true"
                                                         Position="RelativePosition.Outside"
-                                                        RadialOffset="12"
+                                                        RadialOffset="8"
                                                         FormatPattern="{argument}">
                                         <DxChartSeriesLabelBorder Visible="true" Width="1" />
                                         <DxChartSeriesLabelConnector Visible="true" Width="1" />
