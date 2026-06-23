@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="SMSLiteUI\src\SMSLiteUI\SMSLiteUI.csproj" />
+  <Project Path="SMSLiteApi\src\SMSLiteCommandAPI\SMSLiteCommandAPI.csproj" />
+  <Project Path="SMSLiteApi\src\External.ELMA.Client\External.ELMA.Client.csproj" />
+  <Project Path="SMSLiteApi\src\SMS.Integration.SurveyReview\SMS.Integration.SurveyReview.csproj" />
+  <Project Path="SMSLiteModels\src\SMSLiteModels\SMSLiteModels.csproj" />
+</Solution>

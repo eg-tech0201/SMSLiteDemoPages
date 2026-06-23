@@ -4,14 +4,17 @@ Blazor app and ASP.NET Core API host for SMS Lite.
 
 ## Repository Layout
 
-- `sms_lite/` - SMS Lite Blazor Server app, API endpoints, `sms_lite.slnx`, and integration client libraries
-- `sms_lite/External.ELMA.Client/` - ELMA plain client library
-- `sms_lite/SMS.Integration.SurveyReview/` - Survey Review plain client library
+- `SMSLiteUI/src/SMSLiteUI/` - Blazor UI host, pages, shared components, UI services, and `wwwroot`.
+- `SMSLiteUI/documentation/` - UI documentation.
+- `SMSLiteApi/src/SMSLiteCommandAPI/` - API endpoints, authentication, DTOs, repositories, services, data access, functions, query API, and integration clients.
+- `SMSLiteDBO/` - database object scripts, organized by tables and stored procedures.
+- `SMSLiteModels/src/SMSLiteModels/Entities/` - shared entity and integration model types.
+- `SMSLite.slnx` - solution file for the UI, API, integration, and model projects.
 
 ## Local Run
 
 ```bash
-dotnet run --project sms_lite/sms_lite.csproj --urls http://localhost:5088
+dotnet run --project SMSLiteUI/src/SMSLiteUI/SMSLiteUI.csproj --urls http://localhost:5088
 ```
 
 Open `http://localhost:5088`.
@@ -19,5 +22,5 @@ Open `http://localhost:5088`.
 ## Build
 
 ```bash
-dotnet build sms_lite/sms_lite.slnx
+dotnet build SMSLite.slnx
 ```

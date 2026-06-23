@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SMSLiteUI</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DevExpress.Blazor" Version="25.2.7" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../SMSLiteApi/src/SMSLiteCommandAPI/SMSLiteCommandAPI.csproj" />
+    <ProjectReference Include="../../../SMSLiteApi/src/External.ELMA.Client/External.ELMA.Client.csproj" />
+    <ProjectReference Include="../../../SMSLiteApi/src/SMS.Integration.SurveyReview/SMS.Integration.SurveyReview.csproj" />
+    <ProjectReference Include="../../../SMSLiteModels/src/SMSLiteModels/SMSLiteModels.csproj" />
+  </ItemGroup>
+
+</Project>

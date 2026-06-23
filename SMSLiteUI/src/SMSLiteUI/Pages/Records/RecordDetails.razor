@@ -1,0 +1,67 @@
+@page "/records/details/{RecordId:int?}"
+
+<PageTitle>Record Details</PageTitle>
+
+<h1 class="page-h1">Record Details</h1>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3"><strong>Record ID:</strong> @DisplayText(RecordId)</div>
+            <div class="col-md-3"><strong>Respondent:</strong> —</div>
+            <div class="col-md-3"><strong>Status:</strong> —</div>
+            <div class="col-md-3"><strong>Survey:</strong> —</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
+        <section class="card h-100">
+            <div class="card-header">Record Fields</div>
+            <div class="card-body">
+                <DxGrid Data="@Fields"
+                        ShowFilterRow="false"
+                        AllowSort="false"
+                        ColumnResizeMode="GridColumnResizeMode.ColumnsContainer">
+                    <Columns>
+                        <DxGridDataColumn FieldName="@nameof(FieldGridRow.Field)" Caption="Field" MinWidth="180" />
+                        <DxGridDataColumn FieldName="@nameof(FieldGridRow.Value)" Caption="Value" MinWidth="220" />
+                    </Columns>
+                </DxGrid>
+            </div>
+        </section>
+    </div>
+    <div class="col-12 col-lg-6">
+        <section class="card h-100">
+            <div class="card-header">Annotation / Metadata</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Annotation</label>
+                    <DxMemo Rows="4" NullText="Add reviewer note" ReadOnly="true" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Metadata Tag</label>
+                    <DxTextBox NullText="Add metadata tag" ReadOnly="true" />
+                </div>
+                <DxButton Text="Save" RenderStyle="ButtonRenderStyle.Primary" Enabled="false" />
+            </div>
+        </section>
+    </div>
+</div>
+
+<section class="card mt-3">
+    <div class="card-header">Audit Log</div>
+    <div class="card-body">
+        <DxGrid Data="@AuditRows"
+                ShowFilterRow="false"
+                AllowSort="true"
+                ColumnResizeMode="GridColumnResizeMode.ColumnsContainer">
+            <Columns>
+                <DxGridDataColumn FieldName="@nameof(AuditGridRow.EventDate)" Caption="Date" DisplayFormat="MM/dd/yyyy" MinWidth="140" />
+                <DxGridDataColumn FieldName="@nameof(AuditGridRow.Action)" Caption="Action" MinWidth="240" />
+                <DxGridDataColumn FieldName="@nameof(AuditGridRow.User)" Caption="User" MinWidth="160" />
+            </Columns>
+        </DxGrid>
+    </div>
+</section>

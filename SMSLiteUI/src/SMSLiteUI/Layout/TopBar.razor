@@ -1,0 +1,161 @@
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+
+<header class="sms-topbar">
+    <div class="sms-topbar-search" @onclick:stopPropagation="true">
+        <form class="dashboard-searchbar" @onsubmit="OnSearchSubmit" @onsubmit:preventDefault="true">
+            @if (ShowFilters)
+            {
+                <div class="filters-backdrop" @onclick="CloseFilters"></div>
+            }
+            <div class="search-row">
+                <div class="search-shell" @ref="_filtersAnchor">
+                    <button class="search-icon-button" type="submit" title="Search">
+                        <span class="bi bi-search" aria-hidden="true"></span>
+                    </button>
+                    <input class="survey-search search-input" placeholder="Search by FIPS, POID, survey name, or survey ID"
+                           @bind="SearchText" @bind:event="oninput" />
+                    @if (AppliedFilterChips.Any())
+                    {
+                        <div class="inline-filter-chips">
+                            @foreach (var chip in AppliedFilterChips)
+                            {
+                                <button type="button" class="chip" @onclick="chip.OnRemove">
+                                    <span class="chip-x">×</span>
+                                    <span>@chip.Label</span>
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    <button class="search-filter-button" type="button" @onclick="ToggleFilters" title="Filters">
+                        <span class="bi bi-sliders" aria-hidden="true"></span>
+                        <span class="filter-label">Filters</span>
+                        @if (FilterAppliedCount > 0)
+                        {
+                            <span class="filter-count">(@FilterAppliedCount)</span>
+                        }
+                    </button>
+
+                    @if (ShowFilters)
+                    {
+                        <div class="filters-pop" @onclick:stopPropagation="true" @ref="_filtersPop">
+                            <div class="filters-header">
+                                <div class="filters-title">Filters</div>
+                                @if (AppliedFilterChips.Any())
+                                {
+                                    <div class="filters-chips">
+                                        @foreach (var chip in AppliedFilterChips)
+                                        {
+                                            <button type="button" class="chip" @onclick="chip.OnRemove">
+                                                <span class="chip-x">×</span>
+                                                <span>@chip.Label</span>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="filters-group">
+                                <div class="filters-subtitle">Start Date – Stop Date</div>
+                                <div class="filters-inline">
+                                    <InputDate class="select-lite" @bind-Value="StartDateFilter" />
+                                    <InputDate class="select-lite" @bind-Value="StopDateFilter" />
+                                </div>
+                            </div>
+
+                            <div class="filters-group">
+                                <div class="filters-subtitle">Reference Date</div>
+                                <div class="filters-inline">
+                                    <InputSelect class="select-lite" @bind-Value="ReferenceMonth" @bind-Value:after="OnReferenceDatePartChanged">
+                                        <option value="">MM</option>
+                                        @foreach (var month in ReferenceMonthOptions)
+                                        {
+                                            <option value="@month">@month</option>
+                                        }
+                                    </InputSelect>
+                                    <InputSelect class="select-lite" @bind-Value="ReferenceDay" @bind-Value:after="OnReferenceDatePartChanged">
+                                        <option value="">DD</option>
+                                        @foreach (var day in ReferenceDayOptions)
+                                        {
+                                            <option value="@day">@day</option>
+                                        }
+                                    </InputSelect>
+                                    <InputSelect class="select-lite" @bind-Value="ReferenceYear" @bind-Value:after="OnReferenceDatePartChanged">
+                                        <option value="">YYYY</option>
+                                        @foreach (var year in ReferenceYearOptions)
+                                        {
+                                            <option value="@year">@year</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                            </div>
+
+                            <div class="filters-group">
+                                <div class="filters-subtitle">States</div>
+                                <div class="filters-checks">
+                                    @foreach (var state in States)
+                                    {
+                                        <label class="check-pill">
+                                            <input type="checkbox"
+                                                   checked="@StateSelections.Contains(state)"
+                                                   @onchange="e => ToggleSelection(StateSelections, state, e)" />
+                                            <span>@state</span>
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="filters-group">
+                                <div class="filters-subtitle">Mode</div>
+                                <div class="filters-checks">
+                                    @foreach (var mode in Modes)
+                                    {
+                                        <label class="check-pill">
+                                            <input type="checkbox"
+                                                   checked="@ModeSelections.Contains(mode)"
+                                                   @onchange="e => ToggleSelection(ModeSelections, mode, e)" />
+                                            <span>@mode</span>
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="filters-group">
+                                <div class="filters-subtitle">Show # of results</div>
+                                <select class="select-lite" @bind="ResultsSize">
+                                    <option value="">Default</option>
+                                    @foreach (var size in ResultsSizes)
+                                    {
+                                        <option value="@size">@size</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="filters-group">
+                                <div class="filters-subtitle">Status</div>
+                                <div class="filters-checks">
+                                    @foreach (var status in StatusOptions)
+                                    {
+                                        <label class="check-pill">
+                                            <input type="checkbox"
+                                                   checked="@StatusSelections.Contains(status)"
+                                                   @onchange="e => ToggleSelection(StatusSelections, status, e)" />
+                                            <span>@status</span>
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="filters-actions">
+                                <button class="button-lite" type="button" @onclick="ClearFilters">Clear</button>
+                                <button class="button-primary" type="button" @onclick="() => ShowFilters = false">Done</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </form>
+    </div>
+
+</header>

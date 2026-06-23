@@ -1,0 +1,29 @@
+.dashboard-widget {
+    min-width: 0;
+}
+
+.dashboard-widget ::deep .dxbl-fl-group {
+    border: 2px solid color-mix(in srgb, var(--brand-border) 58%, var(--brand-navy));
+    box-shadow: none;
+}
+
+.dashboard-widget ::deep .dxbl-fl-group-content {
+    padding: 0.85rem 1rem 1.1rem;
+}
+
+.dashboard-widget-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0.35rem 0.75rem 1rem;
+}
+
+.dashboard-widget-title {
+    margin: 0;
+    color: var(--brand-navy);
+    font-size: 1.28rem;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: 0;
+}

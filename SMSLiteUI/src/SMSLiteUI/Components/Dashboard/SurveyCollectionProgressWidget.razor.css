@@ -1,0 +1,41 @@
+.dashboard-panel,
+.survey-progress-panel {
+    min-width: 0;
+}
+
+.survey-progress-grid-wrap {
+    overflow-x: auto;
+    border: none;
+    border-radius: 8px;
+    background: #ffffff;
+    margin: 0.5rem;
+}
+
+.survey-progress-grid {
+    min-width: 960px;
+    border: 2px solid #8b9ba8;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.survey-progress-grid ::deep :is(.dxbl-grid-header-row, .dxbl-grid-header, .dxbl-grid-header-content),
+::deep .survey-progress-grid :is(.dxbl-grid-header-row, .dxbl-grid-header, .dxbl-grid-header-content) {
+    background: #dbe6ee !important;
+    color: var(--brand-navy) !important;
+    font-weight: 900;
+}
+
+.survey-progress-grid ::deep :is(.dxbl-grid-header, .dxbl-grid-header-cell, .dxbl-grid-cell, .dxbl-grid-data-cell, .dxbl-grid-empty-data-cell, th, td),
+::deep .survey-progress-grid :is(.dxbl-grid-header, .dxbl-grid-header-cell, .dxbl-grid-cell, .dxbl-grid-data-cell, .dxbl-grid-empty-data-cell, th, td) {
+    border-color: #a6b4bf !important;
+}
+
+.survey-progress-grid ::deep :is(.dxbl-grid-header, .dxbl-grid-header-cell, .dxbl-grid-cell, .dxbl-grid-data-cell, .dxbl-grid-empty-data-cell, th, td):not(:last-child),
+::deep .survey-progress-grid :is(.dxbl-grid-header, .dxbl-grid-header-cell, .dxbl-grid-cell, .dxbl-grid-data-cell, .dxbl-grid-empty-data-cell, th, td):not(:last-child) {
+    border-right: 1px solid #a6b4bf !important;
+}
+
+.survey-progress-grid ::deep :is(.dxbl-grid-data-row:hover),
+::deep .survey-progress-grid :is(.dxbl-grid-data-row:hover) {
+    background: color-mix(in srgb, #dbe6ee 55%, #ffffff);
+}

@@ -1,0 +1,155 @@
+@page "/surveys/details"
+@page "/surveys/details/{SurveyId:int?}"
+@inject HttpClient Http
+@inject ILogger<SurveyDetails> Logger
+
+<PageTitle>@(Detail?.Title ?? "Survey Details")</PageTitle>
+
+@if (IsLoading)
+{
+    <LoadingSwirl Text="Loading survey details" />
+}
+else if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-warning">@ErrorMessage</div>
+}
+else if (Detail is null)
+{
+    <div class="alert alert-warning">No survey detail found for the selected instance.</div>
+}
+else
+{
+    <section class="detail-identity mb-2">
+        <div class="detail-identity-main">
+            <h1 class="detail-identity-title">@FormatValue(Detail.Title)</h1>
+            <div class="detail-identity-subtitle">@FormatValue(Detail.SubTitle)</div>
+        </div>
+        <div class="detail-identity-meta">
+            <div class="identity-line">
+                <span class="identity-key">Survey ID:</span>
+                <span class="identity-data">@FormatValue(Detail.SurveyId)</span>
+            </div>
+            <div class="identity-line">
+                <span class="identity-key">Reference Date:</span>
+                <span class="identity-data">@Detail.ReferenceDate.ToString("MM/dd/yyyy")</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="details-top-layout mb-4">
+        <div class="card overview-card">
+            <div class="card-body top-card-body">
+                <div class="count-stack-wrap overview-stack-wrap">
+                    <div class="metric-label">Total Count: @Detail.TotalSample</div>
+                    <div class="count-stack">
+                        <span class="count-stack-received" style="width:@($"{ReceivedPercent:0.##}%")"></span>
+                        <span class="count-stack-deleted" style="width:@($"{NotReceivedPercent:0.##}%")"></span>
+                    </div>
+                    <div class="count-stack-meta">
+                        <span class="count-stack-received-text">Received: @Detail.TotalReceived (@ReceivedPercent.ToString("0.0")%)</span>
+                        <span class="count-stack-deleted-text">Not received: @Detail.TotalDeleted (@NotReceivedPercent.ToString("0.0")%)</span>
+                    </div>
+                </div>
+
+                <div class="survey-overview-panel">
+                    <div class="survey-detail-form">
+                        <div class="form-field"><span class="overview-label">Sample ID</span><span class="overview-value">@FormatValue(Detail.SampleId)</span></div>
+                        <div class="form-field"><span class="overview-label">Sample Name</span><span class="overview-value">@FormatValue(Detail.SampleName)</span></div>
+                        <div class="form-field"><span class="overview-label">Survey Frequency</span><span class="overview-value">@FormatValue(Detail.SurveyFrequency)</span></div>
+                        <div class="form-field"><span class="overview-label">Base Month</span><span class="overview-value">@FormatValue(Detail.BaseMonth)</span></div>
+                        <div class="form-field"><span class="overview-label">OMB Docket</span><span class="overview-value">@FormatValue(Detail.OmbNumber)</span></div>
+                        <div class="form-field"><span class="overview-label">OMB Expiration</span><span class="overview-value">@FormatDate(Detail.OmbExpiration)</span></div>
+                        <div class="form-field"><span class="overview-label">ELMO Survey ID</span><span class="overview-value">@FormatValue(Detail.ElmoSurveyId)</span></div>
+                        <div class="form-field"><span class="overview-label">ELMO Period ID</span><span class="overview-value">@FormatValue(Detail.ElmoPeriodId)</span></div>
+                        <div class="form-field"><span class="overview-label">ELMO Month</span><span class="overview-value">@FormatValue(Detail.ElmoMonth)</span></div>
+                        <div class="form-field"><span class="overview-label">Project Code</span><span class="overview-value">@FormatValue(Detail.ProjectCode)</span></div>
+                        <div class="form-field"><span class="overview-label">Marked Version</span><span class="overview-value">@FormatValue(Detail.MarkedVersion)</span></div>
+                    </div>
+
+                    <div class="date-range-form">
+                        <div class="date-range-row">
+                            <span class="date-range-mode">Mail</span>
+                            <span class="overview-label">Start</span>
+                            <span class="overview-value">@FormatDate(Detail.MailStartDate)</span>
+                            <span class="overview-label">Stop</span>
+                            <span class="overview-value">@FormatDate(Detail.MailStopDate)</span>
+                        </div>
+                        <div class="date-range-row">
+                            <span class="date-range-mode">CAWI</span>
+                            <span class="overview-label">Start</span>
+                            <span class="overview-value">@FormatDate(Detail.CawiStartDate)</span>
+                            <span class="overview-label">Stop</span>
+                            <span class="overview-value">@FormatDate(Detail.CawiStopDate)</span>
+                        </div>
+                        <div class="date-range-row">
+                            <span class="date-range-mode">CAPI</span>
+                            <span class="overview-label">Start</span>
+                            <span class="overview-value">@FormatDate(Detail.CapiStartDate)</span>
+                            <span class="overview-label">Stop</span>
+                            <span class="overview-value">@FormatDate(Detail.CapiStopDate)</span>
+                        </div>
+                        <div class="date-range-row">
+                            <span class="date-range-mode">CATI</span>
+                            <span class="overview-label">Start</span>
+                            <span class="overview-value">@FormatDate(Detail.CatiStartDate)</span>
+                            <span class="overview-label">Stop</span>
+                            <span class="overview-value">@FormatDate(Detail.CatiStopDate)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="survey-chart-layout">
+            <div class="card chart-panel-card">
+                <div class="card-body top-card-body">
+                    <DxPieChart Data="@DataCollectionStatusPieItems"
+                                CssClass="devexpress-pie-chart"
+                                InnerDiameter="0.5"
+                                Diameter="0.82"
+                                MinDiameter="0.68"
+                                LabelOverlap="PieChartLabelOverlap.Shift">
+                        <DxChartTitle Text="Data Collection Status" />
+                        <DxChartLegend Position="RelativePosition.Outside"
+                                       VerticalAlignment="VerticalEdge.Top"
+                                       HorizontalAlignment="HorizontalAlignment.Left"
+                                       Orientation="Orientation.Vertical">
+                            <DxChartTitle Text="@($"Total: {Detail.TotalSample:N0}")" />
+                        </DxChartLegend>
+                        <DxPieChartSeries ArgumentField="@((PieSlice item) => item.Label)"
+                                          ValueField="@((PieSlice item) => item.Count)">
+                            <DxChartSeriesLabel Visible="true"
+                                                FormatPattern="{argument}: {value}" />
+                        </DxPieChartSeries>
+                        <DxChartTooltip Enabled="true" />
+                    </DxPieChart>
+                </div>
+            </div>
+
+            <div class="card chart-panel-card">
+                <div class="card-body top-card-body">
+                    <DxPieChart Data="@ReportsReceivedByModePieItems"
+                                CssClass="devexpress-pie-chart"
+                                InnerDiameter="0.5"
+                                Diameter="0.82"
+                                MinDiameter="0.68"
+                                LabelOverlap="PieChartLabelOverlap.Shift">
+                        <DxChartTitle Text="Reports Received by Mode" />
+                        <DxChartLegend Position="RelativePosition.Outside"
+                                       VerticalAlignment="VerticalEdge.Top"
+                                       HorizontalAlignment="HorizontalAlignment.Left"
+                                       Orientation="Orientation.Vertical">
+                            <DxChartTitle Text="@($"Total: {Detail.TotalReceived:N0}")" />
+                        </DxChartLegend>
+                        <DxPieChartSeries ArgumentField="@((PieSlice item) => item.Label)"
+                                          ValueField="@((PieSlice item) => item.Count)">
+                            <DxChartSeriesLabel Visible="true"
+                                                FormatPattern="{argument}: {value}" />
+                        </DxPieChartSeries>
+                        <DxChartTooltip Enabled="true" />
+                    </DxPieChart>
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,48 @@
+﻿@page "/"
+@inject NavigationManager Navigation
+
+<header class="dashboard-heading">
+    <div>
+        <div class="welcome-heading">Welcome, user@usda.gov!</div>
+        <h1 class="page-h1">SMS Lite Dashboard</h1>
+    </div>
+</header>
+
+<div class="dashboard-grid">
+    <DashboardWidget Title="Survey Search" CssClass="dashboard-full dashboard-search-panel">
+        <SurveySearchBar SearchText="@SearchText"
+                         SearchTextChanged="@OnDashboardSearchTextChanged"
+                         SearchRequested="@OnSearchSubmit"
+                         Placeholder="Search by survey ID or title"
+                         BindValueMode="BindValueMode.OnInput"
+                         InputDelay="0"
+                         SurveyDate="@SurveyDateFilter"
+                         SurveyDateChanged="@OnSurveyDateFilterChanged"
+                         StartDate="@StartDateFilter"
+                         StartDateChanged="@OnStartDateFilterChanged"
+                         StopDate="@StopDateFilter"
+                         StopDateChanged="@OnStopDateFilterChanged"
+                         Mail="@MailFilter"
+                         MailChanged="@OnMailFilterChanged"
+                         Cawi="@CawiFilter"
+                         CawiChanged="@OnCawiFilterChanged"
+                         Capi="@CapiFilter"
+                         CapiChanged="@OnCapiFilterChanged"
+                         Cati="@CatiFilter"
+                         CatiChanged="@OnCatiFilterChanged"
+                         HqReview="@HqReviewFilter"
+                         HqReviewChanged="@OnHqReviewFilterChanged"
+                         ClearFiltersRequested="@ClearFilters"
+                         ShowViewAllButton="true"
+                         ViewAllRequested="@ViewAll" />
+    </DashboardWidget>
+
+    <DashboardStatisticsWidget />
+
+    <div class="dashboard-widget-row">
+        <SurveyCollectionProgressWidget />
+        <RecentSurveysGrid SectionCssClass="dashboard-panel recent-surveys-panel"
+                           Title="My Recent Surveys"
+                           PageSize="8" />
+    </div>
+</div>

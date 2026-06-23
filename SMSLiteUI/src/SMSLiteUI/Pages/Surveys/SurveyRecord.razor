@@ -1,0 +1,60 @@
+@page "/surveys/record"
+@page "/surveys/record/{SurveyId:int?}"
+
+<PageTitle>Survey Record</PageTitle>
+
+<section class="record-identity mb-3">
+    <h1 class="record-identity-title">Survey Record</h1>
+    <div class="record-identity-meta">
+        <span><strong>Survey ID:</strong> @DisplayText(EffectiveSurveyId)</span>
+        <span><strong>Survey Date:</strong> @DisplayText(ReferenceDate)</span>
+        <span><strong>Sample ID:</strong> @DisplayText(SampleId)</span>
+        <span><strong>SKey:</strong> @DisplayText(SKey)</span>
+    </div>
+</section>
+
+<div class="record-searchbar">
+    <i class="bi bi-search search-icon" aria-hidden="true"></i>
+    <DxTextBox @bind-Text="SearchText"
+               BindValueMode="BindValueMode.OnInput"
+               NullText="Search respondents"
+               ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto"
+               CssClass="record-search-input" />
+</div>
+
+<div class="record-toolbar">
+    <div class="record-toolbar-actions">
+        <DxButton Text="Bulk Edit" RenderStyle="ButtonRenderStyle.Secondary" Enabled="false" />
+        <DxButton Text="Undo" RenderStyle="ButtonRenderStyle.Secondary" Enabled="false" />
+        <DxButton Text="Customize Columns"
+                  RenderStyle="ButtonRenderStyle.Secondary"
+                  Click="@ShowColumnChooserAsync" />
+        <DxButton Text="Save Changes" RenderStyle="ButtonRenderStyle.Primary" Enabled="false" />
+    </div>
+</div>
+
+<div class="table-wrap dx-grid-wrap">
+    <DxGrid @ref="RecordGrid"
+            Data="@Rows"
+            CssClass="record-dx-grid"
+            PageSize="20"
+            ShowFilterRow="false"
+            FilterMenuButtonDisplayMode="GridFilterMenuButtonDisplayMode.Always"
+            ShowGroupPanel="true"
+            AllowGroup="true"
+            AllowSort="true"
+            AllowColumnReorder="true"
+            SelectionMode="GridSelectionMode.Multiple"
+            SelectAllCheckboxMode="GridSelectAllCheckboxMode.Page"
+            ColumnResizeMode="GridColumnResizeMode.ColumnsContainer">
+        <Columns>
+            <DxGridSelectionColumn Width="48px" />
+            <DxGridDataColumn FieldName="@nameof(RespondentGridRow.Poid)" Caption="POID" MinWidth="120" />
+            <DxGridDataColumn FieldName="@nameof(RespondentGridRow.WholeName)" Caption="Whole Name" MinWidth="200" />
+            <DxGridDataColumn FieldName="@nameof(RespondentGridRow.StateId)" Caption="State FIPS" MinWidth="120" />
+            <DxGridDataColumn FieldName="@nameof(RespondentGridRow.SurveyDate)" Caption="Survey Date" DisplayFormat="MM/dd/yyyy" MinWidth="140" />
+            <DxGridDataColumn FieldName="@nameof(RespondentGridRow.EnumeratorName)" Caption="Enumerator" MinWidth="180" />
+            <DxGridDataColumn FieldName="@nameof(RespondentGridRow.Notes)" Caption="Notes" MinWidth="220" />
+        </Columns>
+    </DxGrid>
+</div>

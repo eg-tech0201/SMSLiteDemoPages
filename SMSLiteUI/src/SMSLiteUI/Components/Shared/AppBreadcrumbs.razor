@@ -1,0 +1,23 @@
+@implements IDisposable
+@inject BreadcrumbService Breadcrumbs
+
+@if (Breadcrumbs.Items.Count > 1)
+{
+    <nav class="app-breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+            @foreach (var item in Breadcrumbs.Items)
+            {
+                <li>
+                    @if (item.IsCurrent || string.IsNullOrWhiteSpace(item.Url))
+                    {
+                        <span aria-current="page">@item.Text</span>
+                    }
+                    else
+                    {
+                        <a href="@item.Url">@item.Text</a>
+                    }
+                </li>
+            }
+        </ol>
+    </nav>
+}

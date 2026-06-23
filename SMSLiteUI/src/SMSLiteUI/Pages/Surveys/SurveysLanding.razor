@@ -1,0 +1,34 @@
+@page "/surveys"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<h1 class="page-h1">Surveys</h1>
+
+<SurveySearchBar SearchText="@SearchText"
+                 SearchTextChanged="@OnSearchTextChanged"
+                 SearchRequested="@OnSearchSubmit"
+                 Placeholder="Search by survey ID or title"
+                 BindValueMode="BindValueMode.OnInput"
+                 InputDelay="0"
+                 SurveyDate="@SurveyDateFilter"
+                 SurveyDateChanged="@OnSurveyDateFilterChanged"
+                 StartDate="@StartDateFilter"
+                 StartDateChanged="@OnStartDateFilterChanged"
+                 StopDate="@StopDateFilter"
+                 StopDateChanged="@OnStopDateFilterChanged"
+                 Mail="@MailFilter"
+                 MailChanged="@OnMailFilterChanged"
+                 Cawi="@CawiFilter"
+                 CawiChanged="@OnCawiFilterChanged"
+                 Capi="@CapiFilter"
+                 CapiChanged="@OnCapiFilterChanged"
+                 Cati="@CatiFilter"
+                 CatiChanged="@OnCatiFilterChanged"
+                 HqReview="@HqReviewFilter"
+                 HqReviewChanged="@OnHqReviewFilterChanged"
+                 ClearFiltersRequested="@ClearFilters"
+                 ShowViewAllButton="true"
+                 ViewAllText="View all surveys"
+                 ViewAllRequested="@ViewAll" />
+
+<RecentSurveysGrid />

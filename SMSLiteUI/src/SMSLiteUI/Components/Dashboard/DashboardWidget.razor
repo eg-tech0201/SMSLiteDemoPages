@@ -1,0 +1,11 @@
+<DxFormLayout CssClass="@($"dashboard-widget {CssClass}")">
+    <DxFormLayoutGroup Decoration="FormLayoutGroupDecoration.Card">
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <div class="dashboard-widget-title-row">
+                <h2 class="dashboard-widget-title">@Title</h2>
+            </div>
+        }
+        @ChildContent
+    </DxFormLayoutGroup>
+</DxFormLayout>

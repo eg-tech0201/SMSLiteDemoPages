@@ -1,0 +1,166 @@
+@page "/search"
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@using System.Text.Json
+@using System.Diagnostics
+
+<PageTitle>Global Search</PageTitle>
+
+<h1 class="page-h1">Global Search</h1>
+
+<div class="search-page-shell">
+    <div class="card search-toolbar-card">
+        <div class="card-body">
+            <form class="search-form" @onsubmit="ApplySearch" @onsubmit:preventDefault="true">
+                <input class="search-input" placeholder="Search by FIPS, POID, survey name, or survey ID" @bind="SearchText" @bind:event="oninput" />
+                <button class="button-primary" type="submit">Search</button>
+                <button class="button-lite" type="button" @onclick="ToggleAdvanced">@(ShowAdvanced ? "Hide Filters" : "Advanced Filters")</button>
+                <button class="button-lite" type="button" @onclick="ClearAllFilters">Clear</button>
+            </form>
+
+            @if (ShowAdvanced)
+            {
+                <div class="advanced-panel">
+                    <div class="advanced-panel-header">
+                        <div>
+                            <div class="advanced-panel-title">Advanced Search Filters</div>
+                        </div>
+                        <div class="advanced-panel-actions">
+                            <span class="criteria-count">@ActiveCriteriaCount active</span>
+                            <button class="button-lite" type="button" @onclick="ClearAdvancedFilters">Reset Filters</button>
+                        </div>
+                    </div>
+
+                    <div class="advanced-grid">
+                        <label>
+                            <span>Record Type</span>
+                            <select class="select-lite" @bind="RecordTypeFilter">
+                                <option value="">All</option>
+                                <option value="SMS Survey">SMS Survey</option>
+                                <option value="SMS Respondent">SMS Respondent</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Status</span>
+                            <select class="select-lite" @bind="StatusFilter">
+                                <option value="">All</option>
+                                @foreach (var status in StatusOptions)
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            <span>Survey Type</span>
+                            <select class="select-lite" @bind="SurveyTypeFilter">
+                                <option value="">All</option>
+                                @foreach (var surveyType in SurveyTypeOptions)
+                                {
+                                    <option value="@surveyType">@surveyType</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            <span>Geographic Area</span>
+                            <select class="select-lite" @bind="GeographicAreaFilter">
+                                <option value="">All</option>
+                                @foreach (var area in GeographicAreaOptions)
+                                {
+                                    <option value="@area">@area</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            <span>Date Range Start</span>
+                            <InputDate class="select-lite" @bind-Value="StartDateFilter" />
+                        </label>
+                        <label>
+                            <span>Date Range End</span>
+                            <InputDate class="select-lite" @bind-Value="EndDateFilter" />
+                        </label>
+                    </div>
+
+                    <div class="advanced-grid exact-grid">
+                        <label>
+                            <span>POID</span>
+                            <input class="search-input compact-input" placeholder="Exact POID" @bind="PoidFilter" />
+                        </label>
+                        <label>
+                            <span>Respondent ID</span>
+                            <input class="search-input compact-input" placeholder="Exact respondent ID" @bind="RespondentIdFilter" />
+                        </label>
+                        <label>
+                            <span>Tracking Number</span>
+                            <input class="search-input compact-input" placeholder="Survey or respondent tracking #" @bind="TrackingFilter" />
+                        </label>
+                    </div>
+                </div>
+            }
+
+            @* Filter chips are shown inside the Advanced Filters panel; remove inline chips here *@
+
+            <div class="saved-search-row">
+                <input class="search-input saved-search-input" placeholder="Saved search name" @bind="SavedSearchName" />
+                <button class="button-lite" type="button" @onclick="SaveCurrentSearchAsync">Save Search</button>
+                <select class="select-lite" @bind="SelectedSavedSearch">
+                    <option value="">Saved searches</option>
+                    @foreach (var search in SavedSearches)
+                    {
+                        <option value="@search.Name">@search.Name</option>
+                    }
+                </select>
+                <button class="button-lite" type="button" @onclick="ApplySavedSearchAsync" disabled="@string.IsNullOrWhiteSpace(SelectedSavedSearch)">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-results-toolbar">
+        <div class="pager">
+            <button class="button-lite" @onclick="PrevPage" disabled="@IsPrevDisabled">‹</button>
+            <span class="pager-text">@PageSummary</span>
+            <button class="button-lite" @onclick="NextPage" disabled="@IsNextDisabled">›</button>
+        </div>
+        <div class="pagesize">
+            <span class="pagesize-label">Rows:</span>
+            <select class="select-lite" @bind="PageSizeString" @bind:after="OnPageSizeChanged">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="All">All</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="search-summary">@SearchSummaryText</div>
+
+    @if (!string.IsNullOrWhiteSpace(StatusMessage))
+    {
+        <div class="search-status-message">@StatusMessage</div>
+    }
+
+    @foreach (var group in GroupedResults)
+    {
+        <div class="card results-card">
+            <div class="card-body">
+                <div class="results-group-title">@group.Label</div>
+                @if (group.Items.Count == 0)
+                {
+                    <div class="text-muted">No matching @group.Label records.</div>
+                }
+                else
+                {
+                    <div class="results-list">
+                        @foreach (var result in group.Items)
+                        {
+                            <a class="result-item" href="@result.Link">
+                                <div class="result-title">@result.Title</div>
+                                <div class="result-meta">@result.Subtitle</div>
+                                <div class="result-meta">Tracking: @result.TrackingNumber • State: @result.GeographicArea • Date: @result.Date.ToString("MM/dd/yyyy")</div>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

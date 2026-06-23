@@ -1,0 +1,117 @@
+@page "/surveys/results"
+@using SMSLiteUI.Services
+@inject HttpClient Http
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+
+<h1 class="page-h1">Surveys</h1>
+
+@if (string.IsNullOrWhiteSpace(LoadError))
+{
+    <SurveySearchBar SearchText="@SurveySearch"
+                     SearchTextChanged="@OnSurveySearchChanged"
+                     SurveyDate="@SurveyDateFilter"
+                     SurveyDateChanged="@OnSurveyDateFilterChanged"
+                     StartDate="@StartDateFilter"
+                     StartDateChanged="@OnStartDateFilterChanged"
+                     StopDate="@StopDateFilter"
+                     StopDateChanged="@OnStopDateFilterChanged"
+                     Mail="@MailFilter"
+                     MailChanged="@OnMailFilterChanged"
+                     Cawi="@CawiFilter"
+                     CawiChanged="@OnCawiFilterChanged"
+                     Capi="@CapiFilter"
+                     CapiChanged="@OnCapiFilterChanged"
+                     Cati="@CatiFilter"
+                     CatiChanged="@OnCatiFilterChanged"
+                     HqReview="@HqReviewFilter"
+                     HqReviewChanged="@OnHqReviewFilterChanged"
+                     ClearFiltersRequested="@ClearServerFiltersAsync" />
+}
+
+<div class="table-wrap dx-grid-wrap">
+    @if (!string.IsNullOrWhiteSpace(LoadError))
+    {
+        <div class="grid-error">@LoadError</div>
+    }
+    else
+    {
+        @if (!IsLoading)
+        {
+            <div class="survey-grid-actions">
+                <div class="survey-server-pager" aria-label="Survey result pages">
+                    <button class="button-lite grid-action-button" type="button" disabled="@IsFirstPage" @onclick="PreviousPageAsync">Previous</button>
+                    <span>@PageSummary</span>
+                    <button class="button-lite grid-action-button" type="button" disabled="@IsLastPage" @onclick="NextPageAsync">Next</button>
+                    <label>
+                        Rows
+                        <select class="survey-page-size-select" value="@GridPageSize" @onchange="OnGridPageSizeChanged">
+                            @foreach (var pageSize in PageSizeOptions)
+                            {
+                                <option value="@pageSize">@pageSize</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+                <div class="survey-grid-hint">@ResultsSummary</div>
+                <div class="survey-column-actions">
+                    <button id="survey-column-chooser-button"
+                            class="button-lite grid-action-button"
+                            type="button"
+                            @onclick="ShowColumnChooser">
+                        Customize Columns
+                    </button>
+                    <button class="button-lite grid-action-button" type="button" @onclick="SaveGridViewAsync">Save View</button>
+                    <button class="button-lite grid-action-button" type="button" @onclick="ResetGridViewAsync">Reset View</button>
+                </div>
+            </div>
+        }
+        <div class="survey-grid-scroll">
+            @if (IsLoading || IsGridInteractionLoading)
+            {
+                <div class="survey-grid-loading-overlay">
+                    <LoadingSwirl Text="Loading survey results" />
+                </div>
+            }
+            <DxGrid @ref="SurveyGrid"
+                    Data="@Rows"
+                    CssClass="survey-dx-grid"
+                    PageSize="@GridPageSize"
+                    PagerVisible="false"
+                    PageSizeSelectorVisible="false"
+                    PageSizeSelectorItems="@PageSizeOptions"
+                    ShowSearchBox="false"
+                    ShowFilterRow="false"
+                    FilterMenuButtonDisplayMode="GridFilterMenuButtonDisplayMode.Always"
+                    ShowGroupPanel="true"
+                    AllowGroup="true"
+                    AllowSort="true"
+                    AllowColumnReorder="true"
+                    RowClick="@OnSurveyRowClick"
+                    SelectionMode="GridSelectionMode.Multiple"
+                    SelectAllCheckboxMode="GridSelectAllCheckboxMode.Page"
+                    ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
+                    TextWrapEnabled="false">
+                <Columns>
+                    <DxGridSelectionColumn Width="48px" />
+                    @foreach (var column in SurveyColumns)
+                    {
+                        <DxGridDataColumn FieldName="@column.FieldName"
+                                          Caption="@column.Caption"
+                                          DisplayFormat="@ResolveDisplayFormat(column)"
+                                          MinWidth="@column.MinWidth"
+                                          Visible="@column.VisibleByDefault">
+                            <CellDisplayTemplate>
+                                @{
+                                    var row = (SurveyGridRow)context.DataItem;
+                                }
+
+                                @FormatCellValue(row, column.FieldName)
+                            </CellDisplayTemplate>
+                        </DxGridDataColumn>
+                    }
+                </Columns>
+            </DxGrid>
+        </div>
+    }
+</div>

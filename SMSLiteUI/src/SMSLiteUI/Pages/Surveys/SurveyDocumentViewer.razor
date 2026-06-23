@@ -1,0 +1,75 @@
+@page "/surveys/document-viewer"
+@inject IJSRuntime Js
+@inject ILogger<SurveyDocumentViewer> Logger
+
+<PageTitle>@(string.IsNullOrWhiteSpace(Title) ? "Document Viewer" : Title)</PageTitle>
+
+@if (IsLoading)
+{
+    <LoadingSwirl Text="Loading document" />
+}
+else
+{
+    <section class="viewer-shell">
+        <div class="viewer-header">
+            <div>
+                <h1 class="viewer-title">@DisplayTitle</h1>
+                <div class="viewer-subtitle">@DisplaySubtitle</div>
+            </div>
+            <details class="viewer-actions-menu">
+                <summary>External Actions</summary>
+                <div class="viewer-actions-popover">
+                    @if (IsSurveyReviewDocument)
+                    {
+                        <a class="button-lite button-link viewer-menu-action" href="@BuildSurveyReviewOutputUrl(2)" target="_blank" rel="noopener noreferrer">Open PDF</a>
+                        <a class="button-lite button-link viewer-menu-action" href="@BuildSurveyReviewOutputUrl(4)" target="_blank" rel="noopener noreferrer">Open Booklet PDF</a>
+                        <a class="button-lite button-link viewer-menu-action" href="@BuildSurveyReviewOutputUrl(1)" target="_blank" rel="noopener noreferrer">Download RTF</a>
+                        <a class="button-lite button-link viewer-menu-action" href="@BuildSurveyReviewOutputUrl(3)" target="_blank" rel="noopener noreferrer">Open JSON</a>
+                    }
+                    else
+                    {
+                        <button class="button-lite viewer-menu-action" type="button" @onclick="DownloadAsync">Download</button>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Source))
+                    {
+                        <a class="button-lite button-link viewer-menu-action" href="@Source" target="_blank" rel="noopener noreferrer">Open Source Link</a>
+                    }
+                </div>
+            </details>
+        </div>
+
+        <div class="viewer-grid">
+            <div class="viewer-card">
+                <div class="viewer-label">Type</div>
+                <div class="viewer-value">@(MaterialType ?? "Questionnaire")</div>
+            </div>
+            <div class="viewer-card">
+                <div class="viewer-label">Collection Mode</div>
+                <div class="viewer-value">@(Mode ?? "EDR")</div>
+            </div>
+            <div class="viewer-card">
+                <div class="viewer-label">Version</div>
+                <div class="viewer-value">@(Version ?? "v1.0")</div>
+            </div>
+            <div class="viewer-card">
+                <div class="viewer-label">SKey</div>
+                <div class="viewer-value">@DisplayValue.Text(SKey)</div>
+            </div>
+        </div>
+
+        <div class="viewer-document">
+            <div class="viewer-document-header">
+                <span>Preview</span>
+                <span class="viewer-filename">@DisplayFileName</span>
+            </div>
+            @if (IsSurveyReviewDocument && IsPdfOutput)
+            {
+                <iframe class="viewer-frame" src="@SurveyReviewDocumentUrl" title="@DisplayTitle"></iframe>
+            }
+            else
+            {
+                <pre class="viewer-preview">@DocumentPreview</pre>
+            }
+        </div>
+    </section>
+}

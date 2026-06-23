@@ -1,0 +1,77 @@
+@page "/respondents/details"
+
+<PageTitle>Respondent Details</PageTitle>
+
+<section class="respondent-hero">
+    <div class="respondent-hero-main">
+        <div>
+            <h1 class="respondent-title">Respondent Details</h1>
+            <div class="respondent-subtitle">POID: @DisplayText(Poid)</div>
+        </div>
+        <div class="page-actions-row">
+            <DxButton Text="Record Details"
+                      IconCssClass="bi bi-grid-3x3-gap"
+                      RenderStyle="ButtonRenderStyle.Secondary"
+                      NavigateUrl="@BackToRecordUrl" />
+            <DxButton Text="Survey Details"
+                      IconCssClass="bi bi-card-list"
+                      RenderStyle="ButtonRenderStyle.Secondary"
+                      NavigateUrl="@SurveyDetailsUrl" />
+        </div>
+    </div>
+    <div class="respondent-meta">
+        <span><strong>State:</strong> @DisplayText(StateId)</span>
+        <span><strong>Survey ID:</strong> @DisplayText(SurveyId)</span>
+        <span><strong>Sample ID:</strong> @DisplayText(SampleId)</span>
+        <span><strong>Survey Date:</strong> @DisplayText(ReferenceDate)</span>
+    </div>
+</section>
+
+<div class="respondent-layout">
+    <section class="card respondent-card">
+        <div class="card-body">
+            <h2 class="card-title">Contact and Assignment</h2>
+            <div class="respondent-summary-grid">
+                <div class="respondent-info-section">
+                    <div class="info-section-title">Contact</div>
+                    <div class="empty-field">Name</div>
+                    <div class="empty-field">Phone</div>
+                    <div class="empty-field">Email</div>
+                </div>
+                <div class="respondent-info-section">
+                    <div class="info-section-title">Mailing Address</div>
+                    <div class="empty-field">Address</div>
+                    <div class="empty-field">City, State ZIP</div>
+                </div>
+                <div class="respondent-info-section">
+                    <div class="info-section-title">Operation</div>
+                    <div class="empty-field">Operation name</div>
+                    <div class="empty-field">Operation address</div>
+                </div>
+                <div class="respondent-info-section">
+                    <div class="info-section-title">Assignment</div>
+                    <div class="empty-field">Enumerator</div>
+                    <div class="empty-field">Response status</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card respondent-card">
+        <div class="card-body">
+            <h2 class="card-title">Interaction Timeline</h2>
+            <DxGrid Data="@TimelineRows"
+                    PageSize="10"
+                    ShowFilterRow="false"
+                    AllowSort="true"
+                    ColumnResizeMode="GridColumnResizeMode.ColumnsContainer">
+                <Columns>
+                    <DxGridDataColumn FieldName="@nameof(TimelineGridRow.EventDate)" Caption="Date" DisplayFormat="MM/dd/yyyy" MinWidth="120" />
+                    <DxGridDataColumn FieldName="@nameof(TimelineGridRow.EventType)" Caption="Event" MinWidth="160" />
+                    <DxGridDataColumn FieldName="@nameof(TimelineGridRow.Actor)" Caption="Actor" MinWidth="150" />
+                    <DxGridDataColumn FieldName="@nameof(TimelineGridRow.Summary)" Caption="Summary" MinWidth="220" />
+                </Columns>
+            </DxGrid>
+        </div>
+    </section>
+</div>

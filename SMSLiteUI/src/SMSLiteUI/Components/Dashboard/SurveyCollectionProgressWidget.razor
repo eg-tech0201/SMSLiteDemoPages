@@ -1,0 +1,20 @@
+<DashboardWidget Title="Survey Collection Progress" CssClass="survey-progress-panel">
+    <div class="survey-progress-grid-wrap">
+        <DxGrid Data="@SurveyProgressRows"
+                CssClass="survey-progress-grid"
+                PagerVisible="false"
+                ShowFilterRow="false"
+                AllowSort="true"
+                ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
+                TextWrapEnabled="false">
+            <Columns>
+                <DxGridDataColumn FieldName="@nameof(SurveyProgressGridRow.SurveyName)" Caption="Survey Name" MinWidth="220" />
+                <DxGridDataColumn FieldName="@nameof(SurveyProgressGridRow.SurveyDate)" Caption="Survey Date" DisplayFormat="MM/dd/yyyy" MinWidth="140" />
+                <DxGridDataColumn FieldName="@nameof(SurveyProgressGridRow.SampleSize)" Caption="Sample Size" DisplayFormat="0" MinWidth="130" />
+                <DxGridDataColumn FieldName="@nameof(SurveyProgressGridRow.CheckedIn)" Caption="Checked In" DisplayFormat="0" MinWidth="130" />
+                <DxGridDataColumn FieldName="@nameof(SurveyProgressGridRow.CheckedInPercent)" Caption="Checked In %" DisplayFormat="0.##%" MinWidth="140" />
+                <DxGridDataColumn FieldName="@nameof(SurveyProgressGridRow.DaysRemaining)" Caption="Days Remaining" DisplayFormat="0" MinWidth="150" />
+            </Columns>
+        </DxGrid>
+    </div>
+</DashboardWidget>

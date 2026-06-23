@@ -1,0 +1,13 @@
+<section class="kpi-grid" aria-label="Survey statistics">
+    @foreach (var tile in DashboardTiles)
+    {
+        <DashboardWidget Title="@tile.Title" CssClass="@($"kpi-panel {tile.CssClass}")">
+            <div class="kpi-card-content">
+                <div class="kpi-metric">
+                    <div class="kpi-icon"><i class="@tile.IconCss" aria-hidden="true"></i></div>
+                    <div class="kpi-value">@tile.Value</div>
+                </div>
+            </div>
+        </DashboardWidget>
+    }
+</section>

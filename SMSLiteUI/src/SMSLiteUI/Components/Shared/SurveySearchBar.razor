@@ -1,0 +1,113 @@
+@inject IJSRuntime Js
+
+<div class="@CssClass">
+    <form class="survey-search-form @(ShowViewAllButton ? "has-view-all" : "search-only")" @onsubmit="SubmitSearchAsync" @onsubmit:preventDefault="true">
+        <div class="search-shell survey-search-shell">
+            <div class="search-input-row" @ref="FiltersAnchor">
+                <DxButton CssClass="search-icon-button"
+                          IconCssClass="bi bi-search"
+                          RenderStyle="ButtonRenderStyle.None"
+                          Click="@SubmitSearchAsync" />
+                <DxTextBox Text="@SearchText"
+                           TextChanged="@OnSearchTextChanged"
+                           BindValueMode="@BindValueMode"
+                           InputDelay="@InputDelay"
+                           NullText="@Placeholder"
+                           ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto"
+                           CssClass="survey-search-input" />
+                <DxButton CssClass="search-filter-button survey-filter-icon-button"
+                          IconCssClass="bi bi-sliders"
+                          RenderStyle="ButtonRenderStyle.None"
+                          Click="@ToggleFiltersMenu" />
+                @if (ActiveFilterCount > 0)
+                {
+                    <span class="survey-filter-count">Filters: @ActiveFilterCount</span>
+                }
+            </div>
+            @if (IsFiltersMenuOpen)
+            {
+                <div class="filters-backdrop" @onclick="CloseFiltersMenu"></div>
+                <div class="filters-pop survey-filters-pop"
+                     role="dialog"
+                     aria-label="Survey filters"
+                     @ref="FiltersPopup">
+                    <div class="filters-header">
+                        <div class="filters-title">Filters</div>
+                        <button class="columns-close" type="button" @onclick="CloseFiltersMenu" aria-label="Close filters">x</button>
+                    </div>
+                    <div class="filters-group survey-date-group">
+                        <div class="filters-subtitle">Survey Date</div>
+                        <div class="survey-filter-field">
+                            <DxDateEdit T="DateTime?"
+                                        Date="@SurveyDate"
+                                        DateChanged="@OnSurveyDateChanged"
+                                        DisplayFormat="MM/dd/yyyy"
+                                        Mask="MM/dd/yyyy"
+                                        NullText="--/--/----"
+                                        ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto" />
+                        </div>
+                    </div>
+                    <div class="filters-group">
+                        <div class="filters-subtitle">Start / Stop Dates</div>
+                        <div class="filters-row date-range-row">
+                            <div class="survey-filter-field">
+                                <label>Start Date</label>
+                                <DxDateEdit T="DateTime?"
+                                            Date="@StartDate"
+                                            DateChanged="@OnStartDateChanged"
+                                            DisplayFormat="MM/dd/yyyy"
+                                            Mask="MM/dd/yyyy"
+                                            NullText="--/--/----"
+                                            ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto" />
+                            </div>
+                            <div class="survey-filter-field">
+                                <label>Stop Date</label>
+                                <DxDateEdit T="DateTime?"
+                                            Date="@StopDate"
+                                            DateChanged="@OnStopDateChanged"
+                                            DisplayFormat="MM/dd/yyyy"
+                                            Mask="MM/dd/yyyy"
+                                            NullText="--/--/----"
+                                            ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filters-group">
+                        <div class="filters-subtitle">Modes</div>
+                        <div class="filters-checks survey-filter-checks">
+                            <DxCheckBox T="bool" Checked="@Mail" CheckedChanged="@OnMailChanged">Mail</DxCheckBox>
+                            <DxCheckBox T="bool" Checked="@Cawi" CheckedChanged="@OnCawiChanged">CAWI</DxCheckBox>
+                            <DxCheckBox T="bool" Checked="@Capi" CheckedChanged="@OnCapiChanged">CAPI</DxCheckBox>
+                            <DxCheckBox T="bool" Checked="@Cati" CheckedChanged="@OnCatiChanged">CATI</DxCheckBox>
+                        </div>
+                    </div>
+                    <div class="filters-group">
+                        <div class="filters-subtitle">Status</div>
+                        <div class="filters-checks survey-filter-checks">
+                            <DxCheckBox T="bool" Checked="@HqReview" CheckedChanged="@OnHqReviewChanged">In HQ Review</DxCheckBox>
+                        </div>
+                    </div>
+                    <div class="filters-actions">
+                        <DxButton Text="Clear Filters"
+                                  RenderStyle="ButtonRenderStyle.Secondary"
+                                  CssClass="survey-filter-action"
+                                  Click="@ClearFiltersAsync" />
+                        <DxButton Text="Done"
+                                  RenderStyle="ButtonRenderStyle.Primary"
+                                  CssClass="survey-filter-action"
+                                  Click="@CloseFiltersMenu" />
+                    </div>
+                </div>
+            }
+        </div>
+        @if (ShowViewAllButton)
+        {
+            <div class="survey-search-actions">
+                <DxButton Text="@ViewAllText"
+                          RenderStyle="ButtonRenderStyle.Secondary"
+                          CssClass="survey-search-view-all"
+                          Click="@SubmitViewAllAsync" />
+            </div>
+        }
+    </form>
+</div>

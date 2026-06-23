@@ -1,0 +1,33 @@
+@using SMSLiteUI.Services
+@inject HttpClient Http
+
+<DashboardWidget Title="@Title" CssClass="@SectionCssClass">
+        @if (IsLoading)
+        {
+            <LoadingSwirl Text="Loading recent surveys" />
+        }
+        else if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <div class="empty-hint">@Error</div>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <DxGrid Data="@Rows"
+                        CssClass="recent-surveys-grid"
+                        PageSize="@PageSize"
+                        PagerVisible="false"
+                        RowClick="@OnRowClick"
+                        ShowFilterRow="false"
+                        ColumnResizeMode="GridColumnResizeMode.ColumnsContainer"
+                        TextWrapEnabled="false">
+                    <Columns>
+                        <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyId)" Caption="Survey ID" DisplayFormat="0" MinWidth="120" />
+                        <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyTitle)" Caption="Survey Name" MinWidth="220" />
+                        <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SurveyDate)" Caption="Survey Date" DisplayFormat="MM/dd/yyyy" MinWidth="140" />
+                        <DxGridDataColumn FieldName="@nameof(SurveyGridRow.SampleId)" Caption="Sample ID" DisplayFormat="0" MinWidth="140" />
+                    </Columns>
+                </DxGrid>
+            </div>
+        }
+</DashboardWidget>

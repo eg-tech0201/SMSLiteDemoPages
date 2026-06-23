@@ -1,0 +1,41 @@
+.table-wrap {
+    overflow-x: auto;
+    border: none;
+    border-radius: 8px;
+    background: #ffffff;
+    margin: 0.5rem;
+}
+
+.recent-surveys-grid {
+    min-width: 720px;
+    border: 2px solid color-mix(in srgb, var(--brand-green) 55%, var(--brand-navy));
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.recent-surveys-grid ::deep .dxbl-grid-data-row,
+::deep .recent-surveys-grid .dxbl-grid-data-row {
+    cursor: pointer;
+}
+
+.recent-surveys-grid ::deep :is(.dxbl-grid-header-row, .dxbl-grid-header, .dxbl-grid-header-content),
+::deep .recent-surveys-grid :is(.dxbl-grid-header-row, .dxbl-grid-header, .dxbl-grid-header-content) {
+    background: color-mix(in srgb, var(--brand-green) 18%, #ffffff) !important;
+    color: color-mix(in srgb, var(--brand-green) 58%, var(--brand-navy)) !important;
+    font-weight: 900;
+}
+
+.recent-surveys-grid ::deep :is(.dxbl-grid-header, .dxbl-grid-header-cell, .dxbl-grid-cell, .dxbl-grid-data-cell, .dxbl-grid-empty-data-cell, th, td),
+::deep .recent-surveys-grid :is(.dxbl-grid-header, .dxbl-grid-header-cell, .dxbl-grid-cell, .dxbl-grid-data-cell, .dxbl-grid-empty-data-cell, th, td) {
+    border-color: color-mix(in srgb, var(--brand-green) 48%, var(--brand-navy)) !important;
+}
+
+.recent-surveys-grid ::deep :is(.dxbl-grid-header, .dxbl-grid-header-cell, .dxbl-grid-cell, .dxbl-grid-data-cell, .dxbl-grid-empty-data-cell, th, td):not(:last-child),
+::deep .recent-surveys-grid :is(.dxbl-grid-header, .dxbl-grid-header-cell, .dxbl-grid-cell, .dxbl-grid-data-cell, .dxbl-grid-empty-data-cell, th, td):not(:last-child) {
+    border-right: 1px solid color-mix(in srgb, var(--brand-green) 48%, var(--brand-navy)) !important;
+}
+
+.recent-surveys-grid ::deep :is(.dxbl-grid-focused-row, .dxbl-grid-selected-row, .dxbl-grid-data-row:hover),
+::deep .recent-surveys-grid :is(.dxbl-grid-focused-row, .dxbl-grid-selected-row, .dxbl-grid-data-row:hover) {
+    background: color-mix(in srgb, var(--brand-green) 12%, #ffffff);
+}
