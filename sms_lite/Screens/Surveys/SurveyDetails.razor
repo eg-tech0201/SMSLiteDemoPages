@@ -129,17 +129,7 @@ else
                                                HorizontalAlignment="HorizontalAlignment.Center"
                                                Orientation="Orientation.Vertical" />
                                 <DxPieChartSeries ArgumentField="@((PieSlice item) => item.DisplayText)"
-                                                  ValueField="@((PieSlice item) => item.Count)">
-                                    <DxChartSeriesLabel Visible="true"
-                                                        Position="RelativePosition.Outside"
-                                                        RadialOffset="12"
-                                                        TextOverflow="ChartTextOverflow.None"
-                                                        WordWrap="ChartWordWrap.Normal"
-                                                        FormatPattern="{argument}">
-                                        <DxChartSeriesLabelBorder Visible="true" Width="1" />
-                                        <DxChartSeriesLabelConnector Visible="true" Width="1" />
-                                    </DxChartSeriesLabel>
-                                </DxPieChartSeries>
+                                                  ValueField="@((PieSlice item) => item.Count)" />
                                 <DxChartTooltip Enabled="true" />
                             </DxPieChart>
                             <div class="devexpress-pie-total">Total: @Detail.TotalSample</div>
@@ -163,17 +153,7 @@ else
                                                HorizontalAlignment="HorizontalAlignment.Center"
                                                Orientation="Orientation.Vertical" />
                                 <DxPieChartSeries ArgumentField="@((PieSlice item) => item.DisplayText)"
-                                                  ValueField="@((PieSlice item) => item.Count)">
-                                    <DxChartSeriesLabel Visible="true"
-                                                        Position="RelativePosition.Outside"
-                                                        RadialOffset="12"
-                                                        TextOverflow="ChartTextOverflow.None"
-                                                        WordWrap="ChartWordWrap.Normal"
-                                                        FormatPattern="{argument}">
-                                        <DxChartSeriesLabelBorder Visible="true" Width="1" />
-                                        <DxChartSeriesLabelConnector Visible="true" Width="1" />
-                                    </DxChartSeriesLabel>
-                                </DxPieChartSeries>
+                                                  ValueField="@((PieSlice item) => item.Count)" />
                                 <DxChartTooltip Enabled="true" />
                             </DxPieChart>
                             <div class="devexpress-pie-total">Total: @Detail.TotalReceived</div>
