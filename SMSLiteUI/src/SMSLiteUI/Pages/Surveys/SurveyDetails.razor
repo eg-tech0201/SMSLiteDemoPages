@@ -111,14 +111,15 @@ else
                                 LabelOverlap="PieChartLabelOverlap.Shift">
                         <DxChartTitle Text="Data Collection Status" />
                         <DxChartLegend Position="RelativePosition.Outside"
-                                       VerticalAlignment="VerticalEdge.Top"
-                                       HorizontalAlignment="HorizontalAlignment.Left"
-                                       Orientation="Orientation.Vertical">
+                                       VerticalAlignment="VerticalEdge.Bottom"
+                                       HorizontalAlignment="HorizontalAlignment.Center"
+                                       Orientation="Orientation.Horizontal">
                             <DxChartTitle Text="@($"Total: {Detail.TotalSample:N0}")" />
                         </DxChartLegend>
                         <DxPieChartSeries ArgumentField="@((PieSlice item) => item.Label)"
                                           ValueField="@((PieSlice item) => item.Count)">
                             <DxChartSeriesLabel Visible="true"
+                                                ShowForZeroValues="false"
                                                 FormatPattern="{argument}: {value}" />
                         </DxPieChartSeries>
                         <DxChartTooltip Enabled="true" />
@@ -136,14 +137,15 @@ else
                                 LabelOverlap="PieChartLabelOverlap.Shift">
                         <DxChartTitle Text="Reports Received by Mode" />
                         <DxChartLegend Position="RelativePosition.Outside"
-                                       VerticalAlignment="VerticalEdge.Top"
-                                       HorizontalAlignment="HorizontalAlignment.Left"
-                                       Orientation="Orientation.Vertical">
+                                       VerticalAlignment="VerticalEdge.Bottom"
+                                       HorizontalAlignment="HorizontalAlignment.Center"
+                                       Orientation="Orientation.Horizontal">
                             <DxChartTitle Text="@($"Total: {Detail.TotalReceived:N0}")" />
                         </DxChartLegend>
                         <DxPieChartSeries ArgumentField="@((PieSlice item) => item.Label)"
                                           ValueField="@((PieSlice item) => item.Count)">
                             <DxChartSeriesLabel Visible="true"
+                                                ShowForZeroValues="false"
                                                 FormatPattern="{argument}: {value}" />
                         </DxPieChartSeries>
                         <DxChartTooltip Enabled="true" />
