@@ -12,6 +12,18 @@ namespace SMSLiteUI.Pages.Surveys;
 
 public partial class SurveyDetails
 {
+    private const double PieCalloutThresholdPercent = 4.5;
+    private static readonly string[] PiePalette =
+    [
+        "#7bcf9b",
+        "#f08f8f",
+        "#f2c66d",
+        "#8ec5ee",
+        "#b5a7e8",
+        "#9bc7b2",
+        "#f3a978"
+    ];
+
     [Parameter] public int? SurveyId { get; set; }
     [SupplyParameterFromQuery(Name = "surveyId")] public int? SurveyIdQuery { get; set; }
     [SupplyParameterFromQuery(Name = "sampleId")] public string? SampleId { get; set; }
@@ -35,9 +47,7 @@ public partial class SurveyDetails
 
     private List<PieSlice> DataCollectionStatusPieItems => Detail is null
         ? []
-        : DataCollectionStatusChartItems
-            .Select(item => new PieSlice(item.Label, item.Count))
-            .ToList();
+        : BuildPieSlices(DataCollectionStatusChartItems);
 
     private List<CountSlice> ReportsReceivedByModeChartItems => Detail is null
         ? []
@@ -52,9 +62,7 @@ public partial class SurveyDetails
 
     private List<PieSlice> ReportsReceivedByModePieItems => Detail is null
         ? []
-        : ReportsReceivedByModeChartItems
-            .Select(item => new PieSlice(item.Label, item.Count))
-            .ToList();
+        : BuildPieSlices(ReportsReceivedByModeChartItems);
 
     private double ReceivedPercent => GetPercent(Detail?.TotalReceived ?? 0, Detail?.TotalSample ?? 0);
     private double NotReceivedPercent => GetPercent(Detail?.TotalDeleted ?? 0, Detail?.TotalSample ?? 0);
@@ -101,6 +109,36 @@ public partial class SurveyDetails
     private static double GetPercent(int count, int total)
         => total <= 0 ? 0 : count * 100d / total;
 
+    private static List<PieSlice> BuildPieSlices(IEnumerable<CountSlice> items)
+    {
+        var materializedItems = items.ToList();
+        var total = materializedItems.Sum(item => Math.Max(item.Count, 0));
+
+        return materializedItems
+            .Select((item, index) =>
+            {
+                var percent = GetPercent(item.Count, total);
+                return new PieSlice(
+                    item.Label,
+                    item.Count,
+                    item.Count > 0 && percent <= PieCalloutThresholdPercent,
+                    PiePalette[index % PiePalette.Length]);
+            })
+            .ToList();
+    }
+
+    private static void CustomizePiePoint(ChartSeriesPointCustomizationSettings settings)
+    {
+        if (settings.Point.DataItems.OfType<PieSlice>().FirstOrDefault() is not { } slice)
+        {
+            settings.PointLabel.Visible = false;
+            return;
+        }
+
+        settings.PointAppearance.Color = slice.Color;
+        settings.PointLabel.Visible = slice.ShowCallout;
+    }
+
     private sealed record CountSlice(string Label, int Count);
-    private sealed record PieSlice(string Label, int Count);
+    private sealed record PieSlice(string Label, int Count, bool ShowCallout, string Color);
 }

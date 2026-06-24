@@ -105,15 +105,15 @@ else
                 <div class="card-body top-card-body">
                     <DxPieChart Data="@DataCollectionStatusPieItems"
                                 CssClass="devexpress-pie-chart"
-                                InnerDiameter="0.5"
                                 Diameter="0.82"
                                 MinDiameter="0.68"
-                                LabelOverlap="PieChartLabelOverlap.Shift">
+                                LabelOverlap="PieChartLabelOverlap.Shift"
+                                CustomizeSeriesPoint="@CustomizePiePoint">
                         <DxChartTitle Text="Data Collection Status" />
                         <DxChartLegend Position="RelativePosition.Outside"
                                        VerticalAlignment="VerticalEdge.Bottom"
                                        HorizontalAlignment="HorizontalAlignment.Center"
-                                       Orientation="Orientation.Horizontal">
+                                       Orientation="Orientation.Vertical">
                             <DxChartTitle Text="@($"Total: {Detail.TotalSample:N0}")" />
                         </DxChartLegend>
                         <DxPieChartSeries ArgumentField="@((PieSlice item) => item.Label)"
@@ -131,15 +131,15 @@ else
                 <div class="card-body top-card-body">
                     <DxPieChart Data="@ReportsReceivedByModePieItems"
                                 CssClass="devexpress-pie-chart"
-                                InnerDiameter="0.5"
                                 Diameter="0.82"
                                 MinDiameter="0.68"
-                                LabelOverlap="PieChartLabelOverlap.Shift">
+                                LabelOverlap="PieChartLabelOverlap.Shift"
+                                CustomizeSeriesPoint="@CustomizePiePoint">
                         <DxChartTitle Text="Reports Received by Mode" />
                         <DxChartLegend Position="RelativePosition.Outside"
                                        VerticalAlignment="VerticalEdge.Bottom"
                                        HorizontalAlignment="HorizontalAlignment.Center"
-                                       Orientation="Orientation.Horizontal">
+                                       Orientation="Orientation.Vertical">
                             <DxChartTitle Text="@($"Total: {Detail.TotalReceived:N0}")" />
                         </DxChartLegend>
                         <DxPieChartSeries ArgumentField="@((PieSlice item) => item.Label)"

@@ -1,6 +1,6 @@
 .details-top-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(520px, 0.92fr);
+    grid-template-columns: minmax(420px, 0.9fr) minmax(760px, 1.1fr);
     gap: 1.2rem;
     align-items: start;
     margin-top: 0.7rem;
@@ -8,7 +8,7 @@
 
 .survey-chart-layout {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(320px, 1fr));
     gap: 0.9rem;
     min-width: 0;
 }
@@ -207,11 +207,11 @@
 
 .devexpress-pie-chart {
     width: 100%;
-    min-height: 330px;
-    height: 330px;
+    min-height: 390px;
+    height: 390px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1320px) {
     .details-top-layout {
         grid-template-columns: 1fr;
     }
