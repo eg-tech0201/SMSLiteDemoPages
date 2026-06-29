@@ -39,18 +39,22 @@
         @if (!IsLoading)
         {
             <div class="survey-grid-actions">
-                <div class="survey-server-pager" aria-label="Survey result pages">
-                    <button class="button-lite grid-action-button" type="button" disabled="@IsFirstPage" @onclick="PreviousPageAsync">Previous</button>
-                    <span>@PageSummary</span>
-                    <button class="button-lite grid-action-button" type="button" disabled="@IsLastPage" @onclick="NextPageAsync">Next</button>
-                    <label>
-                        Rows
-                        <select class="survey-page-size-select" value="@GridPageSize" @onchange="OnGridPageSizeChanged">
-                            @foreach (var pageSize in PageSizeOptions)
-                            {
-                                <option value="@pageSize">@pageSize</option>
-                            }
-                        </select>
+                <div class="survey-pager-controls" aria-label="Survey result pages">
+                    <DxPager CssClass="survey-dx-pager"
+                             ActivePageIndex="@PageIndex"
+                             ActivePageIndexChanged="@OnGridPageIndexChanged"
+                             PageCount="@TotalPageCount"
+                             NavigationMode="PagerNavigationMode.NumericButtons"
+                             VisibleNumericButtonCount="5"
+                             AutoHideNavButtons="false" />
+                    <label class="survey-page-size-field">
+                        <span>Rows</span>
+                        <DxComboBox TData="int"
+                                    TValue="int"
+                                    Data="@PageSizeOptions"
+                                    Value="@GridPageSize"
+                                    ValueChanged="@OnGridPageSizeChanged"
+                                    CssClass="survey-page-size-editor" />
                     </label>
                 </div>
                 <div class="survey-grid-hint">@ResultsSummary</div>
@@ -79,7 +83,6 @@
                     PageSize="@GridPageSize"
                     PagerVisible="false"
                     PageSizeSelectorVisible="false"
-                    PageSizeSelectorItems="@PageSizeOptions"
                     ShowSearchBox="false"
                     ShowFilterRow="false"
                     FilterMenuButtonDisplayMode="GridFilterMenuButtonDisplayMode.Always"

@@ -12,9 +12,17 @@ namespace SMSLiteUI.Layout;
 
 public partial class NavMenu
 {
+    [Inject] private UserStateService UserStateService { get; set; } = default!;
+
     private bool ShowNotifications { get; set; }
     private bool ShowUserMenu { get; set; }
     private string GlobalSearchText { get; set; } = string.Empty;
+    private UserState CurrentUser { get; set; } = new(false, null, null, null, []);
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUser = await UserStateService.GetCurrentUserAsync();
+    }
 
     private void ToggleNotifications()
     {

@@ -1,13 +1,11 @@
-<section class="kpi-grid" aria-label="Survey statistics">
-    @foreach (var tile in DashboardTiles)
-    {
-        <DashboardWidget Title="@tile.Title" CssClass="@($"kpi-panel {tile.CssClass}")">
-            <div class="kpi-card-content">
-                <div class="kpi-metric">
-                    <div class="kpi-icon"><i class="@tile.IconCss" aria-hidden="true"></i></div>
-                    <div class="kpi-value">@tile.Value</div>
-                </div>
+<DashboardWidget Title="Survey Metrics" CssClass="survey-metrics-panel">
+    <section class="metric-bubble-grid" aria-label="Survey statistics">
+        @foreach (var tile in DashboardTiles)
+        {
+            <div class="@($"metric-bubble {tile.CssClass}")">
+                <div class="@($"metric-bubble-label {tile.LabelSizeClass}")">@tile.Title:</div>
+                <div class="metric-bubble-value">@tile.Value</div>
             </div>
-        </DashboardWidget>
-    }
-</section>
+        }
+    </section>
+</DashboardWidget>

@@ -49,14 +49,12 @@ public partial class Surveys
     private bool IsLoading { get; set; } = true;
     private bool IsGridInteractionLoading { get; set; }
     private string? LoadError { get; set; }
-    private bool IsFirstPage => PageIndex <= 0;
-    private bool IsLastPage => TotalRowCount == 0 || ((PageIndex + 1) * GridPageSize) >= TotalRowCount;
+    private int TotalPageCount => TotalRowCount == 0
+        ? 1
+        : Math.Max(1, (int)Math.Ceiling(TotalRowCount / (double)GridPageSize));
     private string ResultsSummary => TotalRowCount == 0
         ? string.Empty
         : $"Showing {(PageIndex * GridPageSize) + 1:N0}-{Math.Min((PageIndex + 1) * GridPageSize, TotalRowCount):N0} of {TotalRowCount:N0} survey results";
-    private string PageSummary => TotalRowCount == 0
-        ? "Page 0 of 0"
-        : $"Page {PageIndex + 1:N0} of {Math.Max(1, (int)Math.Ceiling(TotalRowCount / (double)GridPageSize)):N0}";
     private static readonly IReadOnlyList<GridColumnSpec> SurveyColumns =
     [
         new(nameof(SurveyGridRow.SurveyId), "Survey ID", 120, null, true),
@@ -143,7 +141,7 @@ public partial class Surveys
         {
             LoadError = null;
             var page = await Http.GetFromJsonAsync<SurveyInstancePageResponse>(BuildSurveyPageEndpoint());
-            Rows = page?.Rows.ToList() ?? [];
+            Rows = page?.Rows.Take(GridPageSize).ToList() ?? [];
             TotalRowCount = page?.TotalRowCount ?? 0;
         }
         catch (Exception ex)
@@ -265,34 +263,23 @@ public partial class Surveys
         await ReloadFromFirstPageAsync();
     }
 
-    private async Task PreviousPageAsync()
+    private async Task OnGridPageIndexChanged(int pageIndex)
     {
-        if (IsFirstPage)
+        var boundedPageIndex = Math.Clamp(pageIndex, 0, TotalPageCount - 1);
+        if (boundedPageIndex == PageIndex)
             return;
 
-        PageIndex--;
+        PageIndex = boundedPageIndex;
         SyncResultsUrl();
         await LoadSurveyPageAsync();
     }
 
-    private async Task NextPageAsync()
+    private async Task OnGridPageSizeChanged(int pageSize)
     {
-        if (IsLastPage)
+        if (!PageSizeOptions.Contains(pageSize) || pageSize == GridPageSize)
             return;
 
-        PageIndex++;
-        SyncResultsUrl();
-        await LoadSurveyPageAsync();
-    }
-
-    private async Task OnGridPageSizeChanged(ChangeEventArgs args)
-    {
-        if (int.TryParse(Convert.ToString(args.Value), out var selectedPageSize) &&
-            PageSizeOptions.Contains(selectedPageSize))
-        {
-            GridPageSize = selectedPageSize;
-        }
-
+        GridPageSize = pageSize;
         await ReloadFromFirstPageAsync();
     }
 

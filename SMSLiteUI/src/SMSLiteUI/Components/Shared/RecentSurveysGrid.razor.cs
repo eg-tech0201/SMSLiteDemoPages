@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using DevExpress.Blazor;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -13,6 +12,7 @@ namespace SMSLiteUI.Components.Shared;
 public partial class RecentSurveysGrid
 {
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private UserRecentSurveysCacheService RecentSurveysCache { get; set; } = default!;
 
     [Parameter] public string SectionCssClass { get; set; } = "recent-surveys-panel";
     [Parameter] public string Title { get; set; } = "My Recent Surveys";
@@ -26,8 +26,8 @@ public partial class RecentSurveysGrid
     {
         try
         {
-            var rows = await Http.GetFromJsonAsync<List<SurveyGridRow>>("api/survey-instances") ?? [];
-            Rows = BuildUniqueInstanceRows(rows).Take(PageSize).ToList();
+            var rows = await RecentSurveysCache.GetRecentSurveysAsync(CancellationToken.None);
+            Rows = rows.Take(PageSize).Select(ToGridRow).ToList();
         }
         catch (Exception ex)
         {
@@ -39,15 +39,45 @@ public partial class RecentSurveysGrid
         }
     }
 
-    private static List<SurveyGridRow> BuildUniqueInstanceRows(IEnumerable<SurveyGridRow> rows)
-        => rows
-            .Where(row => row.SurveyId.HasValue && row.SurveyDate.HasValue && row.SampleId.HasValue)
-            .GroupBy(row => new { row.SurveyId, SurveyDate = row.SurveyDate!.Value.Date, row.SampleId })
-            .Select(group => group.First())
-            .OrderByDescending(row => row.SurveyDate)
-            .ThenBy(row => row.SurveyId)
-            .ThenBy(row => row.SampleId)
-            .ToList();
+    private static SurveyGridRow ToGridRow(UserRecentSurveyCacheItem item)
+        => new(
+            SurveyId: item.SurveyId,
+            SurveyDate: item.ReferenceDate,
+            SampleId: int.TryParse(item.SampleId, out var sampleId) ? sampleId : null,
+            PeriodId: null,
+            ActiveFlag: null,
+            StartDate: null,
+            StopDate: null,
+            SampleMonth: null,
+            HqReviewFlag: null,
+            PopulatedRows: null,
+            MailFlag: null,
+            CawiFlag: null,
+            CatiFlag: null,
+            CapiFlag: null,
+            MailStartDate: null,
+            MailStopDate: null,
+            CawiStartDate: null,
+            CawiStopDate: null,
+            CapiStartDate: null,
+            CapiStopDate: null,
+            CatiStartDate: null,
+            CatiStopDate: null,
+            CatiApp: null,
+            SurveyTitle: item.SurveyTitle,
+            SurveySubtitle: null,
+            FrequencyCode: null,
+            FrequencyDescription: null,
+            ProjectCode: null,
+            OmbNumber: null,
+            OmbExpires: null,
+            BaseMonth: null,
+            MarkedVersion: null,
+            SampleName: null,
+            ElmoSurveyId: null,
+            ElmoPeriodId: null,
+            ElmoMonth: null,
+            TotalRowCount: null);
 
     private static string BuildDetailHref(SurveyGridRow row)
     {

@@ -73,7 +73,7 @@
                 <span class="bi bi-bell" aria-hidden="true"></span>
                 <span class="badge">4</span>
             </button>
-            <span class="email">user@usda.gov</span>
+            <span class="email">@CurrentUser.DisplayEmail</span>
             <button type="button" class="avatar" title="User menu" @onclick="ToggleUserMenu">
                 <span class="bi bi-person-circle" aria-hidden="true"></span>
             </button>
@@ -99,8 +99,8 @@
     <div class="user-menu-backdrop" @onclick="CloseMenus"></div>
     <div class="user-menu" @onclick:stopPropagation="true">
         <div class="user-menu-header">
-            <span>user@usda.gov</span>
-            <strong>User Menu</strong>
+            <span>Welcome, @CurrentUser.DisplayEmail</span>
+            <strong>@(CurrentUser.DisplayName ?? "User Menu")</strong>
         </div>
         <div class="user-menu-section-title">Account</div>
         <div class="user-menu-item">Profile</div>

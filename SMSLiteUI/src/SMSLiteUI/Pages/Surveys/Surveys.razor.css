@@ -49,7 +49,7 @@
 }
 
 .survey-filter-field label,
-.survey-server-pager label {
+.survey-page-size-field {
     color: var(--brand-muted);
     font-size: 0.76rem;
     font-weight: 800;
@@ -90,14 +90,12 @@
     max-width: 250px;
 }
 
-.survey-server-pager {
+.survey-pager-controls {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 0.5rem;
     flex-wrap: wrap;
-    color: var(--brand-navy);
-    font-weight: 800;
 }
 
 @media (max-width: 1100px) {
@@ -115,18 +113,17 @@
     }
 }
 
-.survey-server-pager label {
+.survey-page-size-field {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
 }
 
-.survey-page-size-select {
-    min-width: 74px;
-    border: 1px solid color-mix(in srgb, var(--brand-green) 35%, var(--brand-border));
-    border-radius: 6px;
-    padding: 0.35rem 0.45rem;
-    background: #ffffff;
+.survey-page-size-editor {
+    min-width: 84px;
+}
+
+.survey-dx-pager {
     color: var(--brand-navy);
     font-weight: 800;
 }
